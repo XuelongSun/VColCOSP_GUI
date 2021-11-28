@@ -42,9 +42,11 @@
 *.idb
 *.pdb
 
-# ppt
+# other files
 *.ppt
 *.pptx
+*.ipynb
+
 
 # Kernel Module Compile Results
 *.mod*
@@ -56,6 +58,6 @@ Mkfile.old
 dkms.conf
 
 #path
-__pycache__/**
-viewer/__pycache__/**
+__pycache__/
+viewer/__pycache__/
 
