@@ -1,0 +1,11 @@
+<RCC>
+  <qresource prefix="resource">
+    <file>resources/pheromone.png</file>
+    <file>resources.qrc</file>
+    <file>resources/visual_scene.png</file>
+    <file>resources/icon_go.png</file>
+    <file>resources/icon_key.png</file>
+    <file>resources/icon_user.png</file>
+    <file>resources/login_background.png</file>
+  </qresource>
+</RCC>
