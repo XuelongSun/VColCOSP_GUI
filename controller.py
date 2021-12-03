@@ -228,6 +228,7 @@ class Controller:
                             QMessageBox.warning(self.viewer.vscene, 
                                                 'Error', 
                                                 'Cannot load image:{}'.format(self.vscene_loaded_image_path))
+                            self.vscene_timer.stop()
                         else:
                             gray = self.viewer.vscene.checkBox_led_v_gray.isChecked()
                             self.vscene_video_image = self.vscene_model.transfer_loaded_image(image,
@@ -240,6 +241,7 @@ class Controller:
                         QMessageBox.warning(self.viewer.vscene, 
                                             'ERROR', 
                                             'No Picture loaded, please load picture first.')
+                        self.vscene_timer.stop()
                 else:
                     self.vscene_image = self.vscene_model.generate_video(self.vscene_video_image,
                                                                       self.vscene_img_width,
@@ -256,6 +258,7 @@ class Controller:
                                 'Error', 
                                 'Not in the Video Mode', 
                                 QMessageBox.Yes, QMessageBox.Yes)
+            self.vscene_timer.stop()
         self.vscene_frame_num += 1
         if (self.viewer.vscene.pb_show.text() == "Hide") and (self.vscene_image is not None):
             self.vscene_screen.show_label_img(self.vscene_screen_start_pos[0],
@@ -296,6 +299,8 @@ class Controller:
         self.phero_img_height = int(self.phero_led_unit_height * self.phero_led_unit_column)
         
         self.phero_mode = self.viewer.phero.comboBox_led_mode.currentText()
+        
+        self.phero_model.dt = 1.0/self.viewer.phero.spinBox_led_v_frame_rate.value()
         
         if self.phero_mode == "Static":
             #* static: just show the loaded picture
@@ -431,12 +436,14 @@ class Controller:
                     QMessageBox.warning(self.viewer.phero,
                                         'Error',
                                         'Please load image first.')
+                    self.phero_timer.stop()
                 else:
                     image = cv2.imread(self.vscene_loaded_image_path)
                     if image is None:
                         QMessageBox.warning(self.viewer.vscene, 
                                             'Error', 
                                             'Cannot load image:{}'.format(self.vscene_loaded_image_path))
+                        self.phero_timer.stop()
                     else:
                         gray = self.viewer.phero.cb_img_gray.isChecked()
                         self.phero_image = self.phero_model.transform_loaded_image(image,
@@ -500,6 +507,7 @@ class Controller:
         
     def phero_start_render(self):
         self.phero_frame_rate = self.viewer.phero.spinBox_led_v_frame_rate.value()
+        self.phero_model.dt = 1.0/self.viewer.phero.spinBox_led_v_frame_rate.value()
         self.phero_timer.start(int(1000/self.phero_frame_rate))
     
     def phero_stop_render(self):
@@ -524,6 +532,8 @@ class Controller:
             port = int(self.viewer.loc.te_socket_port.toPlainText())
             # connect to socket
             try:
+                self.loc_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                self.loc_data_thread = SocketDataReceiver(self.loc_socket)
                 self.loc_socket.connect((ip, port))
             except:
                 self.viewer.system_logger('Cannot connect to {} at {}'.format(ip, port),

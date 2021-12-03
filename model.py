@@ -123,7 +123,7 @@ class PheromoneModel:
         self.evaporation_factor = np.zeros(3)
         self.injection_factor = np.zeros(3)
         self.radius_factor = np.ones(3).astype('int')
-        self.dt = 33
+        self.dt = 0.1
         self.update_parameters()
         
         # pheromone
