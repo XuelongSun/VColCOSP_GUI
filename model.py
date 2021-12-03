@@ -179,9 +179,9 @@ class PheromoneModel:
             except:
                 injection[x-r:x+r, y-r:y+r, ind] += 1
         # evaportion
-        e = -(1/(self.evaporation_factor*100)) * self.pheromone_field * self.dt
+        e = -(1/(self.evaporation_factor*100)) * self.pheromone_field 
         # injection
-        i = self.injection_factor * injection * self.dt
+        i = self.injection_factor * injection
         # diffusion
         # !should separate channels and process individually
         r,g,b = cv2.split(self.pheromone_field)
@@ -189,9 +189,8 @@ class PheromoneModel:
         g = cv2.filter2D(g, -1, self.diffusion_kernel[1])
         b = cv2.filter2D(b, -1, self.diffusion_kernel[2])
         d = cv2.merge([r,g,b])
-        d = d * self.diffusion_factor * self.dt
         # update
-        self.pheromone_field = (self.pheromone_field + e + i + d)
+        self.pheromone_field = self.pheromone_field + (e + i + d) * self.dt
         print(self.pheromone_field.max(), np.sum(injection))
         return np.clip(self.pheromone_field, 0, 255).astype(np.uint8)
 
