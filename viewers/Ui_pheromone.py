@@ -150,6 +150,7 @@ class Ui_phero(object):
         self.spinBox_sp_x.setProperty("showGroupSeparator", False)
         self.spinBox_sp_x.setMinimum(-3840)
         self.spinBox_sp_x.setMaximum(3840)
+        self.spinBox_sp_x.setProperty("value", 1920)
         self.spinBox_sp_x.setDisplayIntegerBase(10)
         self.spinBox_sp_x.setObjectName("spinBox_sp_x")
         self.spinBox_sled_r = QtWidgets.QSpinBox(phero)

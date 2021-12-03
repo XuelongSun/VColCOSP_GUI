@@ -404,6 +404,9 @@ color: rgb(255, 255, 127);
    <property name="maximum">
     <number>3840</number>
    </property>
+   <property name="value">
+    <number>1920</number>
+   </property>
    <property name="displayIntegerBase">
     <number>10</number>
    </property>
