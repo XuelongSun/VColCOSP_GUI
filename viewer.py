@@ -83,8 +83,6 @@ class Localization(QMainWindow, Ui_localization):
     def closeEvent(self, event):
         print('closing the localization window')
         self.signal.emit('close')
-    
-        
 
 class LEDScreen(QMainWindow):
     def __init__(self):
@@ -100,8 +98,6 @@ class LEDScreen(QMainWindow):
         # set the window size
         self.setGeometry(QRect(x, y, width, height))
         self.label.setGeometry(QRect(0, 0, width, height))
-        plt.imshow(img)
-        plt.show()
         # color
         if len(img.shape) == 3:
             _image = QImage(img[:], img.shape[1], img.shape[0], img.shape[1] * 3, QImage.Format_RGB888)
@@ -113,7 +109,7 @@ class LEDScreen(QMainWindow):
             # image = QPixmap(_image).scaled(self.label.width(), self.label.height())
             image = QPixmap(_image)
         self.label.setPixmap(image)
-
+ 
 
 class Viewer:
     def __init__(self):
