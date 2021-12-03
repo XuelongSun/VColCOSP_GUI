@@ -1,5 +1,6 @@
 import re
 import numpy as np
+import matplotlib.pyplot as plt
 import cv2
 
 class LedImageProcess:
@@ -112,7 +113,7 @@ class LedImageProcess:
             img_f = np.zeros((img_h, img_w), np.uint8)
             for i in range(fold_x + 1):
                 img_f[img_h_real * i:img_h_real * (i + 1), :] = img[:, img_w * i:img_w * (i + 1)]
-                    
+        
         return img_f
 
 class PheromoneModel:
@@ -193,6 +194,20 @@ class PheromoneModel:
         self.pheromone_field = self.pheromone_field + (e + i + d) * self.dt
         print(self.pheromone_field.max(), np.sum(injection))
         return np.clip(self.pheromone_field, 0, 255).astype(np.uint8)
+    
+    def generate_calibration_pattern(self, arena_length):
+        image = np.zeros([self.pixel_height, self.pixel_width, 3])
+        # radius of pattern is 2cm
+        radius = int(0.02 * (self.pixel_width/arena_length))
+        for xi, yi in [(radius, radius),
+                       (self.pixel_width-radius, radius),
+                       (radius, self.pixel_height-radius),
+                       (self.pixel_width-radius, self.pixel_height-radius)]:
+            # outer white circle
+            image = cv2.circle(image, (xi, yi), int(radius*7/8), (255, 255, 255), int(radius/4))
+            # inner circle
+            image = cv2.circle(image, (xi, yi), int(radius/4), (255, 255, 255), -1)
+        return image.astype(np.uint8)
 
 class LocDataModel:
     def __init__(self):

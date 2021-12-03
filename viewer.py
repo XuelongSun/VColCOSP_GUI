@@ -9,6 +9,7 @@ from viewers.Ui_main_menu import Ui_main_menu
 from viewers.Ui_vscene import Ui_vscene
 from viewers.Ui_pheromone import Ui_phero
 from viewers.Ui_localization import Ui_localization
+import matplotlib.pyplot as plt
 
 class WinLogin(QMainWindow, Ui_Login):
     def __init__(self):
@@ -50,6 +51,7 @@ class Pheromone(QMainWindow, Ui_phero):
         self.signal.emit('close')
     
     def show_label_image(self, label, img):
+
         if len(img.shape) == 3:
             _image = QImage(img[:], img.shape[1], img.shape[0], img.shape[1] * 3, QImage.Format_RGB888)
             # image = QPixmap(_image).scaled(label.width(), label.height())
@@ -57,6 +59,7 @@ class Pheromone(QMainWindow, Ui_phero):
         else:
             _image = QImage(img[:], img.shape[1], img.shape[0], img.shape[1], QImage.Format_Grayscale8)
             image = QPixmap(_image)
+
             # image = QPixmap(_image).scaled(label.width(), label.height())
         
         label.setPixmap(image)
@@ -91,19 +94,24 @@ class LEDScreen(QMainWindow):
         self.setWindowFlags(Qt.FramelessWindowHint)
         # always on top
         # self.setWindowFlags(Qt.WindowStaysOnTopHint)
+        self.label.setScaledContents(True)
 
     def show_label_img(self, x, y, width, height, img):
         # set the window size
         self.setGeometry(QRect(x, y, width, height))
         self.label.setGeometry(QRect(0, 0, width, height))
+        plt.imshow(img)
+        plt.show()
         # color
         if len(img.shape) == 3:
             _image = QImage(img[:], img.shape[1], img.shape[0], img.shape[1] * 3, QImage.Format_RGB888)
-            image = QPixmap(_image).scaled(self.label.width(), self.label.height())
+            image = QPixmap(_image)
+            # image = QPixmap(_image).scaled(self.label.width(), self.label.height())
         # gray
         else:
             _image = QImage(img[:], img.shape[1], img.shape[0], img.shape[1], QImage.Format_Grayscale8)
-            image = QPixmap(_image).scaled(self.label.width(), self.label.height())
+            # image = QPixmap(_image).scaled(self.label.width(), self.label.height())
+            image = QPixmap(_image)
         self.label.setPixmap(image)
 
 

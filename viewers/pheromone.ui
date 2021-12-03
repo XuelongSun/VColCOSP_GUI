@@ -592,7 +592,7 @@ color: rgb(255, 255, 127);
 </string>
    </property>
    <property name="currentIndex">
-    <number>2</number>
+    <number>0</number>
    </property>
    <item>
     <property name="text">
@@ -612,6 +612,11 @@ color: rgb(255, 255, 127);
    <item>
     <property name="text">
      <string>Dy-Customized</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>Loc-Calibration</string>
     </property>
    </item>
   </widget>
@@ -813,7 +818,7 @@ color: rgb(255, 255, 127);
     <enum>QTabWidget::Triangular</enum>
    </property>
    <property name="currentIndex">
-    <number>2</number>
+    <number>0</number>
    </property>
    <property name="elideMode">
     <enum>Qt::ElideNone</enum>

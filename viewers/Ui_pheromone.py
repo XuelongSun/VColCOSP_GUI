@@ -227,6 +227,7 @@ class Ui_phero(object):
         self.comboBox_led_mode.addItem("")
         self.comboBox_led_mode.addItem("")
         self.comboBox_led_mode.addItem("")
+        self.comboBox_led_mode.addItem("")
         self.line_5 = QtWidgets.QFrame(phero)
         self.line_5.setGeometry(QtCore.QRect(510, 120, 111, 20))
         self.line_5.setStyleSheet("color: rgb(19, 126, 124);")
@@ -650,8 +651,8 @@ class Ui_phero(object):
         self.sp_radius_b.setObjectName("sp_radius_b")
 
         self.retranslateUi(phero)
-        self.comboBox_led_mode.setCurrentIndex(2)
-        self.tabWidget_led_v.setCurrentIndex(2)
+        self.comboBox_led_mode.setCurrentIndex(0)
+        self.tabWidget_led_v.setCurrentIndex(0)
         QtCore.QMetaObject.connectSlotsByName(phero)
 
     def retranslateUi(self, phero):
@@ -681,6 +682,7 @@ class Ui_phero(object):
         self.comboBox_led_mode.setItemText(1, _translate("phero", "Video"))
         self.comboBox_led_mode.setItemText(2, _translate("phero", "Dy-Localization"))
         self.comboBox_led_mode.setItemText(3, _translate("phero", "Dy-Customized"))
+        self.comboBox_led_mode.setItemText(4, _translate("phero", "Loc-Calibration"))
         self.label_7.setText(_translate("phero", "Control"))
         self.label_55.setText(_translate("phero", "| Frame Rate"))
         self.label_18.setText(_translate("phero", "| Injection"))

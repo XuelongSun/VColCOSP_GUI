@@ -302,6 +302,9 @@ class Controller:
         
         self.phero_model.dt = 1.0/self.viewer.phero.spinBox_led_v_frame_rate.value()
         
+        self.arena_length = self.viewer.phero.sp_arena_l.value()
+        self.arena_width = self.viewer.phero.sp_arena_w.value()
+        
         if self.phero_mode == "Static":
             #* static: just show the loaded picture
             if self.phero_loaded_image_path is None:
@@ -352,8 +355,7 @@ class Controller:
             self.phero_model.pixel_width = self.phero_img_width
             self.phero_model.pixel_height = self.phero_img_height
             self.phero_frame_rate = self.viewer.phero.spinBox_led_v_frame_rate.value()
-            # self.phero_model.dt =  1000/self.phero_frame_rate
-            print(self.phero_frame_rate)
+            self.phero_model.dt =  1/self.phero_frame_rate
             # pheromone parameters
             for p in ['diffusion','evaporation','injection','radius']:
                 s = """self.phero_model.{}_factor = np.array([self.viewer.phero.sp_{}_r.value(), 
@@ -393,6 +395,10 @@ class Controller:
                 
             self.phero_channel = phero_channel
         
+        elif self.phero_mode == 'Loc-Calibration':
+            self.phero_image = self.phero_model.generate_calibration_pattern(self.arena_length)
+            self.viewer.phero.show_label_image(self.viewer.phero.label_image, 
+                                                           self.phero_image)
         if (self.viewer.phero.pb_show.text() == "Hide") and (self.phero_image is not None):
             self.phero_screen.show_label_img(self.phero_screen_start_pos[0],
                                             self.phero_screen_start_pos[1],
