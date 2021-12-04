@@ -3,6 +3,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import cv2
 
+from viewer import PheroBgInfoSetting
+
 class LedImageProcess:
     def __init__(self):
         pass
@@ -128,8 +130,13 @@ class PheromoneModel:
         self.update_parameters()
         
         # pheromone
-        self.color_channel = {'red':0, 'green':1, 'blue':2}
-        self.pheromone_field = np.zeros([self.pixel_height, self.pixel_width, 3])
+        self.color_channel = {'red':0, 
+                              'green':1, 
+                              'blue':2}
+        self.pheromone_field = np.zeros([self.pixel_height, 
+                                         self.pixel_width, 
+                                         3])
+        
         
     def update_parameters(self):
         # diffusion_kernel
@@ -138,7 +145,10 @@ class PheromoneModel:
             self.diffusion_kernel[i] *= (1-d)/4
             self.diffusion_kernel[i,1,1] = d - 1
             # self.diffusion_kernel[i,0,0],self.diffusion_kernel[i,0,2],self.diffusion_kernel[i,2,0],self.diffusion_kernel[i,2,2] = 0,0,0,0
-        self.pheromone_field = np.zeros([self.pixel_height, self.pixel_width, 3])
+            
+        self.pheromone_field = np.zeros([self.pixel_height, 
+                                         self.pixel_width, 
+                                         3])
         # injection_kernel
         self.injection_kernel = [[]]*3
         for n in range(3):
@@ -193,7 +203,9 @@ class PheromoneModel:
         # update
         self.pheromone_field = self.pheromone_field + (e + i + d) * self.dt
         print(self.pheromone_field.max(), np.sum(injection))
-        return np.clip(self.pheromone_field, 0, 255).astype(np.uint8)
+        return np.clip(self.pheromone_field, 
+                       0, 
+                       255).astype(np.uint8)
     
     def generate_calibration_pattern(self, arena_length):
         image = np.zeros([self.pixel_height, self.pixel_width, 3])

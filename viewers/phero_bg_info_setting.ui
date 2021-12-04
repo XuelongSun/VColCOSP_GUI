@@ -1,0 +1,480 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>phero_bg_info_setting</class>
+ <widget class="QWidget" name="phero_bg_info_setting">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>273</width>
+    <height>430</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">background-color: rgb(0, 0, 0);
+color: rgb(19, 126, 124);</string>
+  </property>
+  <widget class="QGroupBox" name="groupBox_pos_text">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>20</y>
+     <width>231</width>
+     <height>71</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">QGroupBox::indicator:unchecked{
+	border: 1px solid rgb(100,100,100);
+	background-color:rgb(100,100,100);
+}
+QGroupBox{
+	border: 1px solid rgb(19, 126, 124);
+	border-radius:10px;
+}
+</string>
+   </property>
+   <property name="title">
+    <string>Position Text</string>
+   </property>
+   <property name="flat">
+    <bool>false</bool>
+   </property>
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>false</bool>
+   </property>
+   <widget class="QPushButton" name="pb_pos_text_color">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>30</y>
+      <width>61</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: 2px solid rgb(19, 126, 124);
+border-radius:10px;</string>
+    </property>
+    <property name="text">
+     <string>Color</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pb_pos_text_font">
+    <property name="geometry">
+     <rect>
+      <x>90</x>
+      <y>30</y>
+      <width>61</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: 2px solid rgb(19, 126, 124);
+border-radius:10px;</string>
+    </property>
+    <property name="text">
+     <string>Font</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="lv_pos_text">
+    <property name="geometry">
+     <rect>
+      <x>170</x>
+      <y>10</y>
+      <width>51</width>
+      <height>51</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+   </widget>
+  </widget>
+  <widget class="QGroupBox" name="groupBox_pos_cline">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>110</y>
+     <width>231</width>
+     <height>71</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">QGroupBox::indicator:unchecked{
+	border: 1px solid rgb(100,100,100);
+	background-color:rgb(100,100,100);
+}
+QGroupBox{
+	border: 1px solid rgb(19, 126, 124);
+	border-radius:10px;
+}
+</string>
+   </property>
+   <property name="title">
+    <string>Position Cross Line</string>
+   </property>
+   <property name="flat">
+    <bool>false</bool>
+   </property>
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>false</bool>
+   </property>
+   <widget class="QSpinBox" name="sb_pos_line_width">
+    <property name="geometry">
+     <rect>
+      <x>70</x>
+      <y>40</y>
+      <width>41</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: 2px soild rgb(19, 126, 124);
+color: rgb(255, 255, 127);
+</string>
+    </property>
+    <property name="maximum">
+     <number>100</number>
+    </property>
+    <property name="value">
+     <number>4</number>
+    </property>
+    <property name="displayIntegerBase">
+     <number>10</number>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_11">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>40</y>
+      <width>41</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Width</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pb_pos_line_color">
+    <property name="geometry">
+     <rect>
+      <x>120</x>
+      <y>41</y>
+      <width>41</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: 2px solid rgb(19, 126, 124);
+border-radius:10px;</string>
+    </property>
+    <property name="text">
+     <string>Color</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="lv_pos_line">
+    <property name="geometry">
+     <rect>
+      <x>170</x>
+      <y>10</y>
+      <width>51</width>
+      <height>51</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_15">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>18</y>
+      <width>41</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Style</string>
+    </property>
+   </widget>
+   <widget class="QComboBox" name="cb_pos_line_style">
+    <property name="geometry">
+     <rect>
+      <x>70</x>
+      <y>18</y>
+      <width>91</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: 2px soild rgb(19, 126, 124);
+color: rgb(255, 255, 127);
+</string>
+    </property>
+    <property name="currentIndex">
+     <number>0</number>
+    </property>
+    <item>
+     <property name="text">
+      <string>solid</string>
+     </property>
+    </item>
+    <item>
+     <property name="text">
+      <string>dashed</string>
+     </property>
+    </item>
+    <item>
+     <property name="text">
+      <string>dotted</string>
+     </property>
+    </item>
+   </widget>
+  </widget>
+  <widget class="QGroupBox" name="groupBox_pos_marker">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>200</y>
+     <width>231</width>
+     <height>71</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">QGroupBox::indicator:unchecked{
+	border: 1px solid rgb(100,100,100);
+	background-color:rgb(100,100,100);
+}
+QGroupBox{
+	border: 1px solid rgb(19, 126, 124);
+	border-radius:10px;
+}
+</string>
+   </property>
+   <property name="title">
+    <string>Position Marker</string>
+   </property>
+   <property name="flat">
+    <bool>false</bool>
+   </property>
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>false</bool>
+   </property>
+   <widget class="QComboBox" name="cb_pos_marker">
+    <property name="geometry">
+     <rect>
+      <x>68</x>
+      <y>20</y>
+      <width>91</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: 2px soild rgb(19, 126, 124);
+color: rgb(255, 255, 127);
+</string>
+    </property>
+    <property name="currentIndex">
+     <number>0</number>
+    </property>
+    <item>
+     <property name="text">
+      <string>circle</string>
+     </property>
+    </item>
+    <item>
+     <property name="text">
+      <string>square</string>
+     </property>
+    </item>
+    <item>
+     <property name="text">
+      <string>triangle</string>
+     </property>
+    </item>
+   </widget>
+   <widget class="QLabel" name="label_12">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>20</y>
+      <width>41</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Marker</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pb_pos_marker_color">
+    <property name="geometry">
+     <rect>
+      <x>120</x>
+      <y>40</y>
+      <width>41</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: 2px solid rgb(19, 126, 124);
+border-radius:10px;</string>
+    </property>
+    <property name="text">
+     <string>Color</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="lv_pos_marker">
+    <property name="geometry">
+     <rect>
+      <x>170</x>
+      <y>10</y>
+      <width>51</width>
+      <height>51</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_13">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>42</y>
+      <width>41</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Width</string>
+    </property>
+   </widget>
+   <widget class="QSpinBox" name="sb_pos_marker_width">
+    <property name="geometry">
+     <rect>
+      <x>68</x>
+      <y>42</y>
+      <width>41</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: 2px soild rgb(19, 126, 124);
+color: rgb(255, 255, 127);
+</string>
+    </property>
+    <property name="maximum">
+     <number>100</number>
+    </property>
+    <property name="value">
+     <number>4</number>
+    </property>
+    <property name="displayIntegerBase">
+     <number>10</number>
+    </property>
+   </widget>
+  </widget>
+  <widget class="QPushButton" name="pb_ok">
+   <property name="geometry">
+    <rect>
+     <x>170</x>
+     <y>380</y>
+     <width>81</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>12</pointsize>
+     <weight>75</weight>
+     <bold>true</bold>
+    </font>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">border: 2px solid rgb(19, 126, 124);
+border-radius:10px;</string>
+   </property>
+   <property name="text">
+    <string>OK</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="pb_cancel">
+   <property name="geometry">
+    <rect>
+     <x>80</x>
+     <y>380</y>
+     <width>81</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>12</pointsize>
+     <weight>75</weight>
+     <bold>true</bold>
+    </font>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">border: 2px solid rgb(19, 126, 124);
+border-radius:10px;</string>
+   </property>
+   <property name="text">
+    <string>Cancel</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_14">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>280</y>
+     <width>231</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Type ID that show the info</string>
+   </property>
+  </widget>
+  <widget class="QTextEdit" name="te_select_id">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>300</y>
+     <width>231</width>
+     <height>61</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>12</pointsize>
+    </font>
+   </property>
+   <property name="toolTip">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Define robot &lt;span style=&quot; font-weight:600;&quot;&gt;ID,&lt;/span&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;e.g.: 0,1,2,all&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">border:1px solid rgb(19, 126, 124);
+color:rgb(255, 255, 127)</string>
+   </property>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

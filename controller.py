@@ -4,7 +4,7 @@ import socket
 from multiprocessing import Process
 import cv2
 import numpy as np
-from PyQt5.QtWidgets import QApplication, QFileDialog, QMessageBox
+from PyQt5.QtWidgets import QApplication, QFileDialog, QMessageBox, QColorDialog
 from PyQt5.QtCore import Qt, QTimer, QThread, pyqtSignal
 from model import LedImageProcess, PheromoneModel, LocDataModel
 from viewer import LEDScreen, Viewer
@@ -77,6 +77,21 @@ class Controller:
         self.viewer.phero.pb_load_phero_image.clicked.connect(self.phero_load_picture)
         self.viewer.phero.pb_load_phero_video.clicked.connect(self.phero_load_video)
         self.phero_screen = LEDScreen()
+        # pheromone background settings
+        self.phero_background_image = None
+        self.phero_bg_sc = (0,0,0) # black
+        self.phero_bg_loaded_image = None
+        self.phero_bg_drawn_image = None
+        self.phero_bg_info_paras = {'pos_text_color':(255,255,255),
+                                    'pos_cline_style':'solid',
+                                    'pos_cline_color':(125,125,125),
+                                    'pos_cline_width':2,
+                                    'pos_marker_style':'circle',
+                                    'pos_marker_width':2,
+                                    'pos_marker_color':(0,255,255), 
+                                    'pos_marker_radius':20}
+        self.viewer.phero.pb_bg_setting.clicked.connect(lambda:self.viewer.phero_bg_setting.show())
+        self.viewer.phero_bg_setting.signal.connect(self.handle_phero_bg_setting_message)
         self.phero_image = None
         self.phero_timer = QTimer()
         self.phero_timer.timeout.connect(self.phero_render)
@@ -288,6 +303,15 @@ class Controller:
             self.viewer.phero.hide()
             self.phero_screen.hide()
     
+    def handle_phero_bg_setting_message(self,message):
+        if message == "OK":
+            # update phero background param
+            self.phero_bg_info_paras['pos_cline_width'] = 1
+        elif message == "Cancel":
+            self.viewer.phero_bg_setting.hide()
+        else:
+            pass
+        
     def phero_refresh_parameter(self):
         self.phero_led_unit_width = self.viewer.phero.spinBox_sled_w.value()
         self.phero_led_unit_height = self.viewer.phero.spinBox_sled_h.value()
@@ -394,6 +418,18 @@ class Controller:
                 phero_channel.update({'other':'red'})
                 
             self.phero_channel = phero_channel
+            # pheromone background
+            if self.viewer.phero.radioButton_sc.isChecked():
+                # solid color fill
+                self.phero_background_image = np.ones([self.phero_model.pixel_height,
+                                                        self.phero_model.pixel_width, 3])*self.phero_bg_sc
+            elif self.viewer.phero.radioButton_image.isChecked():
+                self.phero_background_image = self.phero_bg_loaded_image.copy()
+            elif self.viewer.phero.radioButton_draw.isChecked():
+                self.phero_background_image = self.phero_bg_drawn_image.copy()
+            elif self.viewer.phero.radioButton_info.isChecked():
+                # dynamically updated in phero_render()
+                pass
         
         elif self.phero_mode == 'Loc-Calibration':
             self.phero_image = self.phero_model.generate_calibration_pattern(self.arena_length)
@@ -483,20 +519,51 @@ class Controller:
         elif self.phero_mode == "Dy-Localization":
             # * dynamically interact with the localization system
             if not self.loc_data_thread.stop:
-                # print(self.loc_data_now)
-                self.loc_display_img = np.zeros((540, 960, 3), np.uint8)
                 # the latest frame data
                 pos = self.loc_data_thread.loc_data_model.get_last_pos()
-                if pos:                    
+                if pos:
+                    if self.viewer.phero.radioButton_info.isChecked():
+                        image = np.zeros([self.phero_model.pixel_height,
+                                            self.phero_model.pixel_width, 3],
+                                            dtype=np.uint8)
+                        font = cv2.FONT_HERSHEY_SIMPLEX
+                        for k,v in pos.items():
+                            y = int(v[0]/self.arena_length*self.phero_model.pixel_width)
+                            x = int(v[1]/self.arena_width*self.phero_model.pixel_height)
+                            # pos-text
+                            image = cv2.putText(image, 
+                                                "{}:({:.2f},{:.2f})".format(k,
+                                                                            int(v[0]),int(v[1])),
+                                                (x+2,y+2),font,0.5,
+                                                self.phero_bg_info_paras['pos_text_color'],3)
+                            # pos-cross-line
+                            image = cv2.line(image, (x, 0), (x, self.phero_model.pixel_height),
+                                                self.phero_bg_info_paras['pos_cline_color'],
+                                                self.phero_bg_info_paras['pos_cline_width'])
+                            image = cv2.line(image, (0, y), (self.phero_model.pixel_width, y),
+                                                self.phero_bg_info_paras['pos_cline_color'],
+                                                self.phero_bg_info_paras['pos_cline_width'])
+                            # marker
+                            image = cv2.circle(image, (x,y),
+                                                self.phero_bg_info_paras['pos_marker_radius'],
+                                                self.phero_bg_info_paras['pos_marker_color'],
+                                                self.phero_bg_info_paras['pos_marker_width'])                    
+                        self.phero_background_image = image.copy()
                     # if got the positions of the robots
-                    self.phero_image = self.phero_model.render_pheromone(pos, self.phero_channel,
-                                                                         self.arena_length, self.arena_width)
+                    # if 'only-background' checked
+                    if self.viewer.phero.cb_bg_only.isChecked():
+                        phero_image = 0
+                    else:
+                        phero_image = self.phero_model.render_pheromone(pos, self.phero_channel,
+                                                                        self.arena_length, self.arena_width)
+                    if self.phero_background_image is None:
+                        QMessageBox.warning(self.viewer.phero,'Error','No valide background image!')
+                        self.phero_timer.stop()
+                    else:
+                        self.phero_image = phero_image + self.phero_background_image.astype(np.uint8)
             else:
                 QMessageBox.warning(self.viewer.phero,'Error','Please read the localization data first!')
                 self.phero_timer.stop()
-            # pos = {'0':[0.2,0.2],'5':[0.3,0.4],'3':[0.3,0.1],'4':[0.4,0.3]}
-            # self.phero_image = self.phero_model.render_pheromone(pos, self.phero_channel,
-            #                                                      self.arena_length, self.arena_width)
                     
         elif self.phero_mode == "Dy-Customized":
             #* user defined

@@ -1,15 +1,21 @@
 import datetime
+import matplotlib.pyplot as plt
+import numpy as np
+import cv2
+import sys
+import numpy as np
+from PyQt5.QtWidgets import QApplication
 
 from PyQt5.QtCore import Qt, pyqtSignal, QRect
 from PyQt5.QtGui import QImage, QPixmap, QTextCursor
-from PyQt5.QtWidgets import QMainWindow, QLabel
+from PyQt5.QtWidgets import QMainWindow, QLabel, QColorDialog, QFontDialog
 
 from viewers.Ui_login import Ui_Login
 from viewers.Ui_main_menu import Ui_main_menu
 from viewers.Ui_vscene import Ui_vscene
 from viewers.Ui_pheromone import Ui_phero
 from viewers.Ui_localization import Ui_localization
-import matplotlib.pyplot as plt
+from viewers.Ui_phero_bg_info_setting import Ui_phero_bg_info_setting
 
 class WinLogin(QMainWindow, Ui_Login):
     def __init__(self):
@@ -109,8 +115,58 @@ class LEDScreen(QMainWindow):
             # image = QPixmap(_image).scaled(self.label.width(), self.label.height())
             image = QPixmap(_image)
         self.label.setPixmap(image)
- 
 
+
+class PheroBgInfoSetting(QMainWindow, Ui_phero_bg_info_setting):
+    signal = pyqtSignal(str)
+    
+    def __init__(self):
+        super(PheroBgInfoSetting, self).__init__()
+        self.setupUi(self)
+        self.setFixedSize(self.width(), self.height())
+        self.lv_pos_line.setScaledContents(True)
+        self.lv_pos_text.setScaledContents(True)
+        self.pb_pos_text_color.clicked.connect(self.pos_text_color_pick)
+        self.pb_pos_text_font.clicked.connect(self.pos_text_font_pick)
+        self.lv_pos_marker.setScaledContents(True)
+        self.pb_pos_marker_color.clicked.connect(self.pos_marker_color_pick)
+        
+        self.pb_ok.clicked.connect(self.click_ok)
+        self.pb_cancel.clicked.connect(self.click_cancel)
+    
+    def pos_text_color_pick(self):
+        self.signal.emit('pos_text_color_pick')
+        col = QColorDialog.getColor()
+        self.pos_text_image_update((col.blue(),col.green(),col.red()))
+    
+    def pos_marker_color_pick(self):
+        self.signal.emit('pos_marker_color_pick')
+        # col = QColorDialog.getColor()
+        # print(col.name)
+    
+    def pos_text_image_update(self, color):
+        print(color)
+        img = np.zeros([100, 100, 3],
+                       dtype=np.uint8)
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        img = cv2.putText(img, '5', 
+                          (50, 50), font, 1, color)
+        cv2.imshow('img',img)
+        _image = QImage(img[:], img.shape[1], img.shape[0], 
+                        img.shape[1] * 3, QImage.Format_RGB888)
+        image = QPixmap(_image)
+        self.lv_pos_text.setPixmap(image)
+        
+    def pos_text_font_pick(self):
+        font = QFontDialog.getFont()
+        print(font[0].toString())
+        
+    def click_ok(self):
+        self.signal.emit('OK')
+    
+    def click_cancel(self):
+        self.signal.emit('Cancel')
+        
 class Viewer:
     def __init__(self):
         self.login = WinLogin()
@@ -118,6 +174,7 @@ class Viewer:
         self.vscene = VScene()
         self.phero = Pheromone()
         self.loc = Localization()
+        self.phero_bg_setting = PheroBgInfoSetting()
         
         self.logger_str_header = {'error': '--Err: ', 'info': '-Info: ', 'warning': '-Warn: '}
         self.logger_str_color = {'error': 'red', 'info': 'green', 'warning': 'orange'}
@@ -145,4 +202,10 @@ class Viewer:
             cursor.movePosition(QTextCursor.End)
             self.text_edit_exp_info.setTextCursor(cursor)
             self.text_edit_exp_info.insertHtml(s)
-    
+
+if __name__ == '__main__':
+    App = QApplication(sys.argv)
+    view = PheroBgInfoSetting()
+    view.show()
+    sys.exit(App.exec_())
+
