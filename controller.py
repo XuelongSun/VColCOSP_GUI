@@ -18,6 +18,7 @@ class SocketDataReceiver(QThread):
         self.socket_is_connect = False
         self.stop = True
         self.loc_data_model = LocDataModel()
+        self.loc_data_now = None
         
     def run(self):
         while self.socket_is_connect:
@@ -532,19 +533,20 @@ class Controller:
                             x = int(v[1]/self.arena_width*self.phero_model.pixel_height)
                             # pos-text
                             image = cv2.putText(image, 
-                                                "{}:({:.2f},{:.2f})".format(k,
-                                                                            int(v[0]),int(v[1])),
-                                                (x+2,y+2),font,0.5,
-                                                self.phero_bg_info_paras['pos_text_color'],3)
+                                                "{}:({},{})".format(k,v[0],v[1]),
+                                                (y+self.phero_bg_info_paras['pos_marker_radius']+2,
+                                                 x+self.phero_bg_info_paras['pos_marker_radius']+2),
+                                                font,0.5,
+                                                self.phero_bg_info_paras['pos_text_color'],1)
                             # pos-cross-line
-                            image = cv2.line(image, (x, 0), (x, self.phero_model.pixel_height),
+                            image = cv2.line(image, (y, 0), (y, self.phero_model.pixel_height),
                                                 self.phero_bg_info_paras['pos_cline_color'],
                                                 self.phero_bg_info_paras['pos_cline_width'])
-                            image = cv2.line(image, (0, y), (self.phero_model.pixel_width, y),
+                            image = cv2.line(image, (0, x), (self.phero_model.pixel_width, x),
                                                 self.phero_bg_info_paras['pos_cline_color'],
                                                 self.phero_bg_info_paras['pos_cline_width'])
                             # marker
-                            image = cv2.circle(image, (x,y),
+                            image = cv2.circle(image, (y,x),
                                                 self.phero_bg_info_paras['pos_marker_radius'],
                                                 self.phero_bg_info_paras['pos_marker_color'],
                                                 self.phero_bg_info_paras['pos_marker_width'])                    

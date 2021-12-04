@@ -137,7 +137,7 @@ class PheroBgInfoSetting(QMainWindow, Ui_phero_bg_info_setting):
     def pos_text_color_pick(self):
         self.signal.emit('pos_text_color_pick')
         col = QColorDialog.getColor()
-        self.pos_text_image_update((col.blue(),col.green(),col.red()))
+        self.pos_text_image_update((col.red(),col.green(),col.blue()))
     
     def pos_marker_color_pick(self):
         self.signal.emit('pos_marker_color_pick')
@@ -150,8 +150,7 @@ class PheroBgInfoSetting(QMainWindow, Ui_phero_bg_info_setting):
                        dtype=np.uint8)
         font = cv2.FONT_HERSHEY_SIMPLEX
         img = cv2.putText(img, '5', 
-                          (50, 50), font, 1, color)
-        cv2.imshow('img',img)
+                          (30, 70), font, 2, color, 2)
         _image = QImage(img[:], img.shape[1], img.shape[0], 
                         img.shape[1] * 3, QImage.Format_RGB888)
         image = QPixmap(_image)
