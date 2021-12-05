@@ -190,7 +190,7 @@ class PheromoneModel:
             except:
                 injection[x-r:x+r, y-r:y+r, ind] += 1
         # evaportion
-        e = -(1/(self.evaporation_factor*100)) * self.pheromone_field 
+        e = -(1/(self.evaporation_factor)) * self.pheromone_field 
         # injection
         i = self.injection_factor * injection
         # diffusion

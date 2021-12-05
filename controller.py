@@ -269,7 +269,7 @@ class Controller:
                             # random positioned
                             ctime = self.viewer.vscene.sb_r_time.value()
                             if (self.vscene_frame_num * (1/self.vscene_frame_rate))%(ctime) <= 1/self.vscene_frame_rate:
-                                self.vscene_roll = np.random.randint(0, self.vscene_img_width-1)
+                                self.vscene_roll = np.random.randint(0, self.vscene_img_width*(self.vscene_fold_row+1)-1)
                         else:
                             QMessageBox.warning(self.viewer.vscene, 
                                             'ERROR', 
@@ -482,7 +482,7 @@ class Controller:
         # self.phero_refresh_parameter()
         if (self.viewer.phero.pb_show.text() == "Show") and (self.phero_image is not None):
             self.phero_screen.show_label_img(self.phero_screen_start_pos[0],
-                                             self.phero_screen_start_pos[1],
+                                             self.phero_screen_start_pos[1], 
                                              self.phero_img_width,
                                              self.phero_img_height,
                                              self.phero_image)

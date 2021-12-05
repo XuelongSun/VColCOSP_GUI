@@ -706,7 +706,7 @@ color: rgb(255, 0, 0)
     <number>4</number>
    </property>
    <property name="minimum">
-    <double>0.800000000000000</double>
+    <double>0.000000000000000</double>
    </property>
    <property name="maximum">
     <double>1.000000000000000</double>
@@ -1597,6 +1597,9 @@ color: rgb(0, 0, 255);
     <string notr="true">border: 2px soild rgb(19, 126, 124);
 color: rgb(255, 0, 0)
 </string>
+   </property>
+   <property name="decimals">
+    <number>2</number>
    </property>
    <property name="maximum">
     <double>10000.000000000000000</double>

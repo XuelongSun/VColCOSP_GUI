@@ -134,15 +134,19 @@ class PheroBgInfoSetting(QMainWindow, Ui_phero_bg_info_setting):
         self.lv_pos_line.setScaledContents(True)
         self.pb_pos_line_color.clicked.connect(self.pos_line_color_pick)
         self.sb_pos_line_width.valueChanged.connect(self.pos_line_image_update)
-        self.pos_line_color = (123,123,125)
+        self.pos_line_color = (125,125,125)
         
         self.lv_pos_marker.setScaledContents(True)
         self.pb_pos_marker_color.clicked.connect(self.pos_marker_color_pick)
         self.sb_pos_marker_width.valueChanged.connect(self.pos_marker_image_update)
-        self.pos_marker_color = (123,123,125)
+        self.pos_marker_color = (0,255,255)
         
         self.pb_ok.clicked.connect(self.click_ok)
         self.pb_cancel.clicked.connect(self.click_cancel)
+        
+        self.pos_text_image_update()
+        self.pos_marker_image_update()
+        self.pos_line_image_update()
     
     def pos_text_color_pick(self):
         col = QColorDialog.getColor()
