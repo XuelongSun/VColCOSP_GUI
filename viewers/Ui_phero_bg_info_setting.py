@@ -14,33 +14,56 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_phero_bg_info_setting(object):
     def setupUi(self, phero_bg_info_setting):
         phero_bg_info_setting.setObjectName("phero_bg_info_setting")
-        phero_bg_info_setting.resize(273, 430)
+        phero_bg_info_setting.resize(274, 430)
         phero_bg_info_setting.setStyleSheet("background-color: rgb(0, 0, 0);\n"
 "color: rgb(19, 126, 124);")
         self.groupBox_pos_text = QtWidgets.QGroupBox(phero_bg_info_setting)
-        self.groupBox_pos_text.setGeometry(QtCore.QRect(20, 20, 231, 71))
-        self.groupBox_pos_text.setStyleSheet("border: 1px solid rgb(19, 126, 124);")
+        self.groupBox_pos_text.setGeometry(QtCore.QRect(20, 20, 241, 71))
+        self.groupBox_pos_text.setStyleSheet("QGroupBox::indicator:unchecked{\n"
+"    border: 1px solid rgb(100,100,100);\n"
+"    background-color:rgb(100,100,100);\n"
+"}\n"
+"QGroupBox{\n"
+"    border: 1px solid rgb(19, 126, 124);\n"
+"    border-radius:10px;\n"
+"}\n"
+"")
         self.groupBox_pos_text.setFlat(False)
         self.groupBox_pos_text.setCheckable(True)
         self.groupBox_pos_text.setChecked(False)
         self.groupBox_pos_text.setObjectName("groupBox_pos_text")
         self.pb_pos_text_color = QtWidgets.QPushButton(self.groupBox_pos_text)
-        self.pb_pos_text_color.setGeometry(QtCore.QRect(20, 30, 61, 21))
+        self.pb_pos_text_color.setGeometry(QtCore.QRect(20, 20, 121, 21))
         self.pb_pos_text_color.setStyleSheet("border: 2px solid rgb(19, 126, 124);\n"
 "border-radius:10px;")
         self.pb_pos_text_color.setObjectName("pb_pos_text_color")
-        self.pb_pos_text_font = QtWidgets.QPushButton(self.groupBox_pos_text)
-        self.pb_pos_text_font.setGeometry(QtCore.QRect(90, 30, 61, 21))
-        self.pb_pos_text_font.setStyleSheet("border: 2px solid rgb(19, 126, 124);\n"
-"border-radius:10px;")
-        self.pb_pos_text_font.setObjectName("pb_pos_text_font")
         self.lv_pos_text = QtWidgets.QLabel(self.groupBox_pos_text)
-        self.lv_pos_text.setGeometry(QtCore.QRect(170, 10, 51, 51))
+        self.lv_pos_text.setGeometry(QtCore.QRect(180, 10, 51, 51))
         self.lv_pos_text.setText("")
         self.lv_pos_text.setObjectName("lv_pos_text")
+        self.sb_pos_text_width = QtWidgets.QSpinBox(self.groupBox_pos_text)
+        self.sb_pos_text_width.setGeometry(QtCore.QRect(70, 50, 71, 16))
+        self.sb_pos_text_width.setStyleSheet("border: 2px soild rgb(19, 126, 124);\n"
+"color: rgb(255, 255, 127);\n"
+"")
+        self.sb_pos_text_width.setMaximum(100)
+        self.sb_pos_text_width.setProperty("value", 2)
+        self.sb_pos_text_width.setDisplayIntegerBase(10)
+        self.sb_pos_text_width.setObjectName("sb_pos_text_width")
+        self.label_16 = QtWidgets.QLabel(self.groupBox_pos_text)
+        self.label_16.setGeometry(QtCore.QRect(20, 46, 51, 20))
+        self.label_16.setObjectName("label_16")
         self.groupBox_pos_cline = QtWidgets.QGroupBox(phero_bg_info_setting)
-        self.groupBox_pos_cline.setGeometry(QtCore.QRect(20, 110, 231, 71))
-        self.groupBox_pos_cline.setStyleSheet("border: 1px solid rgb(19, 126, 124);")
+        self.groupBox_pos_cline.setGeometry(QtCore.QRect(20, 110, 241, 71))
+        self.groupBox_pos_cline.setStyleSheet("QGroupBox::indicator:unchecked{\n"
+"    border: 1px solid rgb(100,100,100);\n"
+"    background-color:rgb(100,100,100);\n"
+"}\n"
+"QGroupBox{\n"
+"    border: 1px solid rgb(19, 126, 124);\n"
+"    border-radius:10px;\n"
+"}\n"
+"")
         self.groupBox_pos_cline.setFlat(False)
         self.groupBox_pos_cline.setCheckable(True)
         self.groupBox_pos_cline.setChecked(False)
@@ -51,7 +74,7 @@ class Ui_phero_bg_info_setting(object):
 "color: rgb(255, 255, 127);\n"
 "")
         self.sb_pos_line_width.setMaximum(100)
-        self.sb_pos_line_width.setProperty("value", 4)
+        self.sb_pos_line_width.setProperty("value", 2)
         self.sb_pos_line_width.setDisplayIntegerBase(10)
         self.sb_pos_line_width.setObjectName("sb_pos_line_width")
         self.label_11 = QtWidgets.QLabel(self.groupBox_pos_cline)
@@ -63,7 +86,7 @@ class Ui_phero_bg_info_setting(object):
 "border-radius:10px;")
         self.pb_pos_line_color.setObjectName("pb_pos_line_color")
         self.lv_pos_line = QtWidgets.QLabel(self.groupBox_pos_cline)
-        self.lv_pos_line.setGeometry(QtCore.QRect(170, 10, 51, 51))
+        self.lv_pos_line.setGeometry(QtCore.QRect(180, 10, 51, 51))
         self.lv_pos_line.setText("")
         self.lv_pos_line.setObjectName("lv_pos_line")
         self.label_15 = QtWidgets.QLabel(self.groupBox_pos_cline)
@@ -79,8 +102,16 @@ class Ui_phero_bg_info_setting(object):
         self.cb_pos_line_style.addItem("")
         self.cb_pos_line_style.addItem("")
         self.groupBox_pos_marker = QtWidgets.QGroupBox(phero_bg_info_setting)
-        self.groupBox_pos_marker.setGeometry(QtCore.QRect(20, 200, 231, 71))
-        self.groupBox_pos_marker.setStyleSheet("border: 1px solid rgb(19, 126, 124);")
+        self.groupBox_pos_marker.setGeometry(QtCore.QRect(20, 200, 241, 71))
+        self.groupBox_pos_marker.setStyleSheet("QGroupBox::indicator:unchecked{\n"
+"    border: 1px solid rgb(100,100,100);\n"
+"    background-color:rgb(100,100,100);\n"
+"}\n"
+"QGroupBox{\n"
+"    border: 1px solid rgb(19, 126, 124);\n"
+"    border-radius:10px;\n"
+"}\n"
+"")
         self.groupBox_pos_marker.setFlat(False)
         self.groupBox_pos_marker.setCheckable(True)
         self.groupBox_pos_marker.setChecked(False)
@@ -103,7 +134,7 @@ class Ui_phero_bg_info_setting(object):
 "border-radius:10px;")
         self.pb_pos_marker_color.setObjectName("pb_pos_marker_color")
         self.lv_pos_marker = QtWidgets.QLabel(self.groupBox_pos_marker)
-        self.lv_pos_marker.setGeometry(QtCore.QRect(170, 10, 51, 51))
+        self.lv_pos_marker.setGeometry(QtCore.QRect(180, 10, 51, 51))
         self.lv_pos_marker.setText("")
         self.lv_pos_marker.setObjectName("lv_pos_marker")
         self.label_13 = QtWidgets.QLabel(self.groupBox_pos_marker)
@@ -115,7 +146,7 @@ class Ui_phero_bg_info_setting(object):
 "color: rgb(255, 255, 127);\n"
 "")
         self.sb_pos_marker_width.setMaximum(100)
-        self.sb_pos_marker_width.setProperty("value", 4)
+        self.sb_pos_marker_width.setProperty("value", 2)
         self.sb_pos_marker_width.setDisplayIntegerBase(10)
         self.sb_pos_marker_width.setObjectName("sb_pos_marker_width")
         self.pb_ok = QtWidgets.QPushButton(phero_bg_info_setting)
@@ -144,7 +175,7 @@ class Ui_phero_bg_info_setting(object):
         self.label_14.setGeometry(QtCore.QRect(20, 280, 231, 20))
         self.label_14.setObjectName("label_14")
         self.te_select_id = QtWidgets.QTextEdit(phero_bg_info_setting)
-        self.te_select_id.setGeometry(QtCore.QRect(20, 300, 231, 61))
+        self.te_select_id.setGeometry(QtCore.QRect(20, 300, 241, 71))
         font = QtGui.QFont()
         font.setPointSize(12)
         self.te_select_id.setFont(font)
@@ -162,7 +193,7 @@ class Ui_phero_bg_info_setting(object):
         phero_bg_info_setting.setWindowTitle(_translate("phero_bg_info_setting", "Form"))
         self.groupBox_pos_text.setTitle(_translate("phero_bg_info_setting", "Position Text"))
         self.pb_pos_text_color.setText(_translate("phero_bg_info_setting", "Color"))
-        self.pb_pos_text_font.setText(_translate("phero_bg_info_setting", "Font"))
+        self.label_16.setText(_translate("phero_bg_info_setting", "Width"))
         self.groupBox_pos_cline.setTitle(_translate("phero_bg_info_setting", "Position Cross Line"))
         self.label_11.setText(_translate("phero_bg_info_setting", "Width"))
         self.pb_pos_line_color.setText(_translate("phero_bg_info_setting", "Color"))

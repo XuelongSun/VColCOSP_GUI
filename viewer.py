@@ -128,14 +128,17 @@ class PheroBgInfoSetting(QMainWindow, Ui_phero_bg_info_setting):
         
         self.lv_pos_text.setScaledContents(True)
         self.pb_pos_text_color.clicked.connect(self.pos_text_color_pick)
+        self.sb_pos_text_width.valueChanged.connect(self.pos_text_image_update)
         self.pos_text_color = (255,255,255)
         
         self.lv_pos_line.setScaledContents(True)
         self.pb_pos_line_color.clicked.connect(self.pos_line_color_pick)
+        self.sb_pos_line_width.valueChanged.connect(self.pos_line_image_update)
         self.pos_line_color = (123,123,125)
         
         self.lv_pos_marker.setScaledContents(True)
         self.pb_pos_marker_color.clicked.connect(self.pos_marker_color_pick)
+        self.sb_pos_marker_width.valueChanged.connect(self.pos_marker_image_update)
         self.pos_marker_color = (123,123,125)
         
         self.pb_ok.clicked.connect(self.click_ok)
@@ -160,8 +163,9 @@ class PheroBgInfoSetting(QMainWindow, Ui_phero_bg_info_setting):
         img = np.zeros([100, 100, 3],
                        dtype=np.uint8)
         font = cv2.FONT_HERSHEY_SIMPLEX
+        width = int(self.sb_pos_text_width.value())
         img = cv2.putText(img, '5', 
-                          (30, 70), font, 2, self.pos_text_color, 2)
+                          (30, 70), font, 2, self.pos_text_color, width)
         _image = QImage(img[:], img.shape[1], img.shape[0], 
                         img.shape[1] * 3, QImage.Format_RGB888)
         image = QPixmap(_image)
@@ -170,8 +174,9 @@ class PheroBgInfoSetting(QMainWindow, Ui_phero_bg_info_setting):
     def pos_line_image_update(self):
         img = np.zeros([100, 100, 3],
                        dtype=np.uint8)
-        img = cv2.line(img, (0,50),(100,50), self.pos_line_color, 2)
-        img = cv2.line(img, (50,0),(50,100), self.pos_line_color, 2)
+        width = int(self.sb_pos_line_width.value())
+        img = cv2.line(img, (0,50),(100,50), self.pos_line_color, width)
+        img = cv2.line(img, (50,0),(50,100), self.pos_line_color, width)
         _image = QImage(img[:], img.shape[1], img.shape[0], 
                         img.shape[1] * 3, QImage.Format_RGB888)
         image = QPixmap(_image)
@@ -180,7 +185,8 @@ class PheroBgInfoSetting(QMainWindow, Ui_phero_bg_info_setting):
     def pos_marker_image_update(self):
         img = np.zeros([100, 100, 3],
                        dtype=np.uint8)
-        img = cv2.circle(img, (50,50), 20, self.pos_marker_color, 2)
+        width = int(self.sb_pos_marker_width.value())
+        img = cv2.circle(img, (50,50), 20, self.pos_marker_color, width)
         _image = QImage(img[:], img.shape[1], img.shape[0], 
                         img.shape[1] * 3, QImage.Format_RGB888)
         image = QPixmap(_image)

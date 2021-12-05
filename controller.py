@@ -85,15 +85,16 @@ class Controller:
         self.phero_bg_loaded_image = None
         self.phero_bg_drawn_image = None
         self.phero_bg_info_paras = {'pos_text_color':(255,255,255),
-                                    'pos_cline_style':'solid',
-                                    'pos_cline_color':(125,125,125),
-                                    'pos_cline_width':2,
+                                    'pos_text_width':2,
+                                    'pos_line_style':'solid',
+                                    'pos_line_color':(125,125,125),
+                                    'pos_line_width':2,
                                     'pos_marker_style':'circle',
                                     'pos_marker_width':2,
                                     'pos_marker_color':(0,255,255), 
                                     'pos_marker_radius':20}
         self.viewer.phero.pb_bg_setting.clicked.connect(lambda:self.viewer.phero_bg_setting.show())
-        self.viewer.phero_bg_setting.signal.connect(self.handle_phero_bg_setting_message)
+        self.viewer.phero_bg_setting.signal.connect(self.phero_bg_setting_message_handle)
         self.phero_image = None
         self.phero_timer = QTimer()
         self.phero_timer.timeout.connect(self.phero_render)
@@ -101,8 +102,8 @@ class Controller:
         self.phero_loaded_video_path = None
         self.phero_video_capture = None
         self.phero_frame_num = 0
-        self.arena_length = 1.41
-        self.arena_width = 0.8
+        self.arena_length = 0.8
+        self.arena_width = 0.6
         
         #* localization
         self.viewer.main_menu.pb_loc.clicked.connect(self.loc_show_window)
@@ -320,10 +321,15 @@ class Controller:
             self.viewer.phero.hide()
             self.phero_screen.hide()
     
-    def handle_phero_bg_setting_message(self,message):
+    def phero_bg_setting_message_handle(self,message):
         if message == "OK":
             # update phero background param
-            self.phero_bg_info_paras['pos_cline_width'] = 1
+            self.phero_bg_info_paras['pos_text_color'] = self.viewer.phero_bg_setting.pos_text_color
+            self.phero_bg_info_paras['pos_line_color'] = self.viewer.phero_bg_setting.pos_line_color
+            self.phero_bg_info_paras['pos_marker_color'] = self.viewer.phero_bg_setting.pos_marker_color
+            self.phero_bg_info_paras['pos_text_width'] = self.viewer.phero_bg_setting.sb_pos_text_width.value()
+            self.phero_bg_info_paras['pos_line_width'] = self.viewer.phero_bg_setting.sb_pos_line_width.value()
+            self.phero_bg_info_paras['pos_marker_width'] = self.viewer.phero_bg_setting.sb_pos_marker_width.value()
         elif message == "Cancel":
             self.viewer.phero_bg_setting.hide()
         else:
@@ -548,24 +554,27 @@ class Controller:
                             y = int(v[0]/self.arena_length*self.phero_model.pixel_width)
                             x = int(v[1]/self.arena_width*self.phero_model.pixel_height)
                             # pos-text
-                            image = cv2.putText(image, 
-                                                "{}:({},{})".format(k,v[0],v[1]),
-                                                (y+self.phero_bg_info_paras['pos_marker_radius']+2,
-                                                 x+self.phero_bg_info_paras['pos_marker_radius']+2),
-                                                font,0.5,
-                                                self.phero_bg_info_paras['pos_text_color'],1)
+                            if self.viewer.phero_bg_setting.groupBox_pos_text.isChecked():
+                                image = cv2.putText(image, 
+                                                    "{}:({},{})".format(k,v[0],v[1]),
+                                                    (y+self.phero_bg_info_paras['pos_marker_radius']+2,
+                                                    x+self.phero_bg_info_paras['pos_marker_radius']+2),
+                                                    font,0.5,
+                                                    self.phero_bg_info_paras['pos_text_color'],1)
                             # pos-cross-line
-                            image = cv2.line(image, (y, 0), (y, self.phero_model.pixel_height),
-                                                self.phero_bg_info_paras['pos_cline_color'],
-                                                self.phero_bg_info_paras['pos_cline_width'])
-                            image = cv2.line(image, (0, x), (self.phero_model.pixel_width, x),
-                                                self.phero_bg_info_paras['pos_cline_color'],
-                                                self.phero_bg_info_paras['pos_cline_width'])
+                            if self.viewer.phero_bg_setting.groupBox_pos_cline.isChecked():
+                                image = cv2.line(image, (y, 0), (y, self.phero_model.pixel_height),
+                                                    self.phero_bg_info_paras['pos_line_color'],
+                                                    self.phero_bg_info_paras['pos_line_width'])
+                                image = cv2.line(image, (0, x), (self.phero_model.pixel_width, x),
+                                                    self.phero_bg_info_paras['pos_line_color'],
+                                                    self.phero_bg_info_paras['pos_line_width'])
                             # marker
-                            image = cv2.circle(image, (y,x),
-                                                self.phero_bg_info_paras['pos_marker_radius'],
-                                                self.phero_bg_info_paras['pos_marker_color'],
-                                                self.phero_bg_info_paras['pos_marker_width'])                    
+                            if self.viewer.phero_bg_setting.groupBox_pos_marker.isChecked():
+                                image = cv2.circle(image, (y,x),
+                                                    self.phero_bg_info_paras['pos_marker_radius'],
+                                                    self.phero_bg_info_paras['pos_marker_color'],
+                                                    self.phero_bg_info_paras['pos_marker_width'])                    
                         self.phero_background_image = image.copy()
                     # if got the positions of the robots
                     # if 'only-background' checked
