@@ -142,7 +142,7 @@ class PheromoneModel:
         # diffusion_kernel
         self.diffusion_kernel = np.ones([3,3,3])
         for i, d in enumerate(self.diffusion_factor):
-            self.diffusion_kernel[i] *= (1-d)/4
+            self.diffusion_kernel[i] *= (1-d)/8
             self.diffusion_kernel[i,1,1] = d - 1
             # self.diffusion_kernel[i,0,0],self.diffusion_kernel[i,0,2],self.diffusion_kernel[i,2,0],self.diffusion_kernel[i,2,2] = 0,0,0,0
             
@@ -201,12 +201,13 @@ class PheromoneModel:
         b = cv2.filter2D(b, -1, self.diffusion_kernel[2])
         d = cv2.merge([r,g,b])
         # update
-        self.pheromone_field = self.pheromone_field + (e + i + d) * self.dt
-        print(self.pheromone_field.max())
-        if self.pheromone_field.max() > 255:
-            return (self.pheromone_field / self.pheromone_field.max() * 255).astype(np.uint8)
-        else:
-            return self.pheromone_field.astype(np.uint8)
+        self.pheromone_field = self.pheromone_field + (e + i) * self.dt + d
+        # print('max',self.pheromone_field.max(),'dmin',d.min(), 'dmax', d.max(), 'e', e.min(), e.max(), 'i', i.min(), i.max())
+        return np.clip(self.pheromone_field, 0, 255).astype(np.uint8)
+        # if self.pheromone_field.max() > 255:
+        #     return (self.pheromone_field / self.pheromone_field.max() * 255).astype(np.uint8)
+        # else:
+        #     return self.pheromone_field.astype(np.uint8)
     
     def generate_calibration_pattern(self, arena_length):
         image = np.zeros([self.pixel_height, self.pixel_width, 3])
