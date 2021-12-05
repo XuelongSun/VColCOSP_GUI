@@ -202,10 +202,11 @@ class PheromoneModel:
         d = cv2.merge([r,g,b])
         # update
         self.pheromone_field = self.pheromone_field + (e + i + d) * self.dt
-        print(self.pheromone_field.max(), np.sum(injection))
-        return np.clip(self.pheromone_field, 
-                       0, 
-                       255).astype(np.uint8)
+        print(self.pheromone_field.max())
+        if self.pheromone_field.max() > 255:
+            return (self.pheromone_field / self.pheromone_field.max() * 255).astype(np.uint8)
+        else:
+            return self.pheromone_field.astype(np.uint8)
     
     def generate_calibration_pattern(self, arena_length):
         image = np.zeros([self.pixel_height, self.pixel_width, 3])
