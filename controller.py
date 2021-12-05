@@ -65,6 +65,7 @@ class Controller:
         self.vscene_screen = LEDScreen()
         self.vscene_loaded_image_path = None
         self.vscene_frame_num = 0
+        self.vscene_roll = 0
         
         #* pheromone
         self.phero_model = PheromoneModel()
@@ -236,7 +237,6 @@ class Controller:
                                                                     half_cover=False)
             #* loaded image
             elif self.viewer.vscene.tabWidget_led_v.currentIndex() == 1:
-                roll = (self.viewer.vscene.spinBox_led_v_r_speed.value()/self.vscene_frame_rate) * self.vscene_frame_num
                 if self.vscene_video_image is None:
                     if self.vscene_loaded_image_path is not None:
                         image = cv2.imread(self.vscene_loaded_image_path)
@@ -259,12 +259,28 @@ class Controller:
                                             'No Picture loaded, please load picture first.')
                         self.vscene_timer.stop()
                 else:
-                    self.vscene_image = self.vscene_model.generate_video(self.vscene_video_image,
-                                                                      self.vscene_img_width,
-                                                                      self.vscene_img_height,
-                                                                      self.vscene_fold_row,
-                                                                      self.vscene_fold_column,
-                                                                      animation={'roll':int(roll)})
+                    if self.viewer.vscene.rb_led_v_animate.isChecked():
+                        # animated
+                        if self.viewer.vscene.rb_c_roll.isChecked():
+                            # constant roll
+                            self.vscene_roll = (self.viewer.vscene.sb_led_v_r_speed.value()/self.vscene_frame_rate) * self.vscene_frame_num
+                        elif self.viewer.vscene.rb_r_pos.isChecked():
+                            # random positioned
+                            ctime = self.viewer.vscene.sb_r_time.value()
+                            if (self.vscene_frame_num * (1/self.vscene_frame_rate))%(ctime) <= 1/self.vscene_frame_rate:
+                                self.vscene_roll = np.random.randint(0, self.vscene_img_width-1)
+                        else:
+                            QMessageBox.warning(self.viewer.vscene, 
+                                            'ERROR', 
+                                            'Please choose animation option then restart video.')
+                            self.vscene_timer.stop()
+                        
+                        self.vscene_image = self.vscene_model.generate_video(self.vscene_video_image,
+                                                            self.vscene_img_width,
+                                                            self.vscene_img_height,
+                                                            self.vscene_fold_row,
+                                                            self.vscene_fold_column,
+                                                            animation={'roll':int(self.vscene_roll)})
             else:
                 #TODO: other video modes
                 self.vscene_image = None

@@ -124,41 +124,67 @@ class PheroBgInfoSetting(QMainWindow, Ui_phero_bg_info_setting):
         super(PheroBgInfoSetting, self).__init__()
         self.setupUi(self)
         self.setFixedSize(self.width(), self.height())
-        self.lv_pos_line.setScaledContents(True)
+        
+        
         self.lv_pos_text.setScaledContents(True)
         self.pb_pos_text_color.clicked.connect(self.pos_text_color_pick)
-        self.pb_pos_text_font.clicked.connect(self.pos_text_font_pick)
+        self.pos_text_color = (255,255,255)
+        
+        self.lv_pos_line.setScaledContents(True)
+        self.pb_pos_line_color.clicked.connect(self.pos_line_color_pick)
+        self.pos_line_color = (123,123,125)
+        
         self.lv_pos_marker.setScaledContents(True)
         self.pb_pos_marker_color.clicked.connect(self.pos_marker_color_pick)
+        self.pos_marker_color = (123,123,125)
         
         self.pb_ok.clicked.connect(self.click_ok)
         self.pb_cancel.clicked.connect(self.click_cancel)
     
     def pos_text_color_pick(self):
-        self.signal.emit('pos_text_color_pick')
         col = QColorDialog.getColor()
-        self.pos_text_image_update((col.red(),col.green(),col.blue()))
+        self.pos_text_color = (col.red(),col.green(),col.blue())
+        self.pos_text_image_update()
     
+    def pos_line_color_pick(self):
+        col = QColorDialog.getColor()
+        self.pos_line_color = (col.red(),col.green(),col.blue())
+        self.pos_line_image_update()
+        
     def pos_marker_color_pick(self):
-        self.signal.emit('pos_marker_color_pick')
-        # col = QColorDialog.getColor()
-        # print(col.name)
+        col = QColorDialog.getColor()
+        self.pos_marker_color = (col.red(),col.green(),col.blue())
+        self.pos_marker_image_update()
     
-    def pos_text_image_update(self, color):
-        print(color)
+    def pos_text_image_update(self):
         img = np.zeros([100, 100, 3],
                        dtype=np.uint8)
         font = cv2.FONT_HERSHEY_SIMPLEX
         img = cv2.putText(img, '5', 
-                          (30, 70), font, 2, color, 2)
+                          (30, 70), font, 2, self.pos_text_color, 2)
         _image = QImage(img[:], img.shape[1], img.shape[0], 
                         img.shape[1] * 3, QImage.Format_RGB888)
         image = QPixmap(_image)
         self.lv_pos_text.setPixmap(image)
-        
-    def pos_text_font_pick(self):
-        font = QFontDialog.getFont()
-        print(font[0].toString())
+    
+    def pos_line_image_update(self):
+        img = np.zeros([100, 100, 3],
+                       dtype=np.uint8)
+        img = cv2.line(img, (0,50),(100,50), self.pos_line_color, 2)
+        img = cv2.line(img, (50,0),(50,100), self.pos_line_color, 2)
+        _image = QImage(img[:], img.shape[1], img.shape[0], 
+                        img.shape[1] * 3, QImage.Format_RGB888)
+        image = QPixmap(_image)
+        self.lv_pos_line.setPixmap(image)
+    
+    def pos_marker_image_update(self):
+        img = np.zeros([100, 100, 3],
+                       dtype=np.uint8)
+        img = cv2.circle(img, (50,50), 20, self.pos_marker_color, 2)
+        _image = QImage(img[:], img.shape[1], img.shape[0], 
+                        img.shape[1] * 3, QImage.Format_RGB888)
+        image = QPixmap(_image)
+        self.lv_pos_marker.setPixmap(image)
         
     def click_ok(self):
         self.signal.emit('OK')
