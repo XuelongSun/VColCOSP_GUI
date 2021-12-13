@@ -43,9 +43,11 @@
 *.pdb
 
 # ppt
+*.ppt
+*.pptx
 ~'$'*.ppt
 ~'$'*.pptx
-
+*.ipynb
 # Kernel Module Compile Results
 *.mod*
 *.cmd
