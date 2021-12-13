@@ -43,8 +43,8 @@
 *.pdb
 
 # ppt
-*.ppt
-*.pptx
+~'$'*.ppt
+~'$'*.pptx
 
 # Kernel Module Compile Results
 *.mod*
@@ -58,6 +58,4 @@ dkms.conf
 #path
 __pycache__/**
 viewer/__pycache__/**
-*.jpg
-*.png
 
