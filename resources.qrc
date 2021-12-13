@@ -7,5 +7,6 @@
     <file>resources/icon_key.png</file>
     <file>resources/icon_user.png</file>
     <file>resources/login_background.png</file>
+    <file>resources/localization.png</file>
   </qresource>
 </RCC>

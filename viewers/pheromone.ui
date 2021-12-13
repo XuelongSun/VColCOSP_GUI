@@ -737,7 +737,7 @@ color: rgb(255, 0, 0)
     <string>| Frame Rate</string>
    </property>
   </widget>
-  <widget class="QSpinBox" name="spinBox_led_v_frame_rate">
+  <widget class="QSpinBox" name="spinBox_frame_rate">
    <property name="geometry">
     <rect>
      <x>460</x>
@@ -1903,7 +1903,7 @@ border-radius:10px;</string>
     <string>m</string>
    </property>
   </widget>
-  <widget class="QDoubleSpinBox" name="sp_arena_l">
+  <widget class="QDoubleSpinBox" name="spinBox_arena_l">
    <property name="geometry">
     <rect>
      <x>70</x>
@@ -1927,7 +1927,7 @@ color: rgb(255, 255, 0);
     <double>0.800000000000000</double>
    </property>
   </widget>
-  <widget class="QDoubleSpinBox" name="sp_arena_w">
+  <widget class="QDoubleSpinBox" name="spinBox_arena_w">
    <property name="geometry">
     <rect>
      <x>70</x>

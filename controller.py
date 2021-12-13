@@ -1,6 +1,7 @@
 import sys
 import os
 import socket
+import configparser
 from multiprocessing import Process
 import cv2
 import numpy as np
@@ -78,6 +79,8 @@ class Controller:
         self.viewer.phero.pb_refresh.clicked.connect(self.phero_refresh_parameter)
         self.viewer.phero.pb_load_phero_image.clicked.connect(self.phero_load_picture)
         self.viewer.phero.pb_load_phero_video.clicked.connect(self.phero_load_video)
+        self.viewer.phero.pb_save_config.clicked.connect(self.phero_save_config)
+        self.viewer.phero.pb_load_config.clicked.connect(self.phero_load_config)
         self.phero_screen = LEDScreen()
         # pheromone background settings
         self.phero_background_image = None
@@ -617,6 +620,63 @@ class Controller:
     def phero_pause_render(self):
         self.phero_timer.stop()
     
+    def phero_save_config(self):
+        filename, _ = QFileDialog.getSaveFileName(self.viewer.phero, 
+                                                 'save pheromone config',
+                                                 './', 'ini(*.ini)')
+        if len(filename) != 0:
+            cfgfile = open(filename, 'w')
+            Config = configparser.ConfigParser()
+            Config.add_section('Pheromone')
+            # get config and write to the config file
+            config_dict = {'Mode':str(self.viewer.phero.comboBox_led_mode.currentIndex())}
+            for name in ['sled_w','sled_h','sled_r','sled_c',
+                         'sp_x','sp_y','arena_l','arena_w',
+                         'frame_rate']:
+                exec('config_dict[name] = str(self.viewer.phero.spinBox_{}.value())'.format(name))
+            for p in ['diffusion','evaporation','injection','radius']:
+                for c in ['r','g','b']:
+                    value = eval('self.viewer.phero.sp_' + p + '_' + c + '.value()')
+                    config_dict[p + '_' + c] = str(value)
+            
+            for k,v in config_dict.items():
+                Config.set('Pheromone', k, v)
+                
+            Config.write(cfgfile)
+            cfgfile.close()
+            self.viewer.system_logger('Save config {} successfully'.format(filename))
+        else:
+            QMessageBox.warning(self.viewer.phero, 'Error',
+                                'Not a valid filename!')
+        
+    def phero_load_config(self):
+        filename, _ = QFileDialog.getOpenFileName(self.viewer.phero, 
+                                                  'Load config File', './')
+        if filename:
+            Config = configparser.ConfigParser()
+            Config.read(filename)
+            # set values
+            options = Config.options('Pheromone')
+            if 'Mode' in options:
+                mode = Config.getint('Pheromone', 'Mode')
+                self.viewer.phero.comboBox_led_mode.setCurrentIndex(mode)
+            for p in ['diffusion','evaporation','injection','radius']:
+                for c in ['r','g','b']:
+                    if p + '_' + c in options:
+                        value = Config.getfloat('Pheromone', p + '_' + c)
+                        eval('self.viewer.phero.sp_'+ p + '_' + c +'.setValue(value)')
+                        config_dict = {'Mode':str(self.viewer.phero.comboBox_led_mode.currentIndex())}
+            for name in ['sled_w','sled_h','sled_r','sled_c',
+                         'sp_x','sp_y','arena_l','arena_w',
+                         'frame_rate']:
+                if name in options:
+                    if name == 'arena_l' or name == 'arena_w':
+                        value = Config.getfloat('Pheromone', name)
+                    else:
+                        value = Config.getint('Pheromone', name)
+                    eval('self.viewer.phero.spinBox_{}.setValue(value)'.format(name))
+            self.viewer.system_logger('Successful loaded config file:{}'.format(filename))
+            
     def loc_show_window(self):
         self.viewer.main_menu.pb_loc.setDisabled(True)
         self.viewer.loc.show()

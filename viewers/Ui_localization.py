@@ -127,6 +127,12 @@ class Ui_localization(object):
         self.label_localization_dislay.setStyleSheet("border:2px solid rgb(19, 126, 124);")
         self.label_localization_dislay.setText("")
         self.label_localization_dislay.setObjectName("label_localization_dislay")
+        self.frame = QtWidgets.QFrame(localization)
+        self.frame.setGeometry(QtCore.QRect(240, 10, 351, 101))
+        self.frame.setStyleSheet("border-image: url(:/resource/resources/localization.png);")
+        self.frame.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        self.frame.setFrameShadow(QtWidgets.QFrame.Raised)
+        self.frame.setObjectName("frame")
 
         self.retranslateUi(localization)
         QtCore.QMetaObject.connectSlotsByName(localization)
