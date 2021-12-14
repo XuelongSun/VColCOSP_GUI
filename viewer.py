@@ -125,7 +125,6 @@ class PheroBgInfoSetting(QMainWindow, Ui_phero_bg_info_setting):
         self.setupUi(self)
         self.setFixedSize(self.width(), self.height())
         
-        
         self.lv_pos_text.setScaledContents(True)
         self.pb_pos_text_color.clicked.connect(self.pos_text_color_pick)
         self.sb_pos_text_width.valueChanged.connect(self.pos_text_image_update)
@@ -141,12 +140,19 @@ class PheroBgInfoSetting(QMainWindow, Ui_phero_bg_info_setting):
         self.sb_pos_marker_width.valueChanged.connect(self.pos_marker_image_update)
         self.pos_marker_color = (0,255,255)
         
+        self.lv_arena_border.setScaledContents(True)
+        self.pb_arena_border_color.clicked.connect(self.arena_border_color_pick)
+        self.sb_arena_border_width.valueChanged.connect(self.arena_border_image_update)
+        self.sb_arena_border_margin.valueChanged.connect(self.arena_border_image_update)
+        self.arena_border_color = (255,255,255)
+        
         self.pb_ok.clicked.connect(self.click_ok)
         self.pb_cancel.clicked.connect(self.click_cancel)
         
         self.pos_text_image_update()
         self.pos_marker_image_update()
         self.pos_line_image_update()
+        self.arena_border_image_update()
     
     def pos_text_color_pick(self):
         col = QColorDialog.getColor()
@@ -162,6 +168,11 @@ class PheroBgInfoSetting(QMainWindow, Ui_phero_bg_info_setting):
         col = QColorDialog.getColor()
         self.pos_marker_color = (col.red(),col.green(),col.blue())
         self.pos_marker_image_update()
+    
+    def arena_border_color_pick(self):
+        col = QColorDialog.getColor()
+        self.arena_border_color = (col.red(),col.green(),col.blue())
+        self.arena_border_image_update()
     
     def pos_text_image_update(self):
         img = np.zeros([100, 100, 3],
@@ -195,6 +206,19 @@ class PheroBgInfoSetting(QMainWindow, Ui_phero_bg_info_setting):
                         img.shape[1] * 3, QImage.Format_RGB888)
         image = QPixmap(_image)
         self.lv_pos_marker.setPixmap(image)
+    
+    def arena_border_image_update(self):
+        img = np.zeros([100, 100, 3],
+                       dtype=np.uint8)
+        width = int(self.sb_arena_border_width.value())
+        margin = int(self.sb_arena_border_margin.value())
+        img = cv2.rectangle(img, (margin,margin), 
+                            (100-margin,100-margin), 
+                            self.arena_border_color, width)
+        _image = QImage(img[:], img.shape[1], img.shape[0], 
+                        img.shape[1] * 3, QImage.Format_RGB888)
+        image = QPixmap(_image)
+        self.lv_arena_border.setPixmap(image)
         
     def click_ok(self):
         self.signal.emit('OK')

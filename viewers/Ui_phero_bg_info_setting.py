@@ -14,11 +14,11 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_phero_bg_info_setting(object):
     def setupUi(self, phero_bg_info_setting):
         phero_bg_info_setting.setObjectName("phero_bg_info_setting")
-        phero_bg_info_setting.resize(274, 430)
+        phero_bg_info_setting.resize(274, 467)
         phero_bg_info_setting.setStyleSheet("background-color: rgb(0, 0, 0);\n"
 "color: rgb(19, 126, 124);")
         self.groupBox_pos_text = QtWidgets.QGroupBox(phero_bg_info_setting)
-        self.groupBox_pos_text.setGeometry(QtCore.QRect(20, 20, 241, 71))
+        self.groupBox_pos_text.setGeometry(QtCore.QRect(20, 60, 241, 71))
         self.groupBox_pos_text.setStyleSheet("QGroupBox::indicator:unchecked{\n"
 "    border: 1px solid rgb(100,100,100);\n"
 "    background-color:rgb(100,100,100);\n"
@@ -54,7 +54,7 @@ class Ui_phero_bg_info_setting(object):
         self.label_16.setGeometry(QtCore.QRect(20, 46, 51, 20))
         self.label_16.setObjectName("label_16")
         self.groupBox_pos_cline = QtWidgets.QGroupBox(phero_bg_info_setting)
-        self.groupBox_pos_cline.setGeometry(QtCore.QRect(20, 110, 241, 71))
+        self.groupBox_pos_cline.setGeometry(QtCore.QRect(20, 150, 241, 71))
         self.groupBox_pos_cline.setStyleSheet("QGroupBox::indicator:unchecked{\n"
 "    border: 1px solid rgb(100,100,100);\n"
 "    background-color:rgb(100,100,100);\n"
@@ -102,7 +102,7 @@ class Ui_phero_bg_info_setting(object):
         self.cb_pos_line_style.addItem("")
         self.cb_pos_line_style.addItem("")
         self.groupBox_pos_marker = QtWidgets.QGroupBox(phero_bg_info_setting)
-        self.groupBox_pos_marker.setGeometry(QtCore.QRect(20, 200, 241, 71))
+        self.groupBox_pos_marker.setGeometry(QtCore.QRect(20, 240, 241, 71))
         self.groupBox_pos_marker.setStyleSheet("QGroupBox::indicator:unchecked{\n"
 "    border: 1px solid rgb(100,100,100);\n"
 "    background-color:rgb(100,100,100);\n"
@@ -150,7 +150,7 @@ class Ui_phero_bg_info_setting(object):
         self.sb_pos_marker_width.setDisplayIntegerBase(10)
         self.sb_pos_marker_width.setObjectName("sb_pos_marker_width")
         self.pb_ok = QtWidgets.QPushButton(phero_bg_info_setting)
-        self.pb_ok.setGeometry(QtCore.QRect(170, 380, 81, 31))
+        self.pb_ok.setGeometry(QtCore.QRect(180, 420, 81, 31))
         font = QtGui.QFont()
         font.setFamily("Arial")
         font.setPointSize(12)
@@ -161,7 +161,7 @@ class Ui_phero_bg_info_setting(object):
 "border-radius:10px;")
         self.pb_ok.setObjectName("pb_ok")
         self.pb_cancel = QtWidgets.QPushButton(phero_bg_info_setting)
-        self.pb_cancel.setGeometry(QtCore.QRect(80, 380, 81, 31))
+        self.pb_cancel.setGeometry(QtCore.QRect(90, 420, 81, 31))
         font = QtGui.QFont()
         font.setFamily("Arial")
         font.setPointSize(12)
@@ -172,16 +172,64 @@ class Ui_phero_bg_info_setting(object):
 "border-radius:10px;")
         self.pb_cancel.setObjectName("pb_cancel")
         self.label_14 = QtWidgets.QLabel(phero_bg_info_setting)
-        self.label_14.setGeometry(QtCore.QRect(20, 280, 231, 20))
+        self.label_14.setGeometry(QtCore.QRect(20, 0, 231, 20))
         self.label_14.setObjectName("label_14")
         self.te_select_id = QtWidgets.QTextEdit(phero_bg_info_setting)
-        self.te_select_id.setGeometry(QtCore.QRect(20, 300, 241, 71))
+        self.te_select_id.setGeometry(QtCore.QRect(20, 20, 241, 31))
         font = QtGui.QFont()
         font.setPointSize(12)
         self.te_select_id.setFont(font)
         self.te_select_id.setStyleSheet("border:1px solid rgb(19, 126, 124);\n"
 "color:rgb(255, 255, 127)")
         self.te_select_id.setObjectName("te_select_id")
+        self.groupBox_arena_border = QtWidgets.QGroupBox(phero_bg_info_setting)
+        self.groupBox_arena_border.setGeometry(QtCore.QRect(20, 330, 241, 71))
+        self.groupBox_arena_border.setStyleSheet("QGroupBox::indicator:unchecked{\n"
+"    border: 1px solid rgb(100,100,100);\n"
+"    background-color:rgb(100,100,100);\n"
+"}\n"
+"QGroupBox{\n"
+"    border: 1px solid rgb(19, 126, 124);\n"
+"    border-radius:10px;\n"
+"}\n"
+"")
+        self.groupBox_arena_border.setFlat(False)
+        self.groupBox_arena_border.setCheckable(True)
+        self.groupBox_arena_border.setChecked(False)
+        self.groupBox_arena_border.setObjectName("groupBox_arena_border")
+        self.pb_arena_border_color = QtWidgets.QPushButton(self.groupBox_arena_border)
+        self.pb_arena_border_color.setGeometry(QtCore.QRect(120, 40, 41, 21))
+        self.pb_arena_border_color.setStyleSheet("border: 2px solid rgb(19, 126, 124);\n"
+"border-radius:10px;")
+        self.pb_arena_border_color.setObjectName("pb_arena_border_color")
+        self.lv_arena_border = QtWidgets.QLabel(self.groupBox_arena_border)
+        self.lv_arena_border.setGeometry(QtCore.QRect(180, 10, 51, 51))
+        self.lv_arena_border.setText("")
+        self.lv_arena_border.setObjectName("lv_arena_border")
+        self.label_20 = QtWidgets.QLabel(self.groupBox_arena_border)
+        self.label_20.setGeometry(QtCore.QRect(20, 41, 41, 21))
+        self.label_20.setObjectName("label_20")
+        self.sb_arena_border_width = QtWidgets.QSpinBox(self.groupBox_arena_border)
+        self.sb_arena_border_width.setGeometry(QtCore.QRect(60, 44, 51, 16))
+        self.sb_arena_border_width.setStyleSheet("border: 2px soild rgb(19, 126, 124);\n"
+"color: rgb(255, 255, 127);\n"
+"")
+        self.sb_arena_border_width.setMaximum(100)
+        self.sb_arena_border_width.setProperty("value", 2)
+        self.sb_arena_border_width.setDisplayIntegerBase(10)
+        self.sb_arena_border_width.setObjectName("sb_arena_border_width")
+        self.label_21 = QtWidgets.QLabel(self.groupBox_arena_border)
+        self.label_21.setGeometry(QtCore.QRect(20, 10, 41, 31))
+        self.label_21.setObjectName("label_21")
+        self.sb_arena_border_margin = QtWidgets.QSpinBox(self.groupBox_arena_border)
+        self.sb_arena_border_margin.setGeometry(QtCore.QRect(70, 20, 91, 16))
+        self.sb_arena_border_margin.setStyleSheet("border: 2px soild rgb(19, 126, 124);\n"
+"color: rgb(255, 255, 127);\n"
+"")
+        self.sb_arena_border_margin.setMaximum(100)
+        self.sb_arena_border_margin.setProperty("value", 2)
+        self.sb_arena_border_margin.setDisplayIntegerBase(10)
+        self.sb_arena_border_margin.setObjectName("sb_arena_border_margin")
 
         self.retranslateUi(phero_bg_info_setting)
         self.cb_pos_line_style.setCurrentIndex(0)
@@ -212,3 +260,7 @@ class Ui_phero_bg_info_setting(object):
         self.pb_cancel.setText(_translate("phero_bg_info_setting", "Cancel"))
         self.label_14.setText(_translate("phero_bg_info_setting", "Type ID that show the info"))
         self.te_select_id.setToolTip(_translate("phero_bg_info_setting", "<html><head/><body><p>Define robot <span style=\" font-weight:600;\">ID,</span><span style=\" font-style:italic;\">e.g.: 0,1,2,all</span></p></body></html>"))
+        self.groupBox_arena_border.setTitle(_translate("phero_bg_info_setting", "Arena Border"))
+        self.pb_arena_border_color.setText(_translate("phero_bg_info_setting", "Color"))
+        self.label_20.setText(_translate("phero_bg_info_setting", "Width"))
+        self.label_21.setText(_translate("phero_bg_info_setting", "Margin"))

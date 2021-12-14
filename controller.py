@@ -95,7 +95,10 @@ class Controller:
                                     'pos_marker_style':'circle',
                                     'pos_marker_width':2,
                                     'pos_marker_color':(0,255,255), 
-                                    'pos_marker_radius':20}
+                                    'pos_marker_radius':20,
+                                    'arena_border_color':(255,255,255),
+                                    'arena_border_width':4,
+                                    'arena_border_margin':2}
         self.viewer.phero.pb_bg_setting.clicked.connect(lambda:self.viewer.phero_bg_setting.show())
         self.viewer.phero_bg_setting.signal.connect(self.phero_bg_setting_message_handle)
         self.phero_image = None
@@ -330,9 +333,13 @@ class Controller:
             self.phero_bg_info_paras['pos_text_color'] = self.viewer.phero_bg_setting.pos_text_color
             self.phero_bg_info_paras['pos_line_color'] = self.viewer.phero_bg_setting.pos_line_color
             self.phero_bg_info_paras['pos_marker_color'] = self.viewer.phero_bg_setting.pos_marker_color
+            self.phero_bg_info_paras['arena_border_color'] = self.viewer.phero_bg_setting.arena_border_color
             self.phero_bg_info_paras['pos_text_width'] = self.viewer.phero_bg_setting.sb_pos_text_width.value()
             self.phero_bg_info_paras['pos_line_width'] = self.viewer.phero_bg_setting.sb_pos_line_width.value()
             self.phero_bg_info_paras['pos_marker_width'] = self.viewer.phero_bg_setting.sb_pos_marker_width.value()
+            self.phero_bg_info_paras['arena_border_width'] = self.viewer.phero_bg_setting.sb_arena_border_width.value()
+            self.phero_bg_info_paras['arena_border_margin'] = self.viewer.phero_bg_setting.sb_arena_border_margin.value()
+            
         elif message == "Cancel":
             self.viewer.phero_bg_setting.hide()
         else:
@@ -350,10 +357,10 @@ class Controller:
         
         self.phero_mode = self.viewer.phero.comboBox_led_mode.currentText()
         
-        self.phero_model.dt = 1.0/self.viewer.phero.spinBox_led_v_frame_rate.value()
+        self.phero_model.dt = 1.0/self.viewer.phero.spinBox_frame_rate.value()
         
-        self.arena_length = self.viewer.phero.sp_arena_l.value()
-        self.arena_width = self.viewer.phero.sp_arena_w.value()
+        self.arena_length = self.viewer.phero.spinBox_arena_l.value()
+        self.arena_width = self.viewer.phero.spinBox_arena_w.value()
         
         if self.phero_mode == "Static":
             #* static: just show the loaded picture
@@ -400,11 +407,11 @@ class Controller:
                     p, f = os.path.split(self.phero_loaded_video_path)
                     self.viewer.phero.label_video_filename.setText(f)
         elif self.phero_mode == "Dy-Localization":
-            self.arena_length = self.viewer.phero.sp_arena_l.value()
-            self.arena_width = self.viewer.phero.sp_arena_w.value()
+            self.arena_length = self.viewer.phero.spinBox_arena_l.value()
+            self.arena_width = self.viewer.phero.spinBox_arena_w.value()
             self.phero_model.pixel_width = self.phero_img_width
             self.phero_model.pixel_height = self.phero_img_height
-            self.phero_frame_rate = self.viewer.phero.spinBox_led_v_frame_rate.value()
+            self.phero_frame_rate = self.viewer.phero.spinBox_frame_rate.value()
             self.phero_model.dt =  1/self.phero_frame_rate
             # pheromone parameters
             for p in ['diffusion','evaporation','injection','radius']:
@@ -550,12 +557,21 @@ class Controller:
                 if pos:
                     if self.viewer.phero.radioButton_info.isChecked():
                         image = np.zeros([self.phero_model.pixel_height,
-                                            self.phero_model.pixel_width, 3],
-                                            dtype=np.uint8)
+                                          self.phero_model.pixel_width, 3],
+                                         dtype=np.uint8)
                         font = cv2.FONT_HERSHEY_SIMPLEX
                         for k,v in pos.items():
                             y = int(v[0]/self.arena_length*self.phero_model.pixel_width)
                             x = int(v[1]/self.arena_width*self.phero_model.pixel_height)
+                            # arena border
+                            if self.viewer.phero_bg_setting.groupBox_arena_border.isChecked():
+                                m = self.phero_bg_info_paras['arena_border_margin']
+                                image = cv2.rectangle(image,
+                                                      (m,m),
+                                                      (self.phero_model.pixel_width-m, 
+                                                       self.phero_model.pixel_height-m),
+                                                      self.phero_bg_info_paras['arena_border_color'],
+                                                      self.phero_bg_info_paras['arena_border_width'])
                             # pos-text
                             if self.viewer.phero_bg_setting.groupBox_pos_text.isChecked():
                                 image = cv2.putText(image, 
@@ -609,8 +625,8 @@ class Controller:
                                              self.phero_image)
         
     def phero_start_render(self):
-        self.phero_frame_rate = self.viewer.phero.spinBox_led_v_frame_rate.value()
-        self.phero_model.dt = 1.0/self.viewer.phero.spinBox_led_v_frame_rate.value()
+        self.phero_frame_rate = self.viewer.phero.spinBox_frame_rate.value()
+        self.phero_model.dt = 1.0/self.phero_frame_rate
         self.phero_timer.start(int(1000/self.phero_frame_rate))
     
     def phero_stop_render(self):
