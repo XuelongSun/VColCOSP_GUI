@@ -201,14 +201,13 @@ class PheromoneModel:
             else:
                 ind = self.color_channel[channel['other']]
             r = int(self.radius_factor[ind])
-            try:
-                # print(self.injection_kernel)
-                injection[x-r:x+r, y-r:y+r, ind] += self.injection_kernel[ind]
-            # get rid of the boundary effect
-            except:
-                injection[x-r:x+r, y-r:y+r, ind] += 1
+            s_x = np.max([0, x-r])
+            s_y = np.max([0, y-r])
+            e_x = np.min([x+r, self.pixel_height])
+            e_y = np.min([y+r, self.pixel_width])
+            injection[s_x:e_x, s_y:e_y, ind] += self.injection_kernel[ind]
         # evaportion
-        e = -(1/(self.evaporation_factor)) * self.pheromone_field 
+        e = -(1/(self.evaporation_factor)) * self.pheromone_field
         # injection
         i = self.injection_factor * injection
         # diffusion
@@ -219,7 +218,7 @@ class PheromoneModel:
         b = cv2.filter2D(b, -1, self.diffusion_kernel[2])
         d = cv2.merge([r,g,b])
         # update
-        self.pheromone_field = self.pheromone_field + (e + i) * self.dt + d
+        self.pheromone_field = self.pheromone_field + (e + i + d) * self.dt
         # print('max',self.pheromone_field.max(),'dmin',d.min(), 'dmax', d.max(), 'e', e.min(), e.max(), 'i', i.min(), i.max())
         return np.clip(self.pheromone_field, 0, 255).astype(np.uint8)
         # if self.pheromone_field.max() > 255:
