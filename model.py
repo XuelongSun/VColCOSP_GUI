@@ -205,7 +205,9 @@ class PheromoneModel:
             s_y = np.max([0, y-r])
             e_x = np.min([x+r, self.pixel_height])
             e_y = np.min([y+r, self.pixel_width])
-            injection[s_x:e_x, s_y:e_y, ind] += self.injection_kernel[ind]
+            s_k_x = 0 if x-r>0 else r-x
+            s_k_y = 0 if y-r>0 else r-y
+            injection[s_x:e_x, s_y:e_y, ind] += np.array(self.injection_kernel[ind])[s_k_x:e_x-s_x+s_k_x,s_k_y:e_y-s_y+s_k_y]
         # evaportion
         e = -(1/(self.evaporation_factor)) * self.pheromone_field
         # injection
