@@ -140,12 +140,30 @@ class PheromoneModel:
         
     def update_parameters(self):
         # diffusion_kernel
-        self.diffusion_kernel = np.ones([3,3,3])
-        for i, d in enumerate(self.diffusion_factor):
-            self.diffusion_kernel[i] *= (1-d)/8
-            self.diffusion_kernel[i,1,1] = d - 1
+        # self.diffusion_kernel = np.ones([3,3,3])
+        # for i, d in enumerate(self.diffusion_factor):
+        #     self.diffusion_kernel[i] *= (1-d)/8
+        #     self.diffusion_kernel[i,1,1] = d - 1
             # self.diffusion_kernel[i,0,0],self.diffusion_kernel[i,0,2],self.diffusion_kernel[i,2,0],self.diffusion_kernel[i,2,2] = 0,0,0,0
-            
+        
+        self.kernel_size = 21
+        self.diffusion_kernel = np.ones([3,self.kernel_size,
+                                         self.kernel_size])
+        sigma = self.kernel_size/2
+        s = 2*(sigma**2)
+        x0 = int((self.kernel_size-1)/2)
+        y0 = int((self.kernel_size-1)/2)
+        for n, d in enumerate(self.diffusion_factor):
+            for i in range(self.kernel_size):
+                for j in range(self.kernel_size):
+                    x = i - x0
+                    y = j - y0
+                    self.diffusion_kernel[n,i,j] = np.exp(-(x**2 + y**2)/s)
+            self.diffusion_kernel[n] = self.diffusion_kernel[n] / (np.sum(self.diffusion_kernel[n]) - self.diffusion_kernel[n,x0,y0]) * (1-d)
+            self.diffusion_kernel[n,x0,y0] = d - 1
+            # self.diffusion_kernel[n] *= (1-d)/120
+            # self.diffusion_kernel[n,5,5] = d - 1
+            print(np.sum(self.diffusion_kernel[0]))
         self.pheromone_field = np.zeros([self.pixel_height, 
                                          self.pixel_width, 
                                          3])
@@ -277,3 +295,47 @@ class LocDataModel:
                     if y_only:
                         return float(data[i][10:15])
                     return [float(data[i][4:9]), float(data[i][10:15])]
+
+if __name__ == "__main__":
+    import time
+    import matplotlib.pyplot as plt
+    from matplotlib import animation
+    from scipy.stats import norm
+    phero_model = PheromoneModel()
+    phero_model.evaporation_factor = np.array([100000,100000,100000])
+    phero_model.diffusion_factor = np.array([0.2,0.7,0.2])
+    phero_model.injection_factor = np.array([20.0,20.0,30.0])
+    phero_model.radius_factor = np.ones(3).astype('int')*16
+    phero_model.update_parameters()
+    data = []
+    while True:
+        img = phero_model.render_pheromone({0:[0.4,0.3]}, 
+                                           {'0':'red','other':'green'}, 
+                                           0.8, 0.6)
+        cv2.imshow('phero', cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
+        K = cv2.waitKey(10)                # 等待一个键盘的输入
+        if K == 27:                       # 若键入ESC后退出
+            cv2.destroyAllWindows()       # 销毁我们创建的所有窗口
+            break
+        time.sleep(0.1)
+        print(np.max(img))
+        data.append(img[int(phero_model.pixel_height/2),:,0])
+    
+    # data = img[int(phero_model.pixel_height/2),:,2]
+    # plt.plot(data, color="red")
+    fig, ax = plt.subplots()
+    lines = []
+    for d in data:
+        l, = ax.plot(d, color="red")
+        lines.append([l])
+    ani = animation.ArtistAnimation(fig, lines, interval=20)
+    
+    
+    # Gaussian curve fit
+    # mu = np.mean(data)
+    # sigma = np.std(data)
+    # n, bins, patches = plt.hist(data, 30, alpha=0.2)
+    # y = norm.pdf(bins, mu, sigma)
+    # plt.plot(y)
+    plt.grid(True)
+    plt.show()
