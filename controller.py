@@ -51,6 +51,8 @@ class Controller:
         self.viewer.vscene.pb_stop_video.clicked.connect(self.vscene_stop_video)
         self.viewer.vscene.pb_start_video.clicked.connect(self.vscene_start_video)
         self.viewer.vscene.pb_pause_video.clicked.connect(self.vscene_pause_video)
+        self.viewer.vscene.pb_load_config.clicked.connect(self.vscene_load_config)
+        self.viewer.vscene.pb_save_config.clicked.connect(self.vscene_save_config)
         ## timer for video player
         self.vscene_timer = QTimer()
         self.vscene_timer.timeout.connect(self.vscene_video_player)
@@ -316,7 +318,50 @@ class Controller:
     
     def vscene_pause_video(self):
         self.vscene_timer.stop()
+    
+    def vscene_save_config(self):
+        filename, _ = QFileDialog.getSaveFileName(self.viewer.vscene, 
+                                                 'save pheromone config',
+                                                 './', 'ini(*.ini)')
+        if len(filename) != 0:
+            cfgfile = open(filename, 'w')
+            Config = configparser.ConfigParser()
+            Config.add_section('VScene')
+            # get config and write to the config file
+            config_dict = {'mode':str(self.viewer.vscene.comboBox_led_mode.currentIndex())}
+            for name in ['sled_w','sled_h','sled_r','sled_c',
+                         'sp_x','sp_y','sled_fold_c','sled_fold_r',
+                         'frame_rate','pc_display_rate']:
+                exec('config_dict[name] = str(self.viewer.vscene.spinBox_{}.value())'.format(name))
+            for k,v in config_dict.items():
+                Config.set('VScene', k, v)
+            Config.write(cfgfile)
+            cfgfile.close()
+            self.viewer.system_logger('Save config {} successfully'.format(filename))
+        else:
+            QMessageBox.warning(self.viewer.vscene, 'Error',
+                                'Not a valid filename!')
         
+    def vscene_load_config(self):
+        filename, _ = QFileDialog.getOpenFileName(self.viewer.vscene, 
+                                                  'Load config File', './')
+        if filename:
+            Config = configparser.ConfigParser()
+            Config.read(filename)
+            # set values
+            options = Config.options('VScene')
+            if 'mode' in options:
+                mode = Config.getint('VScene', 'Mode')
+                self.viewer.vscene.comboBox_led_mode.setCurrentIndex(mode)
+            
+            for name in ['sled_w','sled_h','sled_r','sled_c',
+                         'sp_x','sp_y','sled_fold_c','sled_fold_r',
+                         'frame_rate','pc_display_rate']:
+                if name in options:
+                    value = Config.getint('VScene', name)
+                    eval('self.viewer.vscene.spinBox_{}.setValue(value)'.format(name))
+            self.viewer.system_logger('Successful loaded config file:{}'.format(filename))
+    
     def phero_show_window(self):
         self.viewer.main_menu.pb_phero.setDisabled(True)
         self.viewer.phero.show()
@@ -645,7 +690,7 @@ class Controller:
             Config = configparser.ConfigParser()
             Config.add_section('Pheromone')
             # get config and write to the config file
-            config_dict = {'Mode':str(self.viewer.phero.comboBox_led_mode.currentIndex())}
+            config_dict = {'mode':str(self.viewer.phero.comboBox_led_mode.currentIndex())}
             for name in ['sled_w','sled_h','sled_r','sled_c',
                          'sp_x','sp_y','arena_l','arena_w',
                          'frame_rate']:
@@ -654,7 +699,8 @@ class Controller:
                 for c in ['r','g','b']:
                     value = eval('self.viewer.phero.sp_' + p + '_' + c + '.value()')
                     config_dict[p + '_' + c] = str(value)
-            
+            diversity = self.viewer.phero.te_diversity.toPlainText()
+            config_dict['diversity_string'] = diversity
             for k,v in config_dict.items():
                 Config.set('Pheromone', k, v)
                 
@@ -673,7 +719,7 @@ class Controller:
             Config.read(filename)
             # set values
             options = Config.options('Pheromone')
-            if 'Mode' in options:
+            if 'mode' in options:
                 mode = Config.getint('Pheromone', 'Mode')
                 self.viewer.phero.comboBox_led_mode.setCurrentIndex(mode)
             for p in ['diffusion','evaporation','injection','radius']:
@@ -691,6 +737,10 @@ class Controller:
                     else:
                         value = Config.getint('Pheromone', name)
                     eval('self.viewer.phero.spinBox_{}.setValue(value)'.format(name))
+            if 'diversity_string' in options:
+                self.viewer.phero.te_diversity.clear()
+                self.viewer.phero.te_diversity.insertPlainText(Config.getint('Pheromone', 
+                                                                             'diversity_string'))
             self.viewer.system_logger('Successful loaded config file:{}'.format(filename))
             
     def loc_show_window(self):

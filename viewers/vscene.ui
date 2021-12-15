@@ -203,7 +203,7 @@ color: rgb(255, 255, 127);
    <property name="geometry">
     <rect>
      <x>520</x>
-     <y>400</y>
+     <y>320</y>
      <width>141</width>
      <height>31</height>
     </rect>
@@ -844,7 +844,7 @@ color: rgb(255, 255, 127);
    <property name="geometry">
     <rect>
      <x>520</x>
-     <y>350</y>
+     <y>280</y>
      <width>141</width>
      <height>31</height>
     </rect>
@@ -1335,7 +1335,7 @@ border-radius:10px;</string>
    <property name="geometry">
     <rect>
      <x>520</x>
-     <y>470</y>
+     <y>390</y>
      <width>141</width>
      <height>31</height>
     </rect>
@@ -1360,7 +1360,7 @@ border-radius:10px;</string>
    <property name="geometry">
     <rect>
      <x>520</x>
-     <y>570</y>
+     <y>490</y>
      <width>141</width>
      <height>31</height>
     </rect>
@@ -1385,7 +1385,7 @@ border-radius:10px;</string>
    <property name="geometry">
     <rect>
      <x>520</x>
-     <y>520</y>
+     <y>440</y>
      <width>141</width>
      <height>31</height>
     </rect>
@@ -1406,7 +1406,7 @@ border-radius:10px;</string>
     <string>Pause Video</string>
    </property>
   </widget>
-  <widget class="QSpinBox" name="spinBox_led_v_frame_rate">
+  <widget class="QSpinBox" name="spinBox_frame_rate">
    <property name="geometry">
     <rect>
      <x>510</x>
@@ -1455,7 +1455,7 @@ color: rgb(255, 255, 127);
    <property name="geometry">
     <rect>
      <x>520</x>
-     <y>270</y>
+     <y>590</y>
      <width>141</width>
      <height>31</height>
     </rect>
@@ -1527,6 +1527,31 @@ border-radius:10px;</string>
    </property>
    <property name="text">
     <string>frame/s</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="pb_save_config">
+   <property name="geometry">
+    <rect>
+     <x>520</x>
+     <y>550</y>
+     <width>141</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>12</pointsize>
+     <weight>75</weight>
+     <bold>true</bold>
+    </font>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">border: 2px solid rgb(19, 126, 124);
+border-radius:10px;</string>
+   </property>
+   <property name="text">
+    <string>Save Config</string>
    </property>
   </widget>
  </widget>
