@@ -310,7 +310,7 @@ if __name__ == "__main__":
     phero_model.update_parameters()
     data = []
     while True:
-        img = phero_model.render_pheromone({0:[0.4,0.3]}, 
+        img = phero_model.render_pheromone({0:[0.0,0.0]}, 
                                            {'0':'red','other':'green'}, 
                                            0.8, 0.6)
         cv2.imshow('phero', cv2.cvtColor(img, cv2.COLOR_RGB2BGR))

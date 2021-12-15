@@ -731,7 +731,10 @@ class Controller:
             for p in ['diffusion','evaporation','injection','radius']:
                 for c in ['r','g','b']:
                     if p + '_' + c in options:
-                        value = Config.getfloat('Pheromone', p + '_' + c)
+                        if p == "radius":
+                            value = Config.getint('Pheromone', p + '_' + c)
+                        else:
+                            value = Config.getfloat('Pheromone', p + '_' + c)
                         eval('self.viewer.phero.sp_'+ p + '_' + c +'.setValue(value)')
                         config_dict = {'Mode':str(self.viewer.phero.comboBox_led_mode.currentIndex())}
             for name in ['sled_w','sled_h','sled_r','sled_c',
@@ -745,8 +748,8 @@ class Controller:
                     eval('self.viewer.phero.spinBox_{}.setValue(value)'.format(name))
             if 'diversity_string' in options:
                 self.viewer.phero.te_diversity.clear()
-                self.viewer.phero.te_diversity.insertPlainText(Config.getint('Pheromone', 
-                                                                             'diversity_string'))
+                self.viewer.phero.te_diversity.insertPlainText(Config.get('Pheromone',
+                                                                          'diversity_string'))
             self.viewer.system_logger('Successful loaded config file:{}'.format(filename))
             
     def loc_show_window(self):
