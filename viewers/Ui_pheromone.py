@@ -197,7 +197,7 @@ class Ui_phero(object):
         self.label_6.setFont(font)
         self.label_6.setObjectName("label_6")
         self.label_16 = QtWidgets.QLabel(phero)
-        self.label_16.setGeometry(QtCore.QRect(206, 210, 111, 16))
+        self.label_16.setGeometry(QtCore.QRect(206, 220, 111, 16))
         font = QtGui.QFont()
         font.setBold(True)
         font.setWeight(75)
@@ -211,7 +211,7 @@ class Ui_phero(object):
         self.label_17.setFont(font)
         self.label_17.setObjectName("label_17")
         self.label_54 = QtWidgets.QLabel(phero)
-        self.label_54.setGeometry(QtCore.QRect(206, 150, 191, 20))
+        self.label_54.setGeometry(QtCore.QRect(206, 150, 121, 20))
         font = QtGui.QFont()
         font.setPointSize(10)
         font.setBold(True)
@@ -219,7 +219,7 @@ class Ui_phero(object):
         self.label_54.setFont(font)
         self.label_54.setObjectName("label_54")
         self.comboBox_led_mode = QtWidgets.QComboBox(phero)
-        self.comboBox_led_mode.setGeometry(QtCore.QRect(220, 170, 191, 31))
+        self.comboBox_led_mode.setGeometry(QtCore.QRect(300, 144, 111, 31))
         self.comboBox_led_mode.setStyleSheet("border: 2px soild rgb(19, 126, 124);\n"
 "color: rgb(255, 255, 127);\n"
 "")
@@ -253,7 +253,7 @@ class Ui_phero(object):
         self.line_6.setFrameShape(QtWidgets.QFrame.VLine)
         self.line_6.setObjectName("line_6")
         self.sp_diffusion_r = QtWidgets.QDoubleSpinBox(phero)
-        self.sp_diffusion_r.setGeometry(QtCore.QRect(220, 230, 61, 22))
+        self.sp_diffusion_r.setGeometry(QtCore.QRect(220, 240, 61, 22))
         self.sp_diffusion_r.setStyleSheet("border: 2px soild rgb(19, 126, 124);\n"
 "color: rgb(255, 0, 0)\n"
 "")
@@ -413,7 +413,7 @@ class Ui_phero(object):
         self.label_23.setObjectName("label_23")
         self.radioButton_sc = QtWidgets.QRadioButton(self.tab_9)
         self.radioButton_sc.setGeometry(QtCore.QRect(10, 40, 89, 16))
-        self.radioButton_sc.setChecked(True)
+        self.radioButton_sc.setChecked(False)
         self.radioButton_sc.setObjectName("radioButton_sc")
         self.radioButton_image = QtWidgets.QRadioButton(self.tab_9)
         self.radioButton_image.setGeometry(QtCore.QRect(120, 40, 89, 16))
@@ -437,6 +437,7 @@ class Ui_phero(object):
         self.line_9.setObjectName("line_9")
         self.radioButton_info = QtWidgets.QRadioButton(self.tab_9)
         self.radioButton_info.setGeometry(QtCore.QRect(300, 40, 71, 16))
+        self.radioButton_info.setChecked(True)
         self.radioButton_info.setObjectName("radioButton_info")
         self.line_10 = QtWidgets.QFrame(self.tab_9)
         self.line_10.setGeometry(QtCore.QRect(280, 40, 21, 61))
@@ -522,7 +523,7 @@ class Ui_phero(object):
         self.frame.setFrameShadow(QtWidgets.QFrame.Raised)
         self.frame.setObjectName("frame")
         self.sp_diffusion_g = QtWidgets.QDoubleSpinBox(phero)
-        self.sp_diffusion_g.setGeometry(QtCore.QRect(290, 230, 61, 22))
+        self.sp_diffusion_g.setGeometry(QtCore.QRect(290, 240, 61, 22))
         self.sp_diffusion_g.setStyleSheet("border: 2px soild rgb(19, 126, 124);\n"
 "color: rgb(0, 255, 0)\n"
 "")
@@ -532,7 +533,7 @@ class Ui_phero(object):
         self.sp_diffusion_g.setProperty("value", 0.5)
         self.sp_diffusion_g.setObjectName("sp_diffusion_g")
         self.sp_diffusion_b = QtWidgets.QDoubleSpinBox(phero)
-        self.sp_diffusion_b.setGeometry(QtCore.QRect(360, 230, 61, 22))
+        self.sp_diffusion_b.setGeometry(QtCore.QRect(360, 240, 61, 22))
         self.sp_diffusion_b.setStyleSheet("border: 2px soild rgb(19, 126, 124);\n"
 "color: rgb(0, 0, 255);\n"
 "")
@@ -542,7 +543,7 @@ class Ui_phero(object):
         self.sp_diffusion_b.setProperty("value", 0.5)
         self.sp_diffusion_b.setObjectName("sp_diffusion_b")
         self.sp_evaporation_r = QtWidgets.QDoubleSpinBox(phero)
-        self.sp_evaporation_r.setGeometry(QtCore.QRect(220, 280, 61, 22))
+        self.sp_evaporation_r.setGeometry(QtCore.QRect(220, 284, 61, 22))
         self.sp_evaporation_r.setStyleSheet("border: 2px soild rgb(19, 126, 124);\n"
 "color: rgb(255, 0, 0)\n"
 "")
@@ -552,7 +553,7 @@ class Ui_phero(object):
         self.sp_evaporation_r.setProperty("value", 400.0)
         self.sp_evaporation_r.setObjectName("sp_evaporation_r")
         self.sp_evaporation_g = QtWidgets.QDoubleSpinBox(phero)
-        self.sp_evaporation_g.setGeometry(QtCore.QRect(290, 280, 61, 22))
+        self.sp_evaporation_g.setGeometry(QtCore.QRect(290, 284, 61, 22))
         self.sp_evaporation_g.setStyleSheet("border: 2px soild rgb(19, 126, 124);\n"
 "color: rgb(0, 255, 0)\n"
 "")
@@ -561,7 +562,7 @@ class Ui_phero(object):
         self.sp_evaporation_g.setProperty("value", 400.0)
         self.sp_evaporation_g.setObjectName("sp_evaporation_g")
         self.sp_evaporation_b = QtWidgets.QDoubleSpinBox(phero)
-        self.sp_evaporation_b.setGeometry(QtCore.QRect(360, 280, 61, 22))
+        self.sp_evaporation_b.setGeometry(QtCore.QRect(360, 283, 61, 22))
         self.sp_evaporation_b.setStyleSheet("border: 2px soild rgb(19, 126, 124);\n"
 "color: rgb(0, 0, 255);\n"
 "")
@@ -715,6 +716,43 @@ class Ui_phero(object):
         self.sp_radius_b.setProperty("value", 4)
         self.sp_radius_b.setDisplayIntegerBase(10)
         self.sp_radius_b.setObjectName("sp_radius_b")
+        self.label_24 = QtWidgets.QLabel(phero)
+        self.label_24.setGeometry(QtCore.QRect(206, 176, 191, 20))
+        font = QtGui.QFont()
+        font.setBold(True)
+        font.setWeight(75)
+        self.label_24.setFont(font)
+        self.label_24.setObjectName("label_24")
+        self.sp_d_kernel_s_r = QtWidgets.QSpinBox(phero)
+        self.sp_d_kernel_s_r.setGeometry(QtCore.QRect(220, 198, 61, 22))
+        self.sp_d_kernel_s_r.setStyleSheet("border: 2px soild rgb(19, 126, 124);\n"
+"color: rgb(255, 0, 0);\n"
+"")
+        self.sp_d_kernel_s_r.setMinimum(5)
+        self.sp_d_kernel_s_r.setMaximum(200)
+        self.sp_d_kernel_s_r.setProperty("value", 51)
+        self.sp_d_kernel_s_r.setDisplayIntegerBase(10)
+        self.sp_d_kernel_s_r.setObjectName("sp_d_kernel_s_r")
+        self.sp_d_kernel_s_g = QtWidgets.QSpinBox(phero)
+        self.sp_d_kernel_s_g.setGeometry(QtCore.QRect(290, 198, 61, 22))
+        self.sp_d_kernel_s_g.setStyleSheet("border: 2px soild rgb(19, 126, 124);\n"
+"color: rgb(0,255, 0);\n"
+"")
+        self.sp_d_kernel_s_g.setMinimum(5)
+        self.sp_d_kernel_s_g.setMaximum(200)
+        self.sp_d_kernel_s_g.setProperty("value", 51)
+        self.sp_d_kernel_s_g.setDisplayIntegerBase(10)
+        self.sp_d_kernel_s_g.setObjectName("sp_d_kernel_s_g")
+        self.sp_d_kernel_s_b = QtWidgets.QSpinBox(phero)
+        self.sp_d_kernel_s_b.setGeometry(QtCore.QRect(360, 198, 61, 22))
+        self.sp_d_kernel_s_b.setStyleSheet("border: 2px soild rgb(19, 126, 124);\n"
+"color: rgb(0, 0, 255);\n"
+"")
+        self.sp_d_kernel_s_b.setMinimum(5)
+        self.sp_d_kernel_s_b.setMaximum(200)
+        self.sp_d_kernel_s_b.setProperty("value", 51)
+        self.sp_d_kernel_s_b.setDisplayIntegerBase(10)
+        self.sp_d_kernel_s_b.setObjectName("sp_d_kernel_s_b")
 
         self.retranslateUi(phero)
         self.comboBox_led_mode.setCurrentIndex(0)
@@ -803,4 +841,5 @@ class Ui_phero(object):
         self.label_21.setText(_translate("phero", "Length"))
         self.label_42.setText(_translate("phero", "m"))
         self.label_22.setText(_translate("phero", "| Radius"))
+        self.label_24.setText(_translate("phero", "| Diffusion Kernel Size"))
 import resources_rc

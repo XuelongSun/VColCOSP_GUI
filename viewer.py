@@ -51,7 +51,16 @@ class Pheromone(QMainWindow, Ui_phero):
         super(Pheromone, self).__init__()
         self.setupUi(self)
         self.setFixedSize(self.width(), self.height())
+        self.sp_d_kernel_s_r.valueChanged.connect(self.d_kernel_size_change)
+        self.sp_d_kernel_s_g.valueChanged.connect(self.d_kernel_size_change)
+        self.sp_d_kernel_s_b.valueChanged.connect(self.d_kernel_size_change)
     
+    def d_kernel_size_change(self):
+        # force kernel size to be odd
+        v = self.sender().value()
+        if v % 2 == 0:
+            self.sender().setValue(v + 1)
+        
     def closeEvent(self, event):
         print('closing the pheromone window')
         self.signal.emit('close')

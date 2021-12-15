@@ -460,7 +460,7 @@ class Controller:
             self.phero_frame_rate = self.viewer.phero.spinBox_frame_rate.value()
             self.phero_model.dt =  1/self.phero_frame_rate
             # pheromone parameters
-            for p in ['diffusion','evaporation','injection','radius']:
+            for p in ['diffusion','evaporation','injection','radius','d_kernel_s']:
                 s = """self.phero_model.{}_factor = np.array([self.viewer.phero.sp_{}_r.value(), 
                      self.viewer.phero.sp_{}_g.value(),
                      self.viewer.phero.sp_{}_b.value()])""".format(p,p,p,p)
@@ -501,7 +501,8 @@ class Controller:
             if self.viewer.phero.radioButton_sc.isChecked():
                 # solid color fill
                 self.phero_background_image = np.ones([self.phero_model.pixel_height,
-                                                        self.phero_model.pixel_width, 3])*self.phero_bg_sc
+                                                        self.phero_model.pixel_width, 3],
+                                                      dtype=np.unit8)*self.phero_bg_sc
             elif self.viewer.phero.radioButton_image.isChecked():
                 self.phero_background_image = self.phero_bg_loaded_image.copy()
             elif self.viewer.phero.radioButton_draw.isChecked():
@@ -658,7 +659,8 @@ class Controller:
                         self.phero_timer.stop()
                     else:
                         # merge the background and pheromone, pheromone z-index is lower
-                        mask = cv2.bitwise_and(cv2.cvtColor(phero_image,cv2.COLOR_RGB2GRAY),
+                        img_temp = (phero_image/np.max(phero_image)*255).astype(np.uint8)
+                        mask = cv2.bitwise_and(cv2.cvtColor(img_temp,cv2.COLOR_RGB2GRAY),
                                                cv2.cvtColor(self.phero_background_image,cv2.COLOR_RGB2GRAY))
                         if np.sum(mask) > 0:
                            phero_image[np.where(mask>0)] = self.phero_background_image[np.where(mask>0)]
@@ -707,7 +709,7 @@ class Controller:
                          'sp_x','sp_y','arena_l','arena_w',
                          'frame_rate']:
                 exec('config_dict[name] = str(self.viewer.phero.spinBox_{}.value())'.format(name))
-            for p in ['diffusion','evaporation','injection','radius']:
+            for p in ['d_kernel_s','diffusion','evaporation','injection','radius']:
                 for c in ['r','g','b']:
                     value = eval('self.viewer.phero.sp_' + p + '_' + c + '.value()')
                     config_dict[p + '_' + c] = str(value)
@@ -734,15 +736,14 @@ class Controller:
             if 'mode' in options:
                 mode = Config.getint('Pheromone', 'Mode')
                 self.viewer.phero.comboBox_led_mode.setCurrentIndex(mode)
-            for p in ['diffusion','evaporation','injection','radius']:
+            for p in ['d_kernel_s','diffusion','evaporation','injection','radius']:
                 for c in ['r','g','b']:
                     if p + '_' + c in options:
-                        if p == "radius":
+                        if (p == "radius") or (p == "d_kernel_s"):
                             value = Config.getint('Pheromone', p + '_' + c)
                         else:
                             value = Config.getfloat('Pheromone', p + '_' + c)
                         eval('self.viewer.phero.sp_'+ p + '_' + c +'.setValue(value)')
-                        config_dict = {'Mode':str(self.viewer.phero.comboBox_led_mode.currentIndex())}
             for name in ['sled_w','sled_h','sled_r','sled_c',
                          'sp_x','sp_y','arena_l','arena_w',
                          'frame_rate']:
