@@ -605,41 +605,46 @@ class Controller:
                         image = np.zeros([self.phero_model.pixel_height,
                                           self.phero_model.pixel_width, 3],
                                          dtype=np.uint8)
+                        # arena border
+                        if self.viewer.phero_bg_setting.groupBox_arena_border.isChecked():
+                            m = self.phero_bg_info_paras['arena_border_margin']
+                            image = cv2.rectangle(image,
+                                                    (m,m),
+                                                    (self.phero_model.pixel_width-m, 
+                                                    self.phero_model.pixel_height-m),
+                                                    self.phero_bg_info_paras['arena_border_color'],
+                                                    self.phero_bg_info_paras['arena_border_width'])
                         font = cv2.FONT_HERSHEY_SIMPLEX
                         for k,v in pos.items():
-                            y = int(v[0]/self.arena_length*self.phero_model.pixel_width)
-                            x = int(v[1]/self.arena_width*self.phero_model.pixel_height)
-                            # arena border
-                            if self.viewer.phero_bg_setting.groupBox_arena_border.isChecked():
-                                m = self.phero_bg_info_paras['arena_border_margin']
-                                image = cv2.rectangle(image,
-                                                      (m,m),
-                                                      (self.phero_model.pixel_width-m, 
-                                                       self.phero_model.pixel_height-m),
-                                                      self.phero_bg_info_paras['arena_border_color'],
-                                                      self.phero_bg_info_paras['arena_border_width'])
-                            # pos-text
-                            if self.viewer.phero_bg_setting.groupBox_pos_text.isChecked():
-                                image = cv2.putText(image, 
-                                                    "{}:({},{})".format(k,v[0],v[1]),
-                                                    (y+self.phero_bg_info_paras['pos_marker_radius']+2,
-                                                    x+self.phero_bg_info_paras['pos_marker_radius']+2),
-                                                    font,0.5,
-                                                    self.phero_bg_info_paras['pos_text_color'],1)
-                            # pos-cross-line
-                            if self.viewer.phero_bg_setting.groupBox_pos_cline.isChecked():
-                                image = cv2.line(image, (y, 0), (y, self.phero_model.pixel_height),
-                                                    self.phero_bg_info_paras['pos_line_color'],
-                                                    self.phero_bg_info_paras['pos_line_width'])
-                                image = cv2.line(image, (0, x), (self.phero_model.pixel_width, x),
-                                                    self.phero_bg_info_paras['pos_line_color'],
-                                                    self.phero_bg_info_paras['pos_line_width'])
-                            # marker
-                            if self.viewer.phero_bg_setting.groupBox_pos_marker.isChecked():
-                                image = cv2.circle(image, (y,x),
-                                                    self.phero_bg_info_paras['pos_marker_radius'],
-                                                    self.phero_bg_info_paras['pos_marker_color'],
-                                                    self.phero_bg_info_paras['pos_marker_width'])                    
+                            if (v[0] >= 0) and (v[0] <= self.arena_width) and \
+                                (v[1]>=0) and (v[1] <= self.arena_length):
+                                y = int(v[0]/self.arena_length*self.phero_model.pixel_width)
+                                x = int(v[1]/self.arena_width*self.phero_model.pixel_height)
+                                # pos-text
+                                if self.viewer.phero_bg_setting.groupBox_pos_text.isChecked():
+                                    image = cv2.putText(image, 
+                                                        "{}:({},{})".format(k,v[0],v[1]),
+                                                        (y+self.phero_bg_info_paras['pos_marker_radius']+2,
+                                                        x+self.phero_bg_info_paras['pos_marker_radius']+2),
+                                                        font,0.5,
+                                                        self.phero_bg_info_paras['pos_text_color'],1)
+                                # pos-cross-line
+                                if self.viewer.phero_bg_setting.groupBox_pos_cline.isChecked():
+                                    image = cv2.line(image, (y, 0), (y, self.phero_model.pixel_height),
+                                                        self.phero_bg_info_paras['pos_line_color'],
+                                                        self.phero_bg_info_paras['pos_line_width'])
+                                    image = cv2.line(image, (0, x), (self.phero_model.pixel_width, x),
+                                                        self.phero_bg_info_paras['pos_line_color'],
+                                                        self.phero_bg_info_paras['pos_line_width'])
+                                # marker
+                                if self.viewer.phero_bg_setting.groupBox_pos_marker.isChecked():
+                                    image = cv2.circle(image, (y,x),
+                                                        self.phero_bg_info_paras['pos_marker_radius'],
+                                                        self.phero_bg_info_paras['pos_marker_color'],
+                                                        self.phero_bg_info_paras['pos_marker_width'])
+                            else:
+                                self.viewer.system_logger('Invalid position value from LOCALIZATION:({},{}) of ID:({})'.format(x,y,k),
+                                                          log_type='warning')                    
                         self.phero_background_image = image.copy()
                     # if got the positions of the robots
                     # if 'only-background' checked
