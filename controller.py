@@ -52,6 +52,7 @@ class Controller:
         self.viewer.vscene.pb_start_video.clicked.connect(self.vscene_start_video)
         self.viewer.vscene.pb_pause_video.clicked.connect(self.vscene_pause_video)
         self.viewer.vscene.pb_load_config.clicked.connect(self.vscene_load_config)
+        
         self.viewer.vscene.pb_save_config.clicked.connect(self.vscene_save_config)
         ## timer for video player
         self.vscene_timer = QTimer()
@@ -643,7 +644,7 @@ class Controller:
                     # if got the positions of the robots
                     # if 'only-background' checked
                     if self.viewer.phero.cb_bg_only.isChecked():
-                        phero_image = 0
+                        phero_image = np.zeros([self.pixel_height, self.pixel_width, 3]).astype(np.unit8)
                     else:
                         phero_image = self.phero_model.render_pheromone(pos, self.phero_channel,
                                                                         self.arena_length, self.arena_width)
@@ -651,7 +652,12 @@ class Controller:
                         QMessageBox.warning(self.viewer.phero,'Error','No valide background image!')
                         self.phero_timer.stop()
                     else:
-                        self.phero_image = phero_image + self.phero_background_image.astype(np.uint8)
+                        # merge the background and pheromone, pheromone z-index is lower
+                        _, mask = cv2.bitwise_and(cv2.cvtColor(phero_image,cv2.COLOR_RGB2GRAY),
+                                                  cv2.cvtColor(self.phero_background_image,cv2.COLOR_RGB2GRAY))
+                        self.phero_image[np.where(mask>0)] = self.phero_background_image[np.where(mask>0)]
+                        self.phero_image[np.where(mask<=0)] = self.phero_background_image[np.where(mask<=0)] + phero_image[np.where(mask<=0)]
+                        # self.phero_image = phero_image + self.phero_background_image.astype(np.uint8)
             else:
                 QMessageBox.warning(self.viewer.phero,'Error','Please read the localization data first!')
                 self.phero_timer.stop()
