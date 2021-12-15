@@ -146,7 +146,7 @@ class PheromoneModel:
         #     self.diffusion_kernel[i,1,1] = d - 1
             # self.diffusion_kernel[i,0,0],self.diffusion_kernel[i,0,2],self.diffusion_kernel[i,2,0],self.diffusion_kernel[i,2,2] = 0,0,0,0
         
-        self.kernel_size = 71
+        self.kernel_size = 101
         self.diffusion_kernel = np.ones([3,self.kernel_size,
                                          self.kernel_size])
         sigma = self.kernel_size/2

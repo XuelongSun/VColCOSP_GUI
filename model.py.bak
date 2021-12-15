@@ -146,10 +146,10 @@ class PheromoneModel:
         #     self.diffusion_kernel[i,1,1] = d - 1
             # self.diffusion_kernel[i,0,0],self.diffusion_kernel[i,0,2],self.diffusion_kernel[i,2,0],self.diffusion_kernel[i,2,2] = 0,0,0,0
         
-        self.kernel_size = 71
+        self.kernel_size = 101
         self.diffusion_kernel = np.ones([3,self.kernel_size,
                                          self.kernel_size])
-        sigma = self.kernel_size/2
+        sigma = self.kernel_size
         s = 2*(sigma**2)
         x0 = int((self.kernel_size-1)/2)
         y0 = int((self.kernel_size-1)/2)
@@ -207,7 +207,7 @@ class PheromoneModel:
             e_y = np.min([y+r, self.pixel_width])
             s_k_x = 0 if x-r>0 else r-x
             s_k_y = 0 if y-r>0 else r-y
-            injection[s_x:e_x, s_y:e_y, ind] += np.array(self.injection_kernel[ind])[s_k_x:e_x-s_x,s_k_y:e_y-s_y]
+            injection[s_x:e_x, s_y:e_y, ind] += np.array(self.injection_kernel[ind])[s_k_x:e_x-s_x+s_k_x,s_k_y:e_y-s_y+s_k_y]
         # evaportion
         e = -(1/(self.evaporation_factor)) * self.pheromone_field
         # injection
