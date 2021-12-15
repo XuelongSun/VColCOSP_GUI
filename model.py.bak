@@ -149,7 +149,7 @@ class PheromoneModel:
         self.kernel_size = 101
         self.diffusion_kernel = np.ones([3,self.kernel_size,
                                          self.kernel_size])
-        sigma = self.kernel_size
+        sigma = self.kernel_size/2
         s = 2*(sigma**2)
         x0 = int((self.kernel_size-1)/2)
         y0 = int((self.kernel_size-1)/2)
@@ -194,31 +194,33 @@ class PheromoneModel:
     def render_pheromone(self, robot_pos, channel, arena_length, arena_width):
         injection = np.zeros([self.pixel_height, self.pixel_width, 3])
         for k, v in robot_pos.items():
-            y = int(v[0]/arena_length*self.pixel_width)
-            x = int(v[1]/arena_width*self.pixel_height)
-            if str(k) in channel.keys():
-                ind = self.color_channel[channel[str(k)]]
-            else:
-                ind = self.color_channel[channel['other']]
-            r = int(self.radius_factor[ind])
-            s_x = np.max([0, x-r])
-            s_y = np.max([0, y-r])
-            e_x = np.min([x+r, self.pixel_height])
-            e_y = np.min([y+r, self.pixel_width])
-            s_k_x = 0 if x-r>0 else r-x
-            s_k_y = 0 if y-r>0 else r-y
-            injection[s_x:e_x, s_y:e_y, ind] += np.array(self.injection_kernel[ind])[s_k_x:e_x-s_x+s_k_x,s_k_y:e_y-s_y+s_k_y]
+            if (v[0] >= 0) and (v[0] <= arena_width) and \
+                (v[1] >= 0) and (v[1] <= arena_length):
+                y = int(v[0]/arena_length*self.pixel_width)
+                x = int(v[1]/arena_width*self.pixel_height)
+                if str(k) in channel.keys():
+                    ind = self.color_channel[channel[str(k)]]
+                else:
+                    ind = self.color_channel[channel['other']]
+                r = int(self.radius_factor[ind])
+                s_x = np.max([0, x-r])
+                s_y = np.max([0, y-r])
+                e_x = np.min([x+r, self.pixel_height])
+                e_y = np.min([y+r, self.pixel_width])
+                s_k_x = 0 if x-r > 0 else r-x
+                s_k_y = 0 if y-r > 0 else r-y
+                injection[s_x:e_x, s_y:e_y, ind] += np.array(self.injection_kernel[ind])[s_k_x:e_x-s_x+s_k_x,s_k_y:e_y-s_y+s_k_y]
         # evaportion
         e = -(1/(self.evaporation_factor)) * self.pheromone_field
         # injection
         i = self.injection_factor * injection
         # diffusion
         # !should separate channels and process individually
-        r,g,b = cv2.split(self.pheromone_field)
+        r, g, b = cv2.split(self.pheromone_field)
         r = cv2.filter2D(r, -1, self.diffusion_kernel[0])
         g = cv2.filter2D(g, -1, self.diffusion_kernel[1])
         b = cv2.filter2D(b, -1, self.diffusion_kernel[2])
-        d = cv2.merge([r,g,b])
+        d = cv2.merge([r, g, b])
         # update
         self.pheromone_field = self.pheromone_field + (e + i + d) * self.dt
         # print('max',self.pheromone_field.max(),'dmin',d.min(), 'dmax', d.max(), 'e', e.min(), e.max(), 'i', i.min(), i.max())
@@ -304,14 +306,14 @@ if __name__ == "__main__":
     from scipy.stats import norm
     phero_model = PheromoneModel()
     phero_model.evaporation_factor = np.array([100000,100000,100000])
-    phero_model.diffusion_factor = np.array([0.2,0.7,0.2])
-    phero_model.injection_factor = np.array([20.0,20.0,30.0])
-    phero_model.radius_factor = np.ones(3).astype('int')*16
+    phero_model.diffusion_factor = np.array([0.2,0.1,0.2])
+    phero_model.injection_factor = np.array([200.0,200.0,300.0])
+    phero_model.radius_factor = np.ones(3).astype('int')*10
     phero_model.update_parameters()
     data = []
     while True:
-        img = phero_model.render_pheromone({0:[0.4,0.3]}, 
-                                           {'0':'red','other':'green'}, 
+        img = phero_model.render_pheromone({0:[0.0,0.0],1:[0.2,0.4],2:[0.6,0.5]}, 
+                                           {'0':'red','1':'green','2':'blue'}, 
                                            0.8, 0.6)
         cv2.imshow('phero', cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
         K = cv2.waitKey(10)                # 等待一个键盘的输入

@@ -660,7 +660,7 @@ class Controller:
                         # merge the background and pheromone, pheromone z-index is lower
                         mask = cv2.bitwise_and(cv2.cvtColor(phero_image,cv2.COLOR_RGB2GRAY),
                                                cv2.cvtColor(self.phero_background_image,cv2.COLOR_RGB2GRAY))
-                        if np.sum(mask) > 0:
+                        if np.sum(mask) > 1:
                            phero_image[np.where(mask>0)] = self.phero_background_image[np.where(mask>0)]
                         phero_image[np.where(mask<=0)] = self.phero_background_image[np.where(mask<=0)] + phero_image[np.where(mask<=0)]
                         self.phero_image = phero_image.copy()
