@@ -122,6 +122,7 @@ class PheromoneModel:
     def __init__(self):
         self.pixel_height = 480
         self.pixel_width = 640
+        self.d_kernel_s_factor = np.ones(3,dtype=np.int)*51
         self.diffusion_factor = np.zeros(3)
         self.evaporation_factor = np.zeros(3)
         self.injection_factor = np.zeros(3)
@@ -145,28 +146,28 @@ class PheromoneModel:
         #     self.diffusion_kernel[i] *= (1-d)/8
         #     self.diffusion_kernel[i,1,1] = d - 1
             # self.diffusion_kernel[i,0,0],self.diffusion_kernel[i,0,2],self.diffusion_kernel[i,2,0],self.diffusion_kernel[i,2,2] = 0,0,0,0
-        
-        self.kernel_size = 101
-        self.diffusion_kernel = np.ones([3,self.kernel_size,
-                                         self.kernel_size])
-        sigma = self.kernel_size/2
-        s = 2*(sigma**2)
-        x0 = int((self.kernel_size-1)/2)
-        y0 = int((self.kernel_size-1)/2)
+
+        # diffusion_kernel
+        self.diffusion_kernel = [[]]*3
         for n, d in enumerate(self.diffusion_factor):
-            for i in range(self.kernel_size):
-                for j in range(self.kernel_size):
+            sigma = self.d_kernel_s_factor[n] / 2
+            s = 2*(sigma**2)
+            x0 = int((self.d_kernel_s_factor[n]-1)/2)
+            y0 = int((self.d_kernel_s_factor[n]-1)/2)
+            diffusion_kernel = np.zeros([self.d_kernel_s_factor[n],
+                                        self.d_kernel_s_factor[n]])
+            for i in range(self.d_kernel_s_factor[n]):
+                for j in range(self.d_kernel_s_factor[n]):
                     x = i - x0
                     y = j - y0
-                    self.diffusion_kernel[n,i,j] = np.exp(-(x**2 + y**2)/s)
-            self.diffusion_kernel[n] = self.diffusion_kernel[n] / (np.sum(self.diffusion_kernel[n]) - self.diffusion_kernel[n,x0,y0]) * (1-d)
-            self.diffusion_kernel[n,x0,y0] = d - 1
+                    diffusion_kernel[i,j] = np.exp(-(x**2 + y**2)/s)
+            diffusion_kernel = diffusion_kernel / (np.sum(diffusion_kernel) - \
+                diffusion_kernel[x0,y0]) * (1-d)
+            diffusion_kernel[x0,y0] = d - 1
+            self.diffusion_kernel[n] = diffusion_kernel.copy()
             # self.diffusion_kernel[n] *= (1-d)/120
             # self.diffusion_kernel[n,5,5] = d - 1
-            print(np.sum(self.diffusion_kernel[0]))
-        self.pheromone_field = np.zeros([self.pixel_height, 
-                                         self.pixel_width, 
-                                         3])
+            
         # injection_kernel
         self.injection_kernel = [[]]*3
         for n in range(3):
@@ -178,6 +179,10 @@ class PheromoneModel:
                         injection_kernel[i, j] = 1
             self.injection_kernel[n] = injection_kernel.copy()
         
+        # pheromone field
+        self.pheromone_field = np.zeros([self.pixel_height, 
+                                         self.pixel_width,
+                                         3])
     def transform_loaded_image(self, source_img, img_w, img_h, gray=False, resize=True):
         if len(source_img.shape) == 3:
             img_real = cv2.cvtColor(source_img, cv2.COLOR_BGR2RGB)
@@ -307,6 +312,7 @@ if __name__ == "__main__":
     phero_model = PheromoneModel()
     phero_model.evaporation_factor = np.array([100000,100000,100000])
     phero_model.diffusion_factor = np.array([0.2,0.1,0.2])
+    phero_model.d_kernel_s_factor = np.array([51,91,21])
     phero_model.injection_factor = np.array([200.0,200.0,300.0])
     phero_model.radius_factor = np.ones(3).astype('int')*10
     phero_model.update_parameters()

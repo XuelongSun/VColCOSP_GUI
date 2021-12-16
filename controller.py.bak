@@ -617,8 +617,8 @@ class Controller:
                                                     self.phero_bg_info_paras['arena_border_width'])
                         font = cv2.FONT_HERSHEY_SIMPLEX
                         for k,v in pos.items():
-                            if (v[0] >= 0) and (v[0] <= self.arena_length) and \
-                                (v[1]>=0) and (v[1] <= self.arena_width):
+                            if (v[0] >= 0) and (v[0] <= self.arena_width) and \
+                                (v[1]>=0) and (v[1] <= self.arena_length):
                                 y = int(v[0]/self.arena_length*self.phero_model.pixel_width)
                                 x = int(v[1]/self.arena_width*self.phero_model.pixel_height)
                                 # pos-text
