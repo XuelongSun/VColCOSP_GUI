@@ -644,7 +644,7 @@ class Controller:
                                                         self.phero_bg_info_paras['pos_marker_color'],
                                                         self.phero_bg_info_paras['pos_marker_width'])
                             else:
-                                self.viewer.system_logger('Invalid position value from LOCALIZATION:({},{}) of ID:({})'.format(x,y,k),
+                                self.viewer.system_logger('Invalid position value from LOCALIZATION:({},{}) of ID:({})'.format(v[0],v[1],k),
                                                           log_type='warning')                    
                         self.phero_background_image = image.copy()
                     # if got the positions of the robots
