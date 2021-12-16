@@ -231,7 +231,7 @@ class Controller:
         self.vscene_loaded_image_path = self.load_picture(self.viewer.vscene) 
         
     def vscene_video_player(self):
-        self.vscene_frame_rate = self.viewer.vscene.spinBox_led_v_frame_rate.value()
+        self.vscene_frame_rate = self.viewer.vscene.spinBox_frame_rate.value()
         if self.vscene_display_mode == "Video":
             #* grating
             if self.viewer.vscene.tabWidget_led_v.currentIndex() == 0:
@@ -310,7 +310,7 @@ class Controller:
                                            self.vscene_image)
         
     def vscene_start_video(self):
-        self.vscene_frame_rate = self.viewer.vscene.spinBox_led_v_frame_rate.value()
+        self.vscene_frame_rate = self.viewer.vscene.spinBox_frame_rate.value()
         self.vscene_timer.start(int(1000/self.vscene_frame_rate))
     
     def vscene_stop_video(self):
