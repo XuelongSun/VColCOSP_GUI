@@ -650,10 +650,14 @@ class Controller:
                     # if got the positions of the robots
                     # if 'only-background' checked
                     if self.viewer.phero.cb_bg_only.isChecked():
-                        phero_image = np.zeros([self.pixel_height, self.pixel_width, 3]).astype(np.unit8)
+                        phero_image = np.zeros([self.phero_model.pixel_height, 
+                                                self.phero_model.pixel_width, 3]).astype(np.uint8)
                     else:
-                        phero_image = self.phero_model.render_pheromone(pos, self.phero_channel,
+                        try:
+                            phero_image = self.phero_model.render_pheromone(pos, self.phero_channel,
                                                                         self.arena_length, self.arena_width)
+                        except:
+                            QMessageBox.warning(self.viewer.phero, 'error', 'Please try to refresh parameters.')
                     if self.phero_background_image is None:
                         QMessageBox.warning(self.viewer.phero,'Error','No valide background image!')
                         self.phero_timer.stop()
@@ -849,9 +853,9 @@ class Controller:
             #                                        (int(self.loc_robot_pos_xs[-1][i]/1.5*960),
             #                                         int(self.loc_robot_pos_ys[-1][i]/0.8*540)),
             #                                        font, 1, (0, 0, 255), 2)
-        # add to the view
-        img = cv2.cvtColor(self.loc_display_img, cv2.COLOR_BGR2RGB)
-        self.viewer.loc.update_localization_dislay(img)
+            # add to the view
+            img = cv2.cvtColor(self.loc_display_img, cv2.COLOR_BGR2RGB)
+            self.viewer.loc.update_localization_dislay(img)
         
 if __name__ == "__main__":
 
