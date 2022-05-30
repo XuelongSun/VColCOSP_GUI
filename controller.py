@@ -84,6 +84,7 @@ class Controller:
         self.viewer.phero.pb_load_phero_video.clicked.connect(self.phero_load_video)
         self.viewer.phero.pb_save_config.clicked.connect(self.phero_save_config)
         self.viewer.phero.pb_load_config.clicked.connect(self.phero_load_config)
+        self.viewer.phero.pb_bg_load_img.clicked.connect(self.phero_load_bg_img)
         self.phero_screen = LEDScreen()
         # pheromone background settings
         self.phero_background_image = None
@@ -108,6 +109,7 @@ class Controller:
         self.phero_timer = QTimer()
         self.phero_timer.timeout.connect(self.phero_render)
         self.phero_loaded_image_path = None
+        self.phero_bg_loaded_image_path = None
         self.phero_loaded_video_path = None
         self.phero_video_capture = None
         self.phero_frame_num = 0
@@ -534,7 +536,10 @@ class Controller:
             self.phero_loaded_video_path = filename
             self.phero_video_capture = cv2.VideoCapture(filename)
             self.phero_video_t_frame = int(self.phero_video_capture.get(cv2.CAP_PROP_FRAME_COUNT))
-           
+    
+    def phero_load_bg_img(self):
+        self.phero_bg_loaded_image_path = self.load_picture(self.viewer.phero)
+
     def phero_show_pheromone(self):
         # self.phero_refresh_parameter()
         if (self.viewer.phero.pb_show.text() == "Show") and (self.phero_image is not None):
@@ -601,8 +606,10 @@ class Controller:
             if not self.loc_data_thread.stop:
                 # the latest frame data
                 pos = self.loc_data_thread.loc_data_model.get_last_pos()
+                # if got the positions of the robots
                 if pos:
                     if self.viewer.phero.radioButton_info.isChecked():
+                        # use information
                         image = np.zeros([self.phero_model.pixel_height,
                                           self.phero_model.pixel_width, 3],
                                          dtype=np.uint8)
@@ -647,7 +654,31 @@ class Controller:
                                 self.viewer.system_logger('Invalid position value from LOCALIZATION:({},{}) of ID:({})'.format(v[0],v[1],k),
                                                           log_type='warning')                    
                         self.phero_background_image = image.copy()
-                    # if got the positions of the robots
+                    elif self.viewer.phero.radioButton_image.isChecked():
+                        # use background image
+                        if self.phero_bg_loaded_image_path is None:
+                            QMessageBox.warning(self.viewer.phero, 
+                                                'Error', 
+                                                'Please load background image first!')
+                            self.phero_timer.stop()
+                        else:
+                            image = cv2.imread(self.phero_bg_loaded_image_path)
+                        if image is None:
+                            QMessageBox.warning(self.viewer.vscene, 
+                                                'Error', 
+                                                'Cannot load image:{}'.format(self.phero_bg_loaded_image_path))
+                            self.phero_timer.stop()
+                        else:
+                            self.phero_background_image = image.copy()
+                    elif self.viewer.phero.radioButton_sc.isChecked():
+                        # use singel color
+                        pass
+                    elif self.viewer.phero.radioButton_draw.isChecked():
+                        # drawing a background image
+                        pass
+                    else:
+                        pass
+                    
                     # if 'only-background' checked
                     if self.viewer.phero.cb_bg_only.isChecked():
                         phero_image = np.zeros([self.phero_model.pixel_height, 
