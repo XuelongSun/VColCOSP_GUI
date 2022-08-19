@@ -1,12 +1,16 @@
 <RCC>
   <qresource prefix="resource">
+    <file>resources/robot2host.png</file>
+    <file>resources/distribution.png</file>
+    <file>resources/map.png</file>
+    <file>resources/plot.png</file>
     <file>resources/pheromone.png</file>
-    <file>resources.qrc</file>
     <file>resources/visual_scene.png</file>
     <file>resources/icon_go.png</file>
     <file>resources/icon_key.png</file>
     <file>resources/icon_user.png</file>
     <file>resources/login_background.png</file>
     <file>resources/localization.png</file>
+    <file>resources/communication.png</file>
   </qresource>
 </RCC>

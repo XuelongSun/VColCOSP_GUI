@@ -5,9 +5,14 @@ import configparser
 from multiprocessing import Process
 import cv2
 import numpy as np
+import struct as st
+import time
+import serial
+import serial.tools.list_ports
+import threading
 from PyQt5.QtWidgets import QApplication, QFileDialog, QMessageBox, QColorDialog
 from PyQt5.QtCore import Qt, QTimer, QThread, pyqtSignal
-from model import LedImageProcess, PheromoneModel, LocDataModel
+from model import LedImageProcess, PheromoneModel, LocDataModel, SerialDataModel
 from viewer import LEDScreen, Viewer
 
 class SocketDataReceiver(QThread):
@@ -36,6 +41,8 @@ class SocketDataReceiver(QThread):
 class Controller:
     def __init__(self):
         self.viewer = Viewer()
+        
+        self.sys_time = time.time()
         
         #* login
         self.viewer.login.pushButton_login.clicked.connect(self.login)
@@ -130,6 +137,30 @@ class Controller:
         
         self.loc_data_display_timer = QTimer()
         self.loc_data_display_timer.timeout.connect(self.loc_data_display)
+        
+        #* communication
+        self.viewer.main_menu.pb_com.clicked.connect(lambda: self.viewer.com.show())
+        # robot data via USB-serial
+        self.serial_data_model = SerialDataModel()
+        # data interface
+        self.thread_robot_data_capture = Process(target=self.serial_run_capture)
+        self.serial_port = serial.Serial()
+        self.serial_send_package_len = 32
+        self.serial_recv_package_len = 96
+        self.robot_data_buff = []
+        self.serial_data_is_running = False
+        self.valid_robot_ids = []
+        self.viewer.com.pb_scan_port.clicked.connect(self.serial_ports_scan)
+        self.viewer.com.pb_open_port.clicked.connect(self.serial_port_open)
+        self.viewer.com.pb_close_port.clicked.connect(self.serial_port_close)
+        self.robot_motion_ctl_table = {'forward':'MFD', 'backward':'MBK', 'left':'MML', 'right': 'MMR',
+                                       'start': 'MST', 'stop':'MSP'}
+        for k in self.robot_motion_ctl_table.keys():
+            eval('self.viewer.com.pb_motion_' + k + '.clicked.connect(self.serial_send_motion)')
+        self.viewer.com.pb_start_capture.clicked.connect(self.serial_start_capture)
+        self.viewer.com.pb_request_update.clicked.connect(self.serial_request_data)
+        self.viewer.com.pb_raw_send.clicked.connect(self.serial_send_raw_data)
+        self.viewer.com.pb_raw_clear.clicked.connect(lambda:self.viewer.com.text_edit_recv_raw.clear())
         
     def login(self):
         self.viewer.login.close()
@@ -887,7 +918,201 @@ class Controller:
             # add to the view
             img = cv2.cvtColor(self.loc_display_img, cv2.COLOR_BGR2RGB)
             self.viewer.loc.update_localization_dislay(img)
+    
+    def serial_ports_scan(self):
+        # get the valid serial ports as a list
+        port_list = serial.tools.list_ports.comports()
+        self.viewer.com.comboBox_com_port.clear()
+        for pl in port_list:
+            self.viewer.com.comboBox_com_port.addItem(pl[0])
+        if len(port_list) > 0:
+            self.viewer.system_logger("Serial Port scanned, got %d ports"%(len(port_list)))
+        else:
+            self.viewer.system_logger("Serial Port scanned, no port is available", log_type='warning')
+    
+    def serial_port_open(self):
+        if self.serial_port.isOpen():
+            QMessageBox.warning(self.viewer.com, 'Error', 'Port is already opened')
+        else:
+            com_name = self.viewer.com.comboBox_com_port.currentText()
+            if com_name != '':
+                self.serial_port.port = com_name
+                try:
+                    self.serial_port.open()
+                except:
+                    QMessageBox.warning(self.viewer.com, 'Error', 'Cannot open port.')
+                    self.viewer.system_logger('try to open ' + com_name + ', but failed')
+                if self.serial_port.isOpen():
+                    self.viewer.system_logger(com_name + ' is successfully opened')
+            else:
+                QMessageBox.warning(self.viewer.com, 'Error', 'No Port is available')
+    
+    def serial_port_close(self):
+        if self.serial_port.isOpen():
+            self.serial_port.close()
+            com_name = self.viewer.com.comboBox_com_port.currentText()
+            if not self.serial_port.isOpen():
+                self.viewer.system_logger(com_name + ' is closed')
+        else:
+            QMessageBox.warning(self.viewer.com, 'Error', 'No port is open')
+    
+    def serial_run_capture(self):
+        while self.serial_data_is_running:
+            if self.serial_port.isOpen():
+                d_display = b''
+                d = self.serial_port.read(1)
+                if d:
+                    d_display += d
+                    # check frame head and end
+                    if d == b'\x01':
+                        d = self.serial_port.read(1)
+                        d_display += d
+                        if d == b'\xfe':
+                            # got frame head, then read {self.serial_package_len} bytes
+                            # print('got frame head')
+                            data = self.serial_port.read(int(self.serial_recv_package_len))
+                            # print(len(data), data)
+                            d_display += data
+                            # check frame end
+                            d = self.serial_port.read(2)
+                            if d == b'\xfe\x01':
+                                # print(data)
+                                # got frame end
+                                # print('got frame end')
+                                # update robot data
+                                d_display += d
+                                self.serial_data_model.data_transfer(data)
+                                # self.serial_port.reset_input_buffer()
+
+                    # raw data display
+                    if self.viewer.com.cb_show_raw.isChecked():
+                        raw_data_str = ''
+                        if self.viewer.com.cb_show_raw_hex.isChecked():
+                            for c in d_display:
+                                raw_data_str += ('0'*(c <= 15) + str(hex(c))[2:]) + ' '
+                        else:
+                            raw_data_str = d_display.decode('utf-8', errors='replace')
+                        self.viewer.com.text_edit_recv_raw.insertPlainText(raw_data_str)
+    
+    def serial_port_send(self, data, r_id=None):
+        header = b''
+        # add robot ID
+        # if not given, get from the GUI
+        if r_id is None:
+            if self.viewer.com.cb_send_to_all.isChecked():
+                r_id = 200
+            else:
+                r_id = self.viewer.com.cbox_send_robot_id.currentText()
+                if r_id == '':
+                    QMessageBox.warning(self.viewer.com, 'Error', 'No valid Robot ID')
+                    self.viewer.system_logger('Try to send data, but failed with no valid Robot ID', 'error')
+                    return
+                else:
+                    r_id = int(r_id)
+        # header : ID (1 bytes) + SYS_TIME(4 bytes)
+        header = st.pack('B', r_id)
+        # add time stamp - ms
+        t = int((time.time() - self.sys_time) * 1000)
+        header += st.pack('L', t)
+
+        data = header + data
+        # data package must be {self.serial_package_len} bytes
+        if len(data) <= self.serial_send_package_len:
+            data += b'\x00' * (self.serial_send_package_len-len(data))
+        else:
+            pass
+        # add frame head and end and then send
+        try:
+            len_bytes = self.serial_port.write(b'\x01\xfe' + data + b'\xfe\x01')
+        except:
+            QMessageBox.warning(self.viewer.com, 'Error', 'Cannot send data')
+            self.viewer.system_logger('Try to send data, but failed -_-', 'error')
+            return
+        self.viewer.system_logger('Send %d bytes data via serial port: \n %s' % (len_bytes, data))
+    
+    def serial_send_raw_data(self):
+        send_str = self.viewer.com.text_edit_send_raw.toPlainText()
+        if self.viewer.com.cb_send_hex.isChecked():
+            # '12 34 ac ed' -> b'\x12\x34\xac\xed'
+            send_data = bytes().fromhex(send_str.replace(" ", ""))
+            if self.viewer.com.cb_send_newline.isChecked():
+                send_data += b'\x0d\x0a'
+        else:
+            send_data = b''
+            for s in send_str.split(" "):
+                print(s)
+                # num - int
+                if s.isdigit():
+                    send_data += st.pack('f', int(s))
+                # num - float
+                elif '.' in s:
+                    s_s = s.split('.')
+                    if s_s[0].isdigit and s_s[1].isdigit:
+                        send_data += st.pack('f', (float(s)))
+                # letters and markers
+                else:
+                    send_data += bytes(s, encoding='utf-8')
+        self.serial_port_send(send_data)
+    
+    def serial_send_motion(self):
+        m = self.viewer.com.sender().objectName()[16:]
+        speed = self.viewer.com.sp_motion_speed.value()
+        data = self.robot_motion_ctl_table[m].encode('utf-8') + st.pack('f', speed)
+        self.serial_port_send(data)
+    
+    def serial_port_send_parameter(self):
+        data = b'DWP'
+        for i in range(5):
+            if eval('self.viewer.com.cb_send_p_' + str(i+1) + '.isChecked()'):
+                f = eval('self.viewer.com.sp_send_p_' + str(i+1) + '.value()')
+                data += st.pack('f', f)
+        # print(data)
+        self.serial_port_send(data)
+
+    def serial_request_data(self):
+        data_request_num = self.viewer.com.sp_num_packs.value()
         
+        if self.viewer.com.cb_request_all.isChecked():
+            r_id = 200
+        else:
+            r_id = self.viewer.com.cbox_request_id.currentText()
+            if r_id == '':
+                QMessageBox.warning(self.viewer.com, 'Error', 'No valid Robot ID')
+                self.viewer.system_logger('Try to send data, but failed with no valid Robot ID', 'error')
+                return
+            else:
+                r_id = int(r_id)
+
+        data = 'DR'.encode('utf-8')
+        data += st.pack('B', data_request_num)
+        self.serial_port_send(data, r_id=r_id)
+
+    def serial_start_capture(self):
+        if self.viewer.com.pb_start_capture.text() == 'Start Capture':
+            if self.serial_port.isOpen():
+                print('start capture...')
+                self.viewer.system_logger('start capturing robot data...')
+                self.robot_data_is_running = True
+                if not self.thread_robot_data_capture.is_alive():
+                    self.thread_robot_data_capture = threading.Thread(target=self.serial_run_capture)
+                    self.thread_robot_data_capture.start()
+                self.viewer.com.pb_start_capture.setText('Stop Capture')
+                self.viewer.com.pb_open_port.setDisabled(True)
+                self.viewer.com.pb_close_port.setDisabled(True)
+                self.viewer.com.pb_scan_port.setDisabled(True)
+            else:
+                QMessageBox.warning(self.viewer.com, 'Error',
+                                    'The serial port is not open, please open the port and retry')
+
+        elif self.viewer.com.pb_start_capture.text() == 'Stop Capture':
+            self.viewer.system_logger('stop capturing robot data')
+            self.robot_data_is_running = False
+            self.viewer.com.pb_start_capture.setText('Start Capture')
+            self.viewer.com.pb_open_port.setDisabled(False)
+            self.viewer.com.pb_close_port.setDisabled(False)
+            self.viewer.com.pb_scan_port.setDisabled(False)
+
+
 if __name__ == "__main__":
 
     QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)

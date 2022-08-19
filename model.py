@@ -1,9 +1,78 @@
 import re
 import numpy as np
+import struct as st
 import matplotlib.pyplot as plt
 import cv2
 
 from viewer import PheroBgInfoSetting
+
+class SerialDataModel(object):
+    def __init__(self):
+        self.data_str_table = {'SYS-T': 0,
+                               'V-BAT': 1,
+                               'CURRENT': 2,
+                               'YAW': 3,
+                               'PITCH': 4,
+                               'ROLL': 5,
+                               'TCRT-ON-L': 6,
+                               'TCRT-ON-M': 7,
+                               'TCRT-ON-R': 8,
+                               'TCRT-OFF-L': 9,
+                               'TCRT-OFF-M': 10,
+                               'TCRT-OFF-R': 11,
+                               'APDS-L': 12,
+                               'APDS-R': 13,
+                               'COL-S-F-R': 14,
+                               'COL-S-F-G': 15,
+                               'COL-S-F-B': 16,
+                               'COL-S-B-R': 17,
+                               'COL-S-B-G': 18,
+                               'COL-S-B-B': 19,
+                               'COL-S-L-R': 20,
+                               'COL-S-L-G': 21,
+                               'COL-S-L-B': 22,
+                               'COL-S-R-R': 23,
+                               'COL-S-R-G': 24,
+                               'COL-S-R-B': 25,
+                               'AVDM': 26,
+                               'P-L': 27,
+                               'FFI': 28,
+                               'T-FLAG': 29
+                               }
+        # data
+        # last 7B is reserved
+        # '=' means that Size and alignment, bytes
+        self.pack_code = '=1B1L2B3h6H2H12H9f7B'
+        self.num_package = 0
+        # robot
+        self.robot_data = {}
+
+    def data_transfer(self, b):
+        # unpack data
+        data = st.unpack(self.pack_code, b)
+        self.num_package += 1
+        # re-arrange data based on robot ID
+        # already exits
+        if data[0] in self.robot_data.keys():
+            self.robot_data[data[0]].append(data[1:])
+        else:
+            # add new id to robot data
+            self.robot_data.update({data[0]: [data[1:]]})
+
+    def get_robots_data(self, data_str, t=None):
+        data = {}
+        if t is not None:
+            list_data = [v[t][self.data_str_table[data_str]] for k, v in self.robot_data.items()]
+        else:
+            list_data = [[v[t][self.data_str_table[data_str]] for t in range(len(v))] for k, v in self.robot_data.items()]
+        for i, k in enumerate(self.robot_data.keys()):
+            data.update({k: list_data[i]})
+        return data
+
+    def get_robot_data(self, robot_id, data_str, t=None):
+        data = list(zip(*self.robot_data[robot_id]))
+        return data[self.data_str_table[data_str]] if t is None else data[self.data_str_table[data_str]][t]
+
 
 class LedImageProcess:
     def __init__(self):

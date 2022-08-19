@@ -16,6 +16,8 @@ from viewers.Ui_vscene import Ui_vscene
 from viewers.Ui_pheromone import Ui_phero
 from viewers.Ui_localization import Ui_localization
 from viewers.Ui_phero_bg_info_setting import Ui_phero_bg_info_setting
+from viewers.Ui_communication import Ui_com
+
 
 class WinLogin(QMainWindow, Ui_Login):
     def __init__(self):
@@ -234,7 +236,14 @@ class PheroBgInfoSetting(QMainWindow, Ui_phero_bg_info_setting):
     
     def click_cancel(self):
         self.signal.emit('Cancel')
-        
+
+
+class Communication(Ui_com, QMainWindow):
+    def __init__(self):
+        super(Communication, self).__init__()
+        self.setupUi(self)
+        self.setFixedSize(self.width(), self.height())
+    
 class Viewer:
     def __init__(self):
         self.login = WinLogin()
@@ -242,6 +251,8 @@ class Viewer:
         self.vscene = VScene()
         self.phero = Pheromone()
         self.loc = Localization()
+        self.com = Communication()
+        
         self.phero_bg_setting = PheroBgInfoSetting()
         
         self.logger_str_header = {'error': '--Err: ', 'info': '-Info: ', 'warning': '-Warn: '}

@@ -14,7 +14,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_localization(object):
     def setupUi(self, localization):
         localization.setObjectName("localization")
-        localization.resize(630, 630)
+        localization.resize(630, 635)
         localization.setStyleSheet("background-color: rgb(0, 0, 0);\n"
 "color: rgb(19, 126, 124);")
         self.label_8 = QtWidgets.QLabel(localization)
