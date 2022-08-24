@@ -847,7 +847,10 @@ class Controller:
         self.camera = HighFpsCamera.Camera()
         cameraCnt, cameraList = self.enumCameras()
         if cameraCnt is None:
-            self.viewer.show_message_box('No camera founded')
+            self.viewer.show_message_box('No camera founded'.format(camera.getKey(camera)))
+        else:
+            camera = cameraList[0]
+            self.viewer.show_message_box('Camera {} founded')
         
     def loc_tcp_connect(self):
         if not self.loc_tcp_is_connected:
