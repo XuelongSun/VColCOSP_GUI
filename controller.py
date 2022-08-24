@@ -1,3 +1,4 @@
+import imp
 import sys
 import os
 import socket
@@ -14,6 +15,7 @@ from PyQt5.QtWidgets import QApplication, QFileDialog, QMessageBox, QColorDialog
 from PyQt5.QtCore import Qt, QTimer, QThread, pyqtSignal
 from model import LedImageProcess, PheromoneModel, LocDataModel, SerialDataModel
 from viewer import LEDScreen, Viewer
+from camera import HighFpsCamera
 
 class SocketDataReceiver(QThread):
     singal = pyqtSignal(str)
@@ -126,14 +128,17 @@ class Controller:
         #* localization
         self.viewer.main_menu.pb_loc.clicked.connect(self.loc_show_window)
         self.viewer.loc.signal.connect(self.loc_event_handle)
-        self.loc_tcp_is_connected = False
-        self.viewer.loc.pb_connect_to_loc.clicked.connect(self.loc_tcp_connect)
-        self.loc_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.loc_data_thread = SocketDataReceiver(self.loc_socket)
-        self.viewer.loc.pb_read_data.clicked.connect(self.loc_toggle_read_data)
-        self.viewer.loc.pb_read_data.setDisabled(True)
-        self.viewer.loc.pb_disconnect_to_loc.setDisabled(True)
-        self.viewer.loc.pb_disconnect_to_loc.clicked.connect(self.loc_socket_disconnect)
+        self.viewer.loc.pb_check_camera.connect(self.loc_check_camera)
+        
+        # previous localization from swarmcon
+        # self.loc_tcp_is_connected = False
+        # self.viewer.loc.pb_connect_to_loc.clicked.connect(self.loc_tcp_connect)
+        # self.loc_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        # self.loc_data_thread = SocketDataReceiver(self.loc_socket)
+        # self.viewer.loc.pb_read_data.clicked.connect(self.loc_toggle_read_data)
+        # self.viewer.loc.pb_read_data.setDisabled(True)
+        # self.viewer.loc.pb_disconnect_to_loc.setDisabled(True)
+        # self.viewer.loc.pb_disconnect_to_loc.clicked.connect(self.loc_socket_disconnect)
         
         self.loc_data_display_timer = QTimer()
         self.loc_data_display_timer.timeout.connect(self.loc_data_display)
@@ -161,7 +166,11 @@ class Controller:
         self.viewer.com.pb_request_update.clicked.connect(self.serial_request_data)
         self.viewer.com.pb_raw_send.clicked.connect(self.serial_send_raw_data)
         self.viewer.com.pb_raw_clear.clicked.connect(lambda:self.viewer.com.text_edit_recv_raw.clear())
-        
+        # visualization plots
+        self.viewer.main_menu.pb_add_plot.clicked.connect(self.exp_visualization_add_plot)
+        self.viewer.main_menu.pb_add_map.clicked.connect(self.exp_visualization_add_plot)
+        self.viewer.main_menu.pb_add_distribution.clicked.connect(self.exp_visualization_add_plot)
+    
     def login(self):
         self.viewer.login.close()
         self.viewer.main_menu.show()
@@ -834,6 +843,12 @@ class Controller:
             self.viewer.main_menu.pb_loc.setDisabled(False)
             self.viewer.loc.hide()
     
+    def loc_check_camera(self):
+        self.camera = HighFpsCamera.Camera()
+        cameraCnt, cameraList = self.enumCameras()
+        if cameraCnt is None:
+            self.viewer.show_message_box('No camera founded')
+        
     def loc_tcp_connect(self):
         if not self.loc_tcp_is_connected:
             ip = self.viewer.loc.te_socket_ip.toPlainText()
@@ -1111,6 +1126,11 @@ class Controller:
             self.viewer.com.pb_open_port.setDisabled(False)
             self.viewer.com.pb_close_port.setDisabled(False)
             self.viewer.com.pb_scan_port.setDisabled(False)
+    
+    def exp_visualization_add_plot(self):
+        name = self.viewer.main_menu.sender().objectName()
+        print(name)
+        self.viewer.add_visualization_figure(name)
 
 
 if __name__ == "__main__":

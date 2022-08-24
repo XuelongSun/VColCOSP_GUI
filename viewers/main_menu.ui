@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>640</width>
-    <height>480</height>
+    <height>584</height>
    </rect>
   </property>
   <property name="font">
@@ -26,10 +26,10 @@ color: rgb(19, 126, 124);</string>
   <widget class="QPushButton" name="pb_loc">
    <property name="geometry">
     <rect>
-     <x>140</x>
-     <y>100</y>
-     <width>131</width>
-     <height>101</height>
+     <x>8</x>
+     <y>60</y>
+     <width>140</width>
+     <height>70</height>
     </rect>
    </property>
    <property name="font">
@@ -59,10 +59,10 @@ border-radius:10px;
   <widget class="QPushButton" name="pb_phero">
    <property name="geometry">
     <rect>
-     <x>140</x>
-     <y>240</y>
-     <width>131</width>
-     <height>101</height>
+     <x>476</x>
+     <y>60</y>
+     <width>140</width>
+     <height>70</height>
     </rect>
    </property>
    <property name="font">
@@ -93,9 +93,9 @@ border-radius:10px;
    <property name="geometry">
     <rect>
      <x>320</x>
-     <y>240</y>
-     <width>131</width>
-     <height>101</height>
+     <y>60</y>
+     <width>140</width>
+     <height>70</height>
     </rect>
    </property>
    <property name="font">
@@ -117,10 +117,10 @@ border-radius:10px;</string>
   <widget class="QPushButton" name="pb_vscene">
    <property name="geometry">
     <rect>
-     <x>320</x>
-     <y>100</y>
-     <width>131</width>
-     <height>101</height>
+     <x>164</x>
+     <y>60</y>
+     <width>140</width>
+     <height>70</height>
     </rect>
    </property>
    <property name="font">
@@ -150,8 +150,8 @@ border-radius:10px;
   <widget class="QTextEdit" name="text_edit_sys_info">
    <property name="geometry">
     <rect>
-     <x>10</x>
-     <y>380</y>
+     <x>6</x>
+     <y>174</y>
      <width>621</width>
      <height>81</height>
     </rect>
@@ -163,8 +163,8 @@ border-radius:10px;
   <widget class="QLabel" name="et_time">
    <property name="geometry">
     <rect>
-     <x>10</x>
-     <y>350</y>
+     <x>6</x>
+     <y>144</y>
      <width>621</width>
      <height>21</height>
     </rect>
@@ -216,7 +216,552 @@ border-top-color: rgb(0, 0, 0);</string>
     <string>Welcome to VColCOSP, </string>
    </property>
   </widget>
+  <widget class="QLabel" name="label_11">
+   <property name="geometry">
+    <rect>
+     <x>254</x>
+     <y>268</y>
+     <width>125</width>
+     <height>25</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>12</pointsize>
+     <weight>75</weight>
+     <bold>true</bold>
+    </font>
+   </property>
+   <property name="text">
+    <string>Experiment</string>
+   </property>
+   <property name="alignment">
+    <set>Qt::AlignCenter</set>
+   </property>
+  </widget>
+  <widget class="Line" name="line_13">
+   <property name="geometry">
+    <rect>
+     <x>378</x>
+     <y>268</y>
+     <width>251</width>
+     <height>25</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">color: rgb(19, 126, 124);</string>
+   </property>
+   <property name="frameShadow">
+    <enum>QFrame::Plain</enum>
+   </property>
+   <property name="lineWidth">
+    <number>4</number>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Horizontal</enum>
+   </property>
+  </widget>
+  <widget class="Line" name="line_14">
+   <property name="geometry">
+    <rect>
+     <x>6</x>
+     <y>268</y>
+     <width>247</width>
+     <height>25</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">color: rgb(19, 126, 124);</string>
+   </property>
+   <property name="frameShadow">
+    <enum>QFrame::Plain</enum>
+   </property>
+   <property name="lineWidth">
+    <number>4</number>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Horizontal</enum>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="pb_start_exp">
+   <property name="geometry">
+    <rect>
+     <x>14</x>
+     <y>400</y>
+     <width>223</width>
+     <height>73</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>10</pointsize>
+     <weight>75</weight>
+     <bold>true</bold>
+    </font>
+   </property>
+   <property name="cursor">
+    <cursorShape>PointingHandCursor</cursorShape>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">QPushButton::disabled {
+    border: 2px solid rgb(149, 149, 149);
+	color:rgb(149, 149, 149);
+	border-radius:10px;
+}
+QPushButton{
+border: 2px solid rgb(19, 126, 124);
+border-radius:10px;
+}
+</string>
+   </property>
+   <property name="text">
+    <string>Start 
+ Experiment</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_54">
+   <property name="geometry">
+    <rect>
+     <x>18</x>
+     <y>304</y>
+     <width>67</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>10</pointsize>
+     <weight>75</weight>
+     <bold>true</bold>
+    </font>
+   </property>
+   <property name="text">
+    <string>Name:</string>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="lineEdit">
+   <property name="geometry">
+    <rect>
+     <x>84</x>
+     <y>304</y>
+     <width>151</width>
+     <height>20</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_55">
+   <property name="geometry">
+    <rect>
+     <x>18</x>
+     <y>335</y>
+     <width>147</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>10</pointsize>
+     <weight>75</weight>
+     <bold>true</bold>
+    </font>
+   </property>
+   <property name="text">
+    <string>Task Frame Rate:</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="pb_save_data_setting">
+   <property name="geometry">
+    <rect>
+     <x>352</x>
+     <y>332</y>
+     <width>91</width>
+     <height>49</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>10</pointsize>
+     <weight>75</weight>
+     <bold>true</bold>
+    </font>
+   </property>
+   <property name="cursor">
+    <cursorShape>PointingHandCursor</cursorShape>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">QPushButton::disabled {
+    border: 2px solid rgb(149, 149, 149);
+	color:rgb(149, 149, 149);
+	border-radius:10px;
+}
+QPushButton{
+border: 2px solid rgb(19, 126, 124);
+border-radius:10px;
+}
+</string>
+   </property>
+   <property name="text">
+    <string>Settings</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="pb_save_data">
+   <property name="geometry">
+    <rect>
+     <x>502</x>
+     <y>350</y>
+     <width>115</width>
+     <height>33</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>10</pointsize>
+     <weight>75</weight>
+     <bold>true</bold>
+    </font>
+   </property>
+   <property name="cursor">
+    <cursorShape>PointingHandCursor</cursorShape>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">QPushButton::disabled {
+    border: 2px solid rgb(149, 149, 149);
+	color:rgb(149, 149, 149);
+	border-radius:10px;
+}
+QPushButton{
+border: 2px solid rgb(19, 126, 124);
+border-radius:10px;
+}
+</string>
+   </property>
+   <property name="text">
+    <string>Save Data</string>
+   </property>
+  </widget>
+  <widget class="QTextEdit" name="text_edit_sys_info_2">
+   <property name="geometry">
+    <rect>
+     <x>14</x>
+     <y>506</y>
+     <width>611</width>
+     <height>67</height>
+    </rect>
+   </property>
+   <property name="readOnly">
+    <bool>true</bool>
+   </property>
+  </widget>
+  <widget class="QLabel" name="et_time_2">
+   <property name="geometry">
+    <rect>
+     <x>16</x>
+     <y>484</y>
+     <width>607</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <family>SimSun</family>
+     <pointsize>9</pointsize>
+     <weight>75</weight>
+     <bold>true</bold>
+    </font>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">color: rgb(19, 126, 124);
+border-top-color: rgb(0, 0, 0);</string>
+   </property>
+   <property name="frameShape">
+    <enum>QFrame::NoFrame</enum>
+   </property>
+   <property name="text">
+    <string>Timer</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="pb_add_map">
+   <property name="geometry">
+    <rect>
+     <x>434</x>
+     <y>412</y>
+     <width>81</width>
+     <height>29</height>
+    </rect>
+   </property>
+   <property name="cursor">
+    <cursorShape>PointingHandCursor</cursorShape>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">QPushButton::disabled {
+    border: 2px solid rgb(149, 149, 149);
+	color:rgb(149, 149, 149);
+	border-radius:4px;
+}
+QPushButton{
+border: 2px solid rgb(19, 126, 124);
+border-radius:4px;
+}
+</string>
+   </property>
+   <property name="text">
+    <string>+ Map</string>
+   </property>
+   <property name="icon">
+    <iconset resource="../resources.qrc">
+     <normaloff>:/resource/resources/map.png</normaloff>:/resource/resources/map.png</iconset>
+   </property>
+   <property name="iconSize">
+    <size>
+     <width>20</width>
+     <height>20</height>
+    </size>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="pb_add_distribution">
+   <property name="geometry">
+    <rect>
+     <x>344</x>
+     <y>448</y>
+     <width>173</width>
+     <height>29</height>
+    </rect>
+   </property>
+   <property name="cursor">
+    <cursorShape>PointingHandCursor</cursorShape>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">QPushButton::disabled {
+    border: 2px solid rgb(149, 149, 149);
+	color:rgb(149, 149, 149);
+	border-radius:4px;
+}
+QPushButton{
+border: 2px solid rgb(19, 126, 124);
+border-radius:4px;
+}
+</string>
+   </property>
+   <property name="text">
+    <string>+ Distribution</string>
+   </property>
+   <property name="icon">
+    <iconset resource="../resources.qrc">
+     <normaloff>:/resource/resources/distribution.png</normaloff>:/resource/resources/distribution.png</iconset>
+   </property>
+   <property name="iconSize">
+    <size>
+     <width>20</width>
+     <height>20</height>
+    </size>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="pb_destroy_figure">
+   <property name="geometry">
+    <rect>
+     <x>532</x>
+     <y>412</y>
+     <width>81</width>
+     <height>63</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>10</pointsize>
+     <weight>75</weight>
+     <bold>true</bold>
+    </font>
+   </property>
+   <property name="cursor">
+    <cursorShape>PointingHandCursor</cursorShape>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">QPushButton::disabled {
+    border: 2px solid rgb(149, 149, 149);
+	color:rgb(149, 149, 149);
+	border-radius:4px;
+}
+QPushButton{
+border: 2px solid rgb(19, 126, 124);
+border-radius:4px;
+}
+</string>
+   </property>
+   <property name="text">
+    <string>Destroy All</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="pb_add_plot">
+   <property name="geometry">
+    <rect>
+     <x>344</x>
+     <y>412</y>
+     <width>79</width>
+     <height>29</height>
+    </rect>
+   </property>
+   <property name="cursor">
+    <cursorShape>PointingHandCursor</cursorShape>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">QPushButton::disabled {
+    border: 2px solid rgb(149, 149, 149);
+	color:rgb(149, 149, 149);
+	border-radius:4px;
+}
+QPushButton{
+border: 2px solid rgb(19, 126, 124);
+border-radius:4px;
+}
+</string>
+   </property>
+   <property name="text">
+    <string>+ Plot</string>
+   </property>
+   <property name="icon">
+    <iconset resource="../resources.qrc">
+     <normaloff>:/resource/resources/plot.png</normaloff>:/resource/resources/plot.png</iconset>
+   </property>
+   <property name="iconSize">
+    <size>
+     <width>20</width>
+     <height>20</height>
+    </size>
+   </property>
+  </widget>
+  <widget class="Line" name="line_11">
+   <property name="geometry">
+    <rect>
+     <x>492</x>
+     <y>390</y>
+     <width>133</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">color: rgb(19, 126, 124);</string>
+   </property>
+   <property name="frameShadow">
+    <enum>QFrame::Plain</enum>
+   </property>
+   <property name="lineWidth">
+    <number>2</number>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Horizontal</enum>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_27">
+   <property name="geometry">
+    <rect>
+     <x>344</x>
+     <y>390</y>
+     <width>141</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <weight>75</weight>
+     <bold>true</bold>
+    </font>
+   </property>
+   <property name="text">
+    <string>| Data Visualization</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_28">
+   <property name="geometry">
+    <rect>
+     <x>342</x>
+     <y>306</y>
+     <width>141</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <weight>75</weight>
+     <bold>true</bold>
+    </font>
+   </property>
+   <property name="text">
+    <string>| Data Saving</string>
+   </property>
+  </widget>
+  <widget class="Line" name="line_12">
+   <property name="geometry">
+    <rect>
+     <x>442</x>
+     <y>306</y>
+     <width>183</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">color: rgb(19, 126, 124);</string>
+   </property>
+   <property name="frameShadow">
+    <enum>QFrame::Plain</enum>
+   </property>
+   <property name="lineWidth">
+    <number>2</number>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Horizontal</enum>
+   </property>
+  </widget>
+  <widget class="QSpinBox" name="sp_motion_speed">
+   <property name="geometry">
+    <rect>
+     <x>164</x>
+     <y>336</y>
+     <width>69</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">border: 2px soild rgb(19, 126, 124);
+color: rgb(0,255, 0);
+</string>
+   </property>
+   <property name="minimum">
+    <number>1</number>
+   </property>
+   <property name="maximum">
+    <number>100</number>
+   </property>
+   <property name="singleStep">
+    <number>1</number>
+   </property>
+   <property name="value">
+    <number>10</number>
+   </property>
+   <property name="displayIntegerBase">
+    <number>10</number>
+   </property>
+  </widget>
+  <widget class="QCheckBox" name="cb_auto_save">
+   <property name="geometry">
+    <rect>
+     <x>504</x>
+     <y>326</y>
+     <width>109</width>
+     <height>19</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Auto Save</string>
+   </property>
+  </widget>
  </widget>
- <resources/>
+ <resources>
+  <include location="../resources.qrc"/>
+ </resources>
  <connections/>
 </ui>

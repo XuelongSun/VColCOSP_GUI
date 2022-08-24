@@ -1,23 +1,25 @@
 import datetime
-import matplotlib.pyplot as plt
+
 import numpy as np
 import cv2
 import sys
 import numpy as np
+import pyqtgraph as pg
 from PyQt5.QtWidgets import QApplication
-
 from PyQt5.QtCore import Qt, pyqtSignal, QRect
 from PyQt5.QtGui import QImage, QPixmap, QTextCursor
-from PyQt5.QtWidgets import QMainWindow, QLabel, QColorDialog, QFontDialog
+from PyQt5.QtWidgets import QMainWindow, QLabel, QColorDialog, QFontDialog, QWidget
 
 from viewers.Ui_login import Ui_Login
 from viewers.Ui_main_menu import Ui_main_menu
 from viewers.Ui_vscene import Ui_vscene
 from viewers.Ui_pheromone import Ui_phero
 from viewers.Ui_localization import Ui_localization
+from viewers.Ui_localization_embedded import Ui_localization_embedded
 from viewers.Ui_phero_bg_info_setting import Ui_phero_bg_info_setting
 from viewers.Ui_communication import Ui_com
-
+from viewers.Ui_visualization_plots import Ui_VisualizationPlot
+from viewers.Ui_message_box import Ui_message
 
 class WinLogin(QMainWindow, Ui_Login):
     def __init__(self):
@@ -101,6 +103,23 @@ class Localization(QMainWindow, Ui_localization):
         print('closing the localization window')
         self.signal.emit('close')
 
+
+class LocalizationEmbedded(QMainWindow, Ui_localization_embedded):
+    signal = pyqtSignal(str)
+    def __init__(self):
+        super(LocalizationEmbedded, self).__init__()
+        self.setupUi(self)
+        self.setFixedSize(self.width(), self.height())
+        self.label_localization_dislay.setScaledContents(True)
+    
+    def update_localization_dislay(self, img):
+        _image = QImage(img[:], img.shape[1], img.shape[0], img.shape[1] * 3, QImage.Format_RGB888)
+        self.label_localization_dislay.setPixmap(QPixmap(_image))
+    
+    def closeEvent(self, event):
+        print('closing the localization window')
+        self.signal.emit('close')
+    
 class LEDScreen(QMainWindow):
     def __init__(self):
         super(LEDScreen, self).__init__()
@@ -243,20 +262,71 @@ class Communication(Ui_com, QMainWindow):
         super(Communication, self).__init__()
         self.setupUi(self)
         self.setFixedSize(self.width(), self.height())
+
+
+class VisualizationPlot(Ui_VisualizationPlot, QMainWindow):
+    close_signal = pyqtSignal(str)
+    def __init__(self, index, type='plot') -> None:
+        super(VisualizationPlot, self).__init__()
+        self.setupUi(self)
+        self._types = ['plot', 'map', 'bar']
+        self.type = type
+        self.plot_index = index
+        self.generate_figure()
     
+    def generate_figure(self):
+        self.figure = pg.PlotWidget()
+        self.figure.setBackground('k')
+        self.vl_figure.addWidget(self.figure)
+        # if self.type == 'plot':
+
+        # elif self.type == 'map':
+        #     self.figure = pg.ScatterPlotWidget()
+        #     self.figure.setBackground('k')
+        # elif self.type == 'bar':
+        #     self.figure = pg.BarGraphItem()
+        #     self.figure.setBackground('k')
+        # else:
+        #     pass
+    
+    def closeEvent(self, event) -> None:
+        super().closeEvent(event)
+        self.close_signal.emit('close')
+
+
+class MessageBox(QMainWindow, Ui_message):
+    def __init__(self):
+        super(MessageBox, self).__init__()
+        self.setupUi(self)
+
 class Viewer:
     def __init__(self):
         self.login = WinLogin()
         self.main_menu = MainMenu()
         self.vscene = VScene()
         self.phero = Pheromone()
-        self.loc = Localization()
+        # self.loc = Localization()
+        self.loc = LocalizationEmbedded()
         self.com = Communication()
+        self.message_box = MessageBox()
+        self.plots = []
         
         self.phero_bg_setting = PheroBgInfoSetting()
         
         self.logger_str_header = {'error': '--Err: ', 'info': '-Info: ', 'warning': '-Warn: '}
         self.logger_str_color = {'error': 'red', 'info': 'green', 'warning': 'orange'}
+    
+    def add_visualization_figure(self, name='plot'):
+        self.plots.append(VisualizationPlot(len(self.plots),name))
+        self.plots[-1].show()
+        self.plots[-1].close_signal.connect(lambda: self.plots.remove(self.plots[-1]))
+        print(self.plots)
+    
+    def remove_visualization_figure(self, all=False):
+        if all:
+            pass
+        else:
+            pass
     
     def system_logger(self, log, log_type='info', out='system'):
         time_e = datetime.datetime.now()
@@ -281,6 +351,12 @@ class Viewer:
             cursor.movePosition(QTextCursor.End)
             self.text_edit_exp_info.setTextCursor(cursor)
             self.text_edit_exp_info.insertHtml(s)
+    
+    def show_message_box(self, msg, msg_type='info'):
+        html_str = "<p>{}</p>"
+        self.message_box.textEdit.setHtml(html_str.format(msg))
+        self.message_box.show()
+        
 
 if __name__ == '__main__':
     App = QApplication(sys.argv)
