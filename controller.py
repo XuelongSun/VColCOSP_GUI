@@ -3,7 +3,7 @@ import sys
 import os
 import socket
 import configparser
-from multiprocessing import Process
+from multiprocessing import Process, Pipe
 import cv2
 import numpy as np
 import struct as st
@@ -125,10 +125,11 @@ class Controller:
         self.arena_length = 0.8
         self.arena_width = 0.6
         
-        #* localization
+        # localization
+        self.loc_refresh_timer = QTimer()
         self.viewer.main_menu.pb_loc.clicked.connect(self.loc_show_window)
         self.viewer.loc.signal.connect(self.loc_event_handle)
-        self.viewer.loc.pb_check_camera.connect(self.loc_check_camera)
+        self.viewer.loc.pb_check_camera.clicked.connect(self.loc_check_camera)
         
         # previous localization from swarmcon
         # self.loc_tcp_is_connected = False
@@ -845,12 +846,12 @@ class Controller:
     
     def loc_check_camera(self):
         self.camera = HighFpsCamera.Camera()
-        cameraCnt, cameraList = self.enumCameras()
+        cameraCnt, cameraList = self.camera.enumCameras()
         if cameraCnt is None:
-            self.viewer.show_message_box('No camera founded'.format(camera.getKey(camera)))
+            self.viewer.show_message_box('No camera founded')
         else:
             camera = cameraList[0]
-            self.viewer.show_message_box('Camera {} founded')
+            self.viewer.show_message_box('Camera {} founded'.format(camera.getKey(camera)))
         
     def loc_tcp_connect(self):
         if not self.loc_tcp_is_connected:

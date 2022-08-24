@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
-
-
+import sys
+sys.path.append('./camera')
 from ImageConvert import *
 from MVSDK import *
 import struct
