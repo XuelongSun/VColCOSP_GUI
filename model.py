@@ -4,7 +4,7 @@ import struct as st
 import matplotlib.pyplot as plt
 import cv2
 import copy
-from viewer import PheroBgInfoSetting
+import sys
 
 class SerialDataModel(object):
     def __init__(self):
@@ -405,7 +405,7 @@ class LocalizationModel(object):
 			print('The camera and coordination is not calibrated, please calibrate it first')
 			sys.exit()
 		else:
-			with np.load('./localize/calibration_data.npz') as X:
+			with np.load('./camera/calibration_data.npz') as X:
 				self.mtx, self.dist, rvecs, tvecs, self.PresM = [X[i] for i in ('mtx','dist','rvecs','tvecs','PresM')]
 		temp_array = np.array([0,0,0])
 		mtx1 = np.insert(self.mtx,3,temp_array,axis=1)
@@ -416,9 +416,9 @@ class LocalizationModel(object):
 		self.p2w_M = self.w2p_M.I
 		self.newcameramtx, roi = cv2.getOptimalNewCameraMatrix(self.mtx, self.dist, (1920,1200), 0, (1920,1200))
 		
-		IDTable = np.loadtxt('./localize/ID.txt')
+		IDTable = np.loadtxt('./temps/ID.txt')
 
-		self.r_output=open("./img/data.txt",'w+') 
+		self.r_output = open("./temps/loc_data.txt",'w+') 
 
 		self.num_of_pattern = 16
 		self.arena_size = (1.4,0.8)
@@ -554,12 +554,12 @@ class LocalizationModel(object):
 		possib_pos = self.get_possible_posi(img_ori)
 		self.id_cam_pos = []
 		self.world_pos = []
-		for i,pos in enumerate(possib_pos):
+		for i, pos in enumerate(possib_pos):
 			id_cam_pos = self.segment(img_ori, pos, i)
 			if id_cam_pos is not None:
 				self.id_cam_pos.append(copy.deepcopy(id_cam_pos))
 				self.world_pos.append(self.trans_corrdi_p2w(self.p2w_M, self.PresM, id_cam_pos))
-		return self.world_pos
+		return self.world_pos, self.id_cam_pos
 
 
 if __name__ == "__main__":

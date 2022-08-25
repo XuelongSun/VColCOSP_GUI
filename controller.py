@@ -1,7 +1,5 @@
-import imp
 import sys
 import os
-import socket
 import configparser
 from multiprocessing import Process
 import cv2
@@ -129,10 +127,13 @@ class Controller:
         # localization
         self.loc_model = LocalizationModel()
         self.loc_refresh_timer = QTimer()
-        self.loc_thread_computing = Process(target=self.loc_computing)
+        self.loc_refresh_timer.timeout.connect(self.loc_display)
         self.loc_camera = HighFpsCamera.Camera()
+        self.loc_has_started = False
         self.loc_is_running = False
+        self.loc_current_image = None
         self.loc_world_location = []
+        self.loc_image_location = []
         self.viewer.main_menu.pb_loc.clicked.connect(self.loc_show_window)
         self.viewer.loc_embedded.signal.connect(self.loc_event_handle)
         self.viewer.loc_embedded.pb_check_camera.clicked.connect(self.loc_check_camera)
@@ -797,7 +798,7 @@ class Controller:
         else:
             QMessageBox.warning(self.viewer.phero, 'Error',
                                 'Not a valid filename!')
-        
+
     def phero_load_config(self):
         filename, _ = QFileDialog.getOpenFileName(self.viewer.phero, 
                                                   'Load config File', './')
@@ -851,23 +852,57 @@ class Controller:
     
     def loc_start(self):
         text = self.viewer.loc_embedded.sender().text()
-        print(text)
-        if self.loc_camera.start_grab_img() == 0:
-            print('start grab image success')
-        else:
-            self.viewer.show_message_box("Error: cannot start capture image from")
-            return
-        time.sleep(1)
-        if not self.loc_thread_computing.is_alive():
-            self.loc_thread_computing.start()
+        if text == 'Start':
+            if self.loc_camera.start_grab_img() == 0:
+                time.sleep(1)
+                print('start grab image success')
+            else:
+                self.viewer.show_message_box("Error: cannot start capture image from")
+                return
             self.loc_is_running = True
-    
+            self.loc_thread_computing = threading.Thread(target=self.loc_computing)
+            self.loc_thread_computing.start()
+            # display
+            self.loc_refresh_timer.start(100)
+            self.viewer.loc_embedded.pb_start.setText("Pause")
+        elif text == 'Pause':
+            self.loc_is_running = False
+            if self.loc_camera.stop_grab_img() == 0:
+                print('Grabbing image stopped')
+            self.viewer.loc_embedded.pb_start.setText("Start")
+            self.loc_refresh_timer.stop()
+        else:
+            pass
+
     def loc_computing(self):
         while self.loc_is_running:
-            img_raw = self.loc_camera.get_gray_image()
-            # img = cv2.cvtColor(self.loc_display_img, cv2.COLOR_BGR2RGB)
-            self.loc_world_location.append(self.loc_model.search_pattern(img_raw))
-            self.viewer.loc_embedded.update_localization_display(img_raw)
+            # grab image from camera
+            self.loc_current_image = self.loc_camera.get_gray_image()
+            # calculate locations
+            w_loc, i_loc = self.loc_model.search_pattern(self.loc_current_image)
+            # print(w_loc, i_loc, sep='||')
+            self.loc_world_location.append(w_loc)
+            self.loc_image_location.append(i_loc)
+
+    def loc_display(self):
+        # color image
+        img_display = self.loc_camera.get_BGR_image()
+        for info in self.loc_image_location[-1]:
+            if self.viewer.loc_embedded.cb_show_id.isChecked():
+                img_display = cv2.putText(img_display, str(info[0]), (info[1], info[2]),
+                                          cv2.FONT_HERSHEY_COMPLEX_SMALL, 3, (255, 0, 0), 3)
+            if self.viewer.loc_embedded.cb_show_marker.isChecked():
+                img_display = cv2.circle(img_display, (info[1], info[2]), 20, (255, 0, 0), 4)
+            if self.viewer.loc_embedded.cb_show_location.isChecked():
+                img_display = cv2.putText(img_display, '[{:3d}, {:3d}]'.format(info[1], info[2]),
+                                          (info[1]+20, info[2]),
+                                          cv2.FONT_HERSHEY_COMPLEX_SMALL, 3, (0, 255, 255), 3)
+        # if self.viewer.loc_embedded.cb_show_trajectory.isChecked():
+        #     end_ind = np.min([20, len(self.loc_image_location)])
+        #     for t in range(end_ind):
+        #         for i, info in enumerate(self.loc_image_location[-1:-end_ind+1]):
+        #             pass
+        self.viewer.loc_embedded.update_localization_display(img_display)
         
     def serial_ports_scan(self):
         # get the valid serial ports as a list

@@ -113,7 +113,7 @@ class LocalizationEmbedded(QMainWindow, Ui_localization_embedded):
         self.label_localization_display.setScaledContents(True)
     
     def update_localization_display(self, img):
-        _image = QImage(img[:], img.shape[1], img.shape[0], img.shape[1], QImage.Format_Grayscale8)
+        _image = QImage(img[:], img.shape[1], img.shape[0], img.shape[1] * 3, QImage.Format_RGB888)
         self.label_localization_display.setPixmap(QPixmap(_image))
     
     def closeEvent(self, event):
@@ -293,11 +293,19 @@ class VisualizationPlot(Ui_VisualizationPlot, QMainWindow):
         super().closeEvent(event)
         self.close_signal.emit('close')
 
-
 class MessageBox(QMainWindow, Ui_message):
+    response = pyqtSignal(str)
     def __init__(self):
         super(MessageBox, self).__init__()
         self.setupUi(self)
+    
+    def ok_callback(self):
+        self.hide()
+        self.response.emit("OK")
+    
+    def cancel_callback(self):
+        self.hide()
+        self.response.emit("Cancel")
 
 class Viewer:
     def __init__(self):
