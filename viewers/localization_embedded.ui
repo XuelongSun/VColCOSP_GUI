@@ -285,7 +285,7 @@ border-radius:10px;
     <string>number</string>
    </property>
   </widget>
-  <widget class="QLabel" name="label_localization_dislay">
+  <widget class="QLabel" name="label_localization_display">
    <property name="geometry">
     <rect>
      <x>242</x>

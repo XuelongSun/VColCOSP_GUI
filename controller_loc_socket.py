@@ -13,9 +13,9 @@ import serial.tools.list_ports
 import threading
 from PyQt5.QtWidgets import QApplication, QFileDialog, QMessageBox, QColorDialog
 from PyQt5.QtCore import Qt, QTimer, QThread, pyqtSignal
-from model import LedImageProcess, PheromoneModel, LocDataModel, SerialDataModel, LocalizationModel
+from model import LedImageProcess, PheromoneModel, LocDataModel, SerialDataModel
 from viewer import LEDScreen, Viewer
-from camera import HighFpsCamera
+
 
 class SocketDataReceiver(QThread):
     singal = pyqtSignal(str)
@@ -45,7 +45,6 @@ class Controller:
         self.viewer = Viewer()
         
         self.sys_time = time.time()
-        self.sys_timer = QTimer()
         
         #* login
         self.viewer.login.pushButton_login.clicked.connect(self.login)
@@ -127,16 +126,18 @@ class Controller:
         self.arena_width = 0.6
         
         # localization
-        self.loc_model = LocalizationModel()
-        self.loc_refresh_timer = QTimer()
-        self.loc_thread_computing = Process(target=self.loc_computing)
-        self.loc_camera = HighFpsCamera.Camera()
-        self.loc_is_running = False
-        self.loc_world_location = []
         self.viewer.main_menu.pb_loc.clicked.connect(self.loc_show_window)
-        self.viewer.loc_embedded.signal.connect(self.loc_event_handle)
-        self.viewer.loc_embedded.pb_check_camera.clicked.connect(self.loc_check_camera)
-        self.viewer.loc_embedded.pb_start.clicked.connect(self.loc_start)
+        self.loc_tcp_is_connected = False
+        self.viewer.loc.pb_connect_to_loc.clicked.connect(self.loc_tcp_connect)
+        self.loc_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.loc_data_thread = SocketDataReceiver(self.loc_socket)
+        self.viewer.loc.pb_read_data.clicked.connect(self.loc_toggle_read_data)
+        self.viewer.loc.pb_read_data.setDisabled(True)
+        self.viewer.loc.pb_disconnect_to_loc.setDisabled(True)
+        self.viewer.loc.pb_disconnect_to_loc.clicked.connect(self.loc_socket_disconnect)
+        
+        self.loc_data_display_timer = QTimer()
+        self.loc_data_display_timer.timeout.connect(self.loc_data_display)
         
         #* communication
         self.viewer.main_menu.pb_com.clicked.connect(lambda: self.viewer.com.show())
@@ -166,9 +167,6 @@ class Controller:
         self.viewer.main_menu.pb_add_map.clicked.connect(self.exp_visualization_add_plot)
         self.viewer.main_menu.pb_add_distribution.clicked.connect(self.exp_visualization_add_plot)
     
-    def system_frequency_task(self):
-        self.sys_time = time.time()
-        
     def login(self):
         self.viewer.login.close()
         self.viewer.main_menu.show()
@@ -834,41 +832,98 @@ class Controller:
             
     def loc_show_window(self):
         self.viewer.main_menu.pb_loc.setDisabled(True)
-        self.viewer.loc_embedded.show()
+        self.viewer.loc.show()
     
     def loc_event_handle(self, signal):
         if signal == "close":
             self.viewer.main_menu.pb_loc.setDisabled(False)
-            self.viewer.loc_embedded.hide()
+            self.viewer.loc.hide()
+
+    def loc_tcp_connect(self):
+        if not self.loc_tcp_is_connected:
+            ip = self.viewer.loc.te_socket_ip.toPlainText()
+            port = int(self.viewer.loc.te_socket_port.toPlainText())
+            # connect to socket
+            try:
+                self.loc_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                self.loc_data_thread = SocketDataReceiver(self.loc_socket)
+                self.loc_socket.connect((ip, port))
+            except:
+                self.viewer.system_logger('Cannot connect to {} at {}'.format(ip, port),
+                                          log_type="error")
+                print('Cannot connect')
+                return 0
+            # successfully connect
+            self.loc_tcp_is_connected = True
+            self.loc_data_thread.socket_is_connect = True
+            self.viewer.loc.pb_connect_to_loc.setText('^.^')
+            self.viewer.loc.pb_connect_to_loc.setDisabled(True)
+            self.viewer.loc.pb_disconnect_to_loc.setDisabled(False)
+            self.viewer.loc.pb_read_data.setDisabled(False)
     
-    def loc_check_camera(self):
-        cameraCnt, cameraList = self.loc_camera.enumCameras()
-        if cameraCnt is None:
-            self.viewer.show_message_box('No camera founded')
+    def loc_socket_disconnect(self):
+        if self.loc_tcp_is_connected:
+            self.loc_tcp_is_connected = False
+            self.loc_data_thread.socket_is_connect = False
+            self.viewer.loc.pb_connect_to_loc.setText('Connect')
+            self.viewer.loc.pb_connect_to_loc.setDisabled(False)
+            self.viewer.loc.pb_read_data.setDisabled(True)
+            self.loc_socket.shutdown(2)
+            self.loc_socket.close()
         else:
-            camera = cameraList[0]
-            self.viewer.show_message_box('Camera {} founded'.format(camera.getKey(camera)))
+            print('no connection')
     
-    def loc_start(self):
-        text = self.viewer.loc_embedded.sender().text()
-        print(text)
-        if self.loc_camera.start_grab_img() == 0:
-            print('start grab image success')
+    def loc_toggle_read_data(self):
+        if self.viewer.loc.sender().text() == "ReadData":
+            if self.loc_tcp_is_connected:
+                if self.loc_data_thread.stop:
+                    self.loc_data_thread.stop = False
+                    self.loc_data_thread.start()
+                    self.viewer.loc.pb_disconnect_to_loc.setDisabled(True)
+                    self.viewer.loc.pb_read_data.setText('Stop')
+                    self.loc_data_display_timer.start(100)
+            else:
+                print('no valid TCP connection')
+        elif self.viewer.loc.sender().text() == "Stop":
+            self.loc_data_thread.stop = True
+            self.viewer.loc.pb_disconnect_to_loc.setDisabled(False)
+            self.viewer.loc.pb_read_data.setText('ReadData')
         else:
-            self.viewer.show_message_box("Error: cannot start capture image from")
-            return
-        time.sleep(1)
-        if not self.loc_thread_computing.is_alive():
-            self.loc_thread_computing.start()
-            self.loc_is_running = True
+            print(self.viewer.loc.sender().text())
     
-    def loc_computing(self):
-        while self.loc_is_running:
-            img_raw = self.loc_camera.get_gray_image()
-            # img = cv2.cvtColor(self.loc_display_img, cv2.COLOR_BGR2RGB)
-            self.loc_world_location.append(self.loc_model.search_pattern(img_raw))
-            self.viewer.loc_embedded.update_localization_display(img_raw)
-        
+    def loc_data_display(self):
+        if self.loc_data_thread.loc_data_now:
+            # print(self.loc_data_now)
+            self.loc_display_img = np.zeros((540, 960, 3), np.uint8)
+            # the latest frame data
+            pos = self.loc_data_thread.loc_data_model.get_last_pos()
+            if pos:
+                for k, v in pos.items():
+                    self.loc_display_img = cv2.circle(self.loc_display_img,
+                                                      (int(v[0]/self.arena_length*960),
+                                                       int(v[1]/self.arena_width*540)),
+                                                      5, (255, 0, 0))
+                    font = cv2.FONT_HERSHEY_SIMPLEX
+                    dir = ' L' if v[0] < self.arena_length/2 else ' R'
+                    self.loc_display_img = cv2.putText(self.loc_display_img, str(k) + dir,
+                                                       (int(v[0] / self.arena_length * 960),
+                                                        int(v[1] / self.arena_width * 540)),
+                                                       font, 1, (0, 0, 255), 2)
+
+            # for i, id in enumerate(self.loc_robot_ids[-1]):
+            #     self.loc_display_img = cv2.circle(self.loc_display_img,
+            #                                       (int(self.loc_robot_pos_xs[-1][i]/1.5*960),
+            #                                        int(self.loc_robot_pos_ys[-1][i]/0.8*540)),
+            #                                       5, (255, 0, 0))
+            #     font = cv2.FONT_HERSHEY_SIMPLEX
+            #     self.loc_display_img = cv2.putText(self.loc_display_img, str(id),
+            #                                        (int(self.loc_robot_pos_xs[-1][i]/1.5*960),
+            #                                         int(self.loc_robot_pos_ys[-1][i]/0.8*540)),
+            #                                        font, 1, (0, 0, 255), 2)
+            # add to the view
+            img = cv2.cvtColor(self.loc_display_img, cv2.COLOR_BGR2RGB)
+            self.viewer.loc.update_localization_dislay(img)
+    
     def serial_ports_scan(self):
         # get the valid serial ports as a list
         port_list = serial.tools.list_ports.comports()

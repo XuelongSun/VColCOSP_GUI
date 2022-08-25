@@ -590,15 +590,14 @@ class Camera:
 			return -1
 		
 		return 0
-	def get_gray_image(self):
 
+	def get_gray_image(self):
 		grayByteArray = bytearray(self.usr_image)
 		Image = numpy.array(grayByteArray).reshape(1200, 1920)
 		Image = cv.cvtColor(Image, cv.COLOR_BAYER_BG2GRAY)
 		return Image
 
 	def get_BGR_image(self):
-
 		colorByteArray = bytearray(self.usr_image)
 		Image = numpy.array(colorByteArray).reshape(1200, 1920)
 		Image = cv.cvtColor(Image, cv.COLOR_BAYER_BG2BGR)

@@ -110,11 +110,11 @@ class LocalizationEmbedded(QMainWindow, Ui_localization_embedded):
         super(LocalizationEmbedded, self).__init__()
         self.setupUi(self)
         self.setFixedSize(self.width(), self.height())
-        self.label_localization_dislay.setScaledContents(True)
+        self.label_localization_display.setScaledContents(True)
     
-    def update_localization_dislay(self, img):
-        _image = QImage(img[:], img.shape[1], img.shape[0], img.shape[1] * 3, QImage.Format_RGB888)
-        self.label_localization_dislay.setPixmap(QPixmap(_image))
+    def update_localization_display(self, img):
+        _image = QImage(img[:], img.shape[1], img.shape[0], img.shape[1], QImage.Format_Grayscale8)
+        self.label_localization_display.setPixmap(QPixmap(_image))
     
     def closeEvent(self, event):
         print('closing the localization window')
@@ -305,8 +305,8 @@ class Viewer:
         self.main_menu = MainMenu()
         self.vscene = VScene()
         self.phero = Pheromone()
-        # self.loc = Localization()
-        self.loc = LocalizationEmbedded()
+        self.loc = Localization()
+        self.loc_embedded = LocalizationEmbedded()
         self.com = Communication()
         self.message_box = MessageBox()
         self.plots = []
