@@ -97,8 +97,6 @@ class Localization(QMainWindow, Ui_localization):
     
     def update_localization_dislay(self, img):
         _image = QImage(img[:], img.shape[1], img.shape[0], img.shape[1] * 3, QImage.Format_RGB888)
-        # image = QPixmap(_image).scaled(self.label_localization_dislay.width(), 
-        #                                self.loc_label_view.height())
         self.label_localization_dislay.setPixmap(QPixmap(_image))
     
     def closeEvent(self, event):
@@ -299,7 +297,7 @@ class VisualizationPlot(Ui_VisualizationPlot, QMainWindow):
         if self.type == 'plot':
             self.lines.update({data_key:self.figure.plot([0], [0],
                                                         pen=pg.mkPen(self.COLORS[i],
-                                                                    width=2))})
+                                                                    width=1))})
         elif self.type == 'map':
             scatter_plot = pg.ScatterPlotItem(symbol='d',
                                               size=10,
@@ -421,7 +419,7 @@ class Viewer:
     
     def add_visualization_figure(self, data_str, ids, name='plot'):
         self.plots.append(VisualizationPlot(len(self.plots), name))
-        if name == 'mat':
+        if name == 'map':
             self.plots[-1].cbox_data.addItems(ids)
         else:
             self.plots[-1].cbox_data.addItems(data_str)

@@ -541,7 +541,7 @@ class LocalizationModel(object):
 		id = p_pos[0]
 		p_pos[:-1] = p_pos[1:]
 		p_pos[-1] = 1
-		w_pos = np.matmul(p2w_M,p_pos)
+		w_pos = np.matmul(p2w_M, p_pos)
 		w_pos = (w_pos[0]/w_pos[0,3]).tolist()
 		w_pos[0].pop(2)
 		w_pos = np.matmul(PresM,w_pos[0])

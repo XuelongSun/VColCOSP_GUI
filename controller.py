@@ -133,7 +133,7 @@ class Controller:
         self.loc_has_started = False
         self.loc_is_running = False
         self.loc_current_image = None
-        self.loc_world_location = []
+        self.loc_world_locations = {}
         self.loc_image_location = []
         self.viewer.main_menu.pb_loc.clicked.connect(self.loc_show_window)
         self.viewer.loc_embedded.signal.connect(self.loc_event_handle)
@@ -172,6 +172,9 @@ class Controller:
         self.exp_start_time = time.time()
         self.exp_is_running = False
         self.exp_thread = threading.Thread(target=self.exp_task)
+        # experiment data
+        self.exp_availabel_data_key = []
+        self.exp_detected_robot_ids = []
         ## data saving
         self.exp_save_data_selected_id = []
         self.exp_save_data_selected_data = []
@@ -195,19 +198,33 @@ class Controller:
         s = t - h * 3600 - m * 60
         self.viewer.main_menu.et_sys_timer.setText('SystemTime: %2d H %2d M% 2.2f S' % (h, m, s))
         
-        # testing data
-        fake_pos_data = []
-        for i in (1,7,8,10):
-            fake_pos_data.append([i, np.random.rand(1), np.random.rand(1)])
+        # 2.update robot ids and data
+        ## ids from localization
+        if self.loc_world_locations:
+            ids_from_loc = list(self.loc_world_locations.keys())
+
+        ## ids from communication
+        if self.serial_data_is_running:
+            ids_from_com = list(self.serial_data_model.robot_data.keys())
+            
+        ## merge
+        if self.loc_world_locations or self.serial_data_is_running:
+            self.exp_detected_robot_ids = ids_from_loc.copy()
         
-        self.loc_world_location.append(fake_pos_data)
+        # testing data
+        # fake_pos_data = []
+        # for i in (1,7,8,10):
+        #     fake_pos_data.append([i, np.random.rand(1), np.random.rand(1)])
+        
+        # self.loc_world_location.append(fake_pos_data)
         
         # visualization plots
+        # print(self.loc_world_locations, "**")
         for plot in self.viewer.plots:
             for k, v in plot.lines.items():
                 if plot.type == 'plot':
-                    v.setData(x=np.arange(len(self.loc_world_location)),
-                              y=np.array(self.loc_world_location, dtype=float)[:,0,1])
+                    v.setData(x=np.arange(len(self.loc_world_locations[4])),
+                              y=np.array(self.loc_world_locations[4], dtype=np.float)[:,0])
         
     def login(self):
         self.viewer.login.close()
@@ -918,15 +935,17 @@ class Controller:
             # grab image from camera
             self.loc_current_image = self.loc_camera.get_gray_image()
             # calculate locations
-            w_loc, i_loc = self.loc_model.search_pattern(self.loc_current_image)
-            # print(w_loc, i_loc, sep='||')
-            self.loc_world_location.append(w_loc)
-            self.loc_image_location.append(i_loc)
+            w_loc, self.loc_image_location = self.loc_model.search_pattern(self.loc_current_image)
+            for info in w_loc:
+                if info[0] in self.loc_world_locations.keys():
+                    self.loc_world_locations[int(info[0])].append([info[1], info[2]])
+                else:
+                    self.loc_world_locations.update({int(info[0]):[[info[1], info[2]]]})
 
     def loc_display(self):
         # color image
         img_display = self.loc_camera.get_BGR_image()
-        for info in self.loc_image_location[-1]:
+        for info in self.loc_image_location:
             if self.viewer.loc_embedded.cb_show_id.isChecked():
                 img_display = cv2.putText(img_display, str(info[0]), (info[1], info[2]),
                                           cv2.FONT_HERSHEY_COMPLEX_SMALL, 3, (255, 0, 0), 3)
@@ -934,7 +953,7 @@ class Controller:
                 img_display = cv2.circle(img_display, (info[1], info[2]), 20, (255, 0, 0), 4)
             if self.viewer.loc_embedded.cb_show_location.isChecked():
                 img_display = cv2.putText(img_display, '[{:3d}, {:3d}]'.format(info[1], info[2]),
-                                          (info[1]+20, info[2]),
+                                          (info[1], info[2]+40),
                                           cv2.FONT_HERSHEY_COMPLEX_SMALL, 3, (0, 255, 255), 3)
         # if self.viewer.loc_embedded.cb_show_trajectory.isChecked():
         #     end_ind = np.min([20, len(self.loc_image_location)])
@@ -1165,7 +1184,8 @@ class Controller:
         data_save_str = []
         data_save_str += list(self.serial_data_model.data_str_table.keys())
         data_save_str += ['POS_X', 'POS_Y']
-        self.viewer.data_save_setting.update_data_checkbox(data_save_str, (1,7,8,10))
+        self.viewer.data_save_setting.update_data_checkbox(data_save_str,
+                                                           self.exp_detected_robot_ids)
         self.viewer.data_save_setting.show()
     
     def exp_save_data_setting_update(self, answer):
@@ -1198,11 +1218,15 @@ class Controller:
         for d_s in self.exp_save_data_selected_data:
             robot_data = {}
             if d_s == 'POS_X':
-                for r_info in self.loc_world_location[-1]:
-                    robot_data.update({r_info[0]:r_info[1][0]})
+                for k in self.loc_world_locations.keys():
+                    robot_data.update({k:self.loc_world_locations[k][-1][0]})
+                # for r_info in self.loc_world_locations[-1]:
+                #     robot_data.update({r_info[0]:r_info[1]})
             elif d_s == 'POS_Y':
-                for r_info in self.loc_world_location[-1]:
-                    robot_data.update({r_info[0]:r_info[2][0]})
+                for k in self.loc_world_locations.keys():
+                    robot_data.update({k:self.loc_world_locations[k][-1][1]})
+                # for r_info in self.loc_world_location[-1]:
+                #     robot_data.update({r_info[0]:r_info[2]})
             else:
                 robot_data = self.serial_data_model.get_robots_data(d_s, t=-1)
             current_data.append(robot_data)
