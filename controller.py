@@ -1,5 +1,6 @@
 import sys
 import os
+import scipy.io as sio
 import configparser
 from multiprocessing import Process
 import cv2
@@ -42,14 +43,14 @@ class Controller:
     def __init__(self):
         self.viewer = Viewer()
         
-        self.sys_time = time.time()
-        self.sys_timer = QTimer()
-        
         #* login
         self.viewer.login.pushButton_login.clicked.connect(self.login)
         
         #* main menu
         self.viewer.main_menu.pb_vscene.clicked.connect(self.vscene_show_window)
+        self.sys_time = time.time()
+        self.sys_timer = QTimer()
+        self.sys_timer.timeout.connect(self.system_frequency_task)
         
         #* vscene
         self.vscene_model = LedImageProcess()
@@ -94,7 +95,7 @@ class Controller:
         self.viewer.phero.pb_load_config.clicked.connect(self.phero_load_config)
         self.viewer.phero.pb_bg_load_img.clicked.connect(self.phero_load_bg_img)
         self.phero_screen = LEDScreen()
-        # pheromone background settings
+        #* pheromone background settings
         self.phero_background_image = None
         self.phero_bg_sc = (0,0,0) # black
         self.phero_bg_loaded_image = None
@@ -124,7 +125,7 @@ class Controller:
         self.arena_length = 0.8
         self.arena_width = 0.6
         
-        # localization
+        #* localization
         self.loc_model = LocalizationModel()
         self.loc_refresh_timer = QTimer()
         self.loc_refresh_timer.timeout.connect(self.loc_display)
@@ -166,9 +167,47 @@ class Controller:
         self.viewer.main_menu.pb_add_plot.clicked.connect(self.exp_visualization_add_plot)
         self.viewer.main_menu.pb_add_map.clicked.connect(self.exp_visualization_add_plot)
         self.viewer.main_menu.pb_add_distribution.clicked.connect(self.exp_visualization_add_plot)
-    
+        
+        #* experiment
+        self.exp_start_time = time.time()
+        self.exp_is_running = False
+        self.exp_thread = threading.Thread(target=self.exp_task)
+        ## data saving
+        self.exp_save_data_selected_id = []
+        self.exp_save_data_selected_data = []
+        self.exp_data_to_save = []
+        self.exp_save_data_file_type = ".txt"
+        self.exp_save_data_max_l = 500
+        self.exp_save_data_interval = 500
+        self.viewer.main_menu.pb_save_data_setting.clicked.connect(self.exp_save_data_setting)
+        self.viewer.data_save_setting.answer.connect(self.exp_save_data_setting_update)
+        
+        self.viewer.main_menu.pb_start_exp.clicked.connect(self.exp_start)
+        self.viewer.main_menu.pb_save_data.clicked.connect(self.exp_save_data)
+        
+        self.sys_timer.start(100)
+        
     def system_frequency_task(self):
-        self.sys_time = time.time()
+        # 1.system time
+        t = time.time() - self.sys_time
+        h = int(t / 3600)
+        m = int((t - h * 3600) / 60)
+        s = t - h * 3600 - m * 60
+        self.viewer.main_menu.et_sys_timer.setText('SystemTime: %2d H %2d M% 2.2f S' % (h, m, s))
+        
+        # testing data
+        fake_pos_data = []
+        for i in (1,7,8,10):
+            fake_pos_data.append([i, np.random.rand(1), np.random.rand(1)])
+        
+        self.loc_world_location.append(fake_pos_data)
+        
+        # visualization plots
+        for plot in self.viewer.plots:
+            for k, v in plot.lines.items():
+                if plot.type == 'plot':
+                    v.setData(x=np.arange(len(self.loc_world_location)),
+                              y=np.array(self.loc_world_location, dtype=float)[:,0,1])
         
     def login(self):
         self.viewer.login.close()
@@ -1098,9 +1137,174 @@ class Controller:
             self.viewer.com.pb_scan_port.setDisabled(False)
     
     def exp_visualization_add_plot(self):
-        name = self.viewer.main_menu.sender().objectName()
-        print(name)
-        self.viewer.add_visualization_figure(name)
+        name = self.viewer.main_menu.sender().objectName().split("_")[-1]
+        self.viewer.add_visualization_figure(['POS_X', 'POS_Y'], [str(i) for i in (1,7,8,10)], name)
+        self.viewer.plots[-1].signal.connect(self.exp_visualization_plot_callback)
+    
+    def exp_visualization_plot_callback(self, signal):
+        if signal.startswith('close'):
+            # close the plot window
+            for p in self.viewer.plots:
+                if p.plot_index == int(signal.split('_')[1]):
+                    self.viewer.plots.remove(p)
+                    break
+        elif signal.startswith('add'):
+            # add plotting item
+            for p in self.viewer.plots:
+                if p.plot_index == int(signal.split('_')[1]):
+                    p.add_plots(p.cbox_data.currentText())
+                    break
+        elif signal.startswith('remove'):
+                # add plotting item
+            for p in self.viewer.plots:
+                if p.plot_index == int(signal.split('_')[1]):
+                    p.remove_plots(p.cbox_data.currentText())
+                    break
+    
+    def exp_save_data_setting(self):
+        data_save_str = []
+        data_save_str += list(self.serial_data_model.data_str_table.keys())
+        data_save_str += ['POS_X', 'POS_Y']
+        self.viewer.data_save_setting.update_data_checkbox(data_save_str, (1,7,8,10))
+        self.viewer.data_save_setting.show()
+    
+    def exp_save_data_setting_update(self, answer):
+        if answer == 'ok':
+            self.exp_save_data_selected_id = []
+            self.exp_save_data_selected_data = []
+            for k, v in self.viewer.data_save_setting.id_check_box_list.items():
+                if v.isChecked():
+                    self.exp_save_data_selected_id.append(k)
+            for k, v in self.viewer.data_save_setting.data_check_box_list.items():
+                if v.isChecked():
+                    self.exp_save_data_selected_data.append(k)
+            self.exp_save_data_file_type = self.viewer.data_save_setting.cbox_file_type.currentText()
+            self.exp_save_data_interval = self.viewer.data_save_setting.spinBox_time_interval.value()
+            self.exp_save_data_max_l = self.viewer.data_save_setting.spinBox_max_data_length.value()
+            self.viewer.data_save_setting.hide()
+            self.viewer.system_logger('Save data option Changed to: file type: %s, time interval: %d,'
+                                          'max length %d robot: %s data: %s' %(self.exp_save_data_file_type,
+                                                                               self.exp_save_data_interval,
+                                                                               self.exp_save_data_max_l,
+                                                                               str(self.exp_save_data_selected_id),
+                                                                               str(self.exp_save_data_selected_data)))
+            self.exp_data_to_save = []
+        elif answer == 'cancel':
+            self.viewer.data_save_setting.hide()
+    
+    def exp_save_data(self):
+        exp_t = time.time() - self.exp_start_time
+        current_data = []
+        for d_s in self.exp_save_data_selected_data:
+            robot_data = {}
+            if d_s == 'POS_X':
+                for r_info in self.loc_world_location[-1]:
+                    robot_data.update({r_info[0]:r_info[1][0]})
+            elif d_s == 'POS_Y':
+                for r_info in self.loc_world_location[-1]:
+                    robot_data.update({r_info[0]:r_info[2][0]})
+            else:
+                robot_data = self.serial_data_model.get_robots_data(d_s, t=-1)
+            current_data.append(robot_data)
+
+        if self.exp_save_data_file_type == '.txt':
+            # if over max length, then write to file
+            if len(self.exp_data_to_save) >= self.exp_save_data_max_l:
+                print(self.exp_data_to_save)
+                # txt
+                exp_name = self.viewer.main_menu.lineEdit_exp_name.text()
+                filename = exp_name + '_' + str(int(self.exp_start_time)) + '_' + \
+                           '_'.join(self.exp_save_data_selected_data) + '.txt'
+                with open(filename, mode='a') as self.save_data_txt_f:
+                    self.save_data_txt_f.write('\n'.join(self.exp_data_to_save) + '\n')
+                    self.viewer.system_logger(
+                        'Write %d lines of data to txt file successfully' % len(self.exp_data_to_save),
+                        out='exp')
+                    self.exp_data_to_save = []
+            for r in self.exp_save_data_selected_id:
+                data_by_id = [str(exp_t), str(r)]
+                for d in current_data:
+                    try:
+                        data_by_id.append(str(d[r]))
+                    except:
+                        self.viewer.system_logger(
+                            'lost data of robot(ID=%d)' % r, log_type='error', out='exp')
+                data_by_id = ','.join(data_by_id)
+                self.exp_data_to_save.append(data_by_id)
+
+        # save mat file
+        elif self.exp_save_data_file_type == '.mat':
+            if len(self.exp_data_to_save) >= self.exp_save_data_max_l:
+                # mat
+                exp_name = self.viewer.main_menu.lineEdit_exp_name.text()
+                filename = exp_name + '_' + str(int(self.exp_start_time)) + '_' + \
+                           '_'.join(self.exp_save_data_selected_data) + '.mat'
+                try:
+                    saved_dic = sio.loadmat(filename)
+                    save_dic = {'data': np.vstack([saved_dic['data'], self.exp_data_to_save])}
+                except:
+                    # create a new mat file
+                    save_dic = {'data': self.exp_data_to_save}
+                sio.savemat(filename, save_dic)
+                self.viewer.system_logger('Write %d long list to mat file successfully' % len(self.exp_data_to_save),
+                                              out='exp')
+                self.exp_data_to_save = []
+            for r in self.exp_save_data_selected_id:
+                data_by_id = [exp_t, r]
+                for d in current_data:
+                    try:
+                        data_by_id.append(d[r])
+                    except:
+                        self.viewer.system_logger(
+                            'lost data of robot(ID=%d)' % r, log_type='error', out='exp')
+                        break
+                self.exp_data_to_save.append(data_by_id)
+
+            print(len(self.exp_data_to_save))
+        # save csv file
+        elif self.exp_save_data_file_type == '.csv':
+            pass
+        else:
+            print('error')
+    
+    def exp_start(self):
+        print(self.viewer.main_menu.pb_start_exp.text())
+        if self.viewer.main_menu.pb_start_exp.text() == "Start \n Experiment":
+            name = self.viewer.main_menu.lineEdit_exp_name.text()
+            if name == "":
+                self.viewer.show_message_box("Please provide experiment name", 'warning')
+                return
+            self.exp_start_time = time.time()
+            self.exp_is_running = True
+            if not self.exp_thread.is_alive():
+                self.exp_thread = threading.Thread(target=self.exp_task)
+                self.exp_thread.start()
+            self.viewer.main_menu.pb_start_exp.setText("Stop \n Experiment")
+            self.viewer.main_menu.lineEdit_exp_name.setDisabled(True)
+            self.viewer.system_logger('Experiment ' + name + ' started', out='exp')
+        elif self.viewer.main_menu.pb_start_exp.text() == "Stop \n Experiment":
+            self.viewer.main_menu.lineEdit_exp_name.setDisabled(False)
+            self.exp_is_running = False
+            name = self.viewer.main_menu.lineEdit_exp_name.text()
+            self.viewer.system_logger('Experiment ' + name + ' stopped', out='exp')
+            self.viewer.main_menu.pb_start_exp.setText("Start \n Experiment")
+
+    def exp_task(self):
+        while self.exp_is_running:
+            # timer
+            t = time.time() - self.exp_start_time
+            h = int(t / 3600)
+            m = int((t - h * 3600) / 60)
+            s = t - h * 3600 - m * 60
+            self.viewer.main_menu.et_exp_timer.setText('ExperimentTime: %2d H %2d M% 2.2f S' % (h, m, s))
+            # task
+            print('i am running')
+            
+            # save data
+            if self.viewer.main_menu.cb_auto_save.isChecked():
+                self.exp_save_data()
+                
+            time.sleep(0.5)
 
 
 if __name__ == "__main__":

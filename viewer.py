@@ -5,7 +5,7 @@ import cv2
 import sys
 import numpy as np
 import pyqtgraph as pg
-from PyQt5.QtWidgets import QApplication
+from PyQt5.QtWidgets import QApplication, QCheckBox
 from PyQt5.QtCore import Qt, pyqtSignal, QRect
 from PyQt5.QtGui import QImage, QPixmap, QTextCursor
 from PyQt5.QtWidgets import QMainWindow, QLabel, QColorDialog, QFontDialog, QWidget
@@ -20,6 +20,8 @@ from viewers.Ui_phero_bg_info_setting import Ui_phero_bg_info_setting
 from viewers.Ui_communication import Ui_com
 from viewers.Ui_visualization_plots import Ui_VisualizationPlot
 from viewers.Ui_message_box import Ui_message
+from viewers.Ui_data_save_setting import Ui_DataSavingSetting
+
 
 class WinLogin(QMainWindow, Ui_Login):
     def __init__(self):
@@ -265,7 +267,7 @@ class Communication(Ui_com, QMainWindow):
 
 
 class VisualizationPlot(Ui_VisualizationPlot, QMainWindow):
-    close_signal = pyqtSignal(str)
+    signal = pyqtSignal(str)
     def __init__(self, index, type='plot') -> None:
         super(VisualizationPlot, self).__init__()
         self.setupUi(self)
@@ -273,7 +275,11 @@ class VisualizationPlot(Ui_VisualizationPlot, QMainWindow):
         self.type = type
         self.plot_index = index
         self.generate_figure()
-    
+        self.lines = {}
+        self.COLORS = ['r','g','b','c','m','y','k','w']
+        self.pb_add.clicked.connect(lambda:self.signal.emit('add_'+str(self.plot_index)))
+        self.pb_remove.clicked.connect(lambda:self.signal.emit('remove_'+str(self.plot_index)))
+        
     def generate_figure(self):
         self.figure = pg.PlotWidget()
         self.figure.setBackground('k')
@@ -288,16 +294,42 @@ class VisualizationPlot(Ui_VisualizationPlot, QMainWindow):
         #     self.figure.setBackground('k')
         # else:
         #     pass
-    
+    def add_plots(self, data_key):
+        i = len(self.lines) % len(self.COLORS)
+        if self.type == 'plot':
+            self.lines.update({data_key:self.figure.plot([0], [0],
+                                                        pen=pg.mkPen(self.COLORS[i],
+                                                                    width=2))})
+        elif self.type == 'map':
+            scatter_plot = pg.ScatterPlotItem(symbol='d',
+                                              size=10,
+                                              brush=pg.mkBrush(self.COLORS[i]))
+            self.lines.update({data_key:scatter_plot})
+            self.figure.addItem(scatter_plot)
+        elif self.type == "distribution":
+            bar_plot = pg.BarGraphItem(brush=pg.mkBrush(self.COLORS[i]))
+            self.lines.update({data_key:bar_plot})
+            self.figure.addItem(scatter_plot)
+        
+        print(self.lines)
+        
+    def remove_plots(self, data_key):
+        if data_key in self.lines.keys():
+            self.lines.pop(data_key)
+        print(self.lines)
+        
     def closeEvent(self, event) -> None:
         super().closeEvent(event)
-        self.close_signal.emit('close')
+        self.signal.emit('close_' + str(self.plot_index))
+
 
 class MessageBox(QMainWindow, Ui_message):
     response = pyqtSignal(str)
     def __init__(self):
         super(MessageBox, self).__init__()
         self.setupUi(self)
+        self.pb_ok.clicked.connect(self.ok_callback)
+        self.pb_cancel.clicked.connect(self.cancel_callback)
     
     def ok_callback(self):
         self.hide()
@@ -307,6 +339,68 @@ class MessageBox(QMainWindow, Ui_message):
         self.hide()
         self.response.emit("Cancel")
 
+
+class DialogSaveDataSetting(QMainWindow, Ui_DataSavingSetting):
+    answer = pyqtSignal(str)
+
+    def __init__(self, parent=None):
+        super(DialogSaveDataSetting, self).__init__(parent)
+        self.setupUi(self)
+        self.gridLayout_data.setSpacing(8)
+        self.gridLayout_data.setSpacing(3)
+        self.data_check_box_list = {}
+        self.id_check_box_list = {}
+        self.pushButton_all_data.clicked.connect(self.check_all_data)
+        self.pushButton_all_robot.clicked.connect(self.check_all_id)
+        self.pushButton_ok.clicked.connect(self.dialog_answer)
+        self.pushButton_cancel.clicked.connect(self.dialog_answer)
+
+    def update_data_checkbox(self, data=None, robot_id=None):
+        row_num = 12
+        if data is not None:
+            for d in data:
+                if d not in self.data_check_box_list.keys():
+                    i = len(self.data_check_box_list)
+                    self.data_check_box_list[d] = QCheckBox()
+                    self.data_check_box_list[d].setText(d)
+                    self.data_check_box_list[d].setChecked(False)
+                    self.data_check_box_list[d].setObjectName("checkBox_data_" + d)
+                    self.gridLayout_data.addWidget(self.data_check_box_list[d], int(i % row_num), int(i // row_num))
+        row_num = 5
+        if robot_id is not None:
+            for d in robot_id:
+                if d not in self.id_check_box_list.keys():
+                    i = len(self.id_check_box_list)
+                    self.id_check_box_list[d] = QCheckBox()
+                    self.id_check_box_list[d].setText(str(d))
+                    self.id_check_box_list[d].setChecked(False)
+                    self.id_check_box_list[d].setObjectName("checkBox_id_" + str(d))
+                    self.gridLayout_id.addWidget(self.id_check_box_list[d], int(i % row_num), int(i // row_num))
+    
+    def check_all_data(self):
+        if self.pushButton_all_data.text() == 'All DATA':
+            for k, v in self.data_check_box_list.items():
+                v.setChecked(True)
+            self.pushButton_all_data.setText('Reset Data')
+        elif self.pushButton_all_data.text() == 'Reset Data':
+            for k, v in self.data_check_box_list.items():
+                v.setChecked(False)
+            self.pushButton_all_data.setText('All DATA')
+
+    def check_all_id(self):
+        if self.pushButton_all_robot.text() == 'All ROBOT':
+            for k, v in self.id_check_box_list.items():
+                v.setChecked(True)
+            self.pushButton_all_robot.setText('Reset ROBOT')
+        elif self.pushButton_all_robot.text() == 'Reset ROBOT':
+            for k, v in self.id_check_box_list.items():
+                v.setChecked(False)
+            self.pushButton_all_robot.setText('All ROBOT')
+
+    def dialog_answer(self):
+        print('data_save_setting: %s' % self.sender().objectName()[11:])
+        self.answer.emit(self.sender().objectName()[11:])
+                    
 class Viewer:
     def __init__(self):
         self.login = WinLogin()
@@ -317,6 +411,7 @@ class Viewer:
         self.loc_embedded = LocalizationEmbedded()
         self.com = Communication()
         self.message_box = MessageBox()
+        self.data_save_setting = DialogSaveDataSetting()
         self.plots = []
         
         self.phero_bg_setting = PheroBgInfoSetting()
@@ -324,17 +419,14 @@ class Viewer:
         self.logger_str_header = {'error': '--Err: ', 'info': '-Info: ', 'warning': '-Warn: '}
         self.logger_str_color = {'error': 'red', 'info': 'green', 'warning': 'orange'}
     
-    def add_visualization_figure(self, name='plot'):
-        self.plots.append(VisualizationPlot(len(self.plots),name))
-        self.plots[-1].show()
-        self.plots[-1].close_signal.connect(lambda: self.plots.remove(self.plots[-1]))
-        print(self.plots)
-    
-    def remove_visualization_figure(self, all=False):
-        if all:
-            pass
+    def add_visualization_figure(self, data_str, ids, name='plot'):
+        self.plots.append(VisualizationPlot(len(self.plots), name))
+        if name == 'mat':
+            self.plots[-1].cbox_data.addItems(ids)
         else:
-            pass
+            self.plots[-1].cbox_data.addItems(data_str)
+        self.plots[-1].show()
+        print(self.plots, self.plots[-1].type, self.plots[-1].plot_index)
     
     def system_logger(self, log, log_type='info', out='system'):
         time_e = datetime.datetime.now()
@@ -355,10 +447,10 @@ class Viewer:
             self.main_menu.text_edit_sys_info.setTextCursor(cursor)
             self.main_menu.text_edit_sys_info.insertHtml(s)
         elif out == 'exp':
-            cursor = self.text_edit_exp_info.textCursor()
+            cursor = self.main_menu.text_edit_exp_info.textCursor()
             cursor.movePosition(QTextCursor.End)
-            self.text_edit_exp_info.setTextCursor(cursor)
-            self.text_edit_exp_info.insertHtml(s)
+            self.main_menu.text_edit_exp_info.setTextCursor(cursor)
+            self.main_menu.text_edit_exp_info.insertHtml(s)
     
     def show_message_box(self, msg, msg_type='info'):
         html_str = "<p>{}</p>"

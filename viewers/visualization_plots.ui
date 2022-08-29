@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>487</width>
-    <height>373</height>
+    <width>940</width>
+    <height>497</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -105,8 +105,8 @@ border-radius:4px;
     <rect>
      <x>14</x>
      <y>64</y>
-     <width>457</width>
-     <height>297</height>
+     <width>917</width>
+     <height>421</height>
     </rect>
    </property>
    <layout class="QVBoxLayout" name="vl_figure"/>
