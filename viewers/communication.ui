@@ -10,7 +10,7 @@
     <x>0</x>
     <y>0</y>
     <width>620</width>
-    <height>633</height>
+    <height>743</height>
    </rect>
   </property>
   <property name="focusPolicy">
@@ -63,48 +63,11 @@ color: rgb(19, 126, 124);</string>
     <enum>QFrame::Raised</enum>
    </property>
   </widget>
-  <widget class="QLabel" name="label_5">
-   <property name="geometry">
-    <rect>
-     <x>16</x>
-     <y>310</y>
-     <width>109</width>
-     <height>21</height>
-    </rect>
-   </property>
-   <property name="font">
-    <font>
-     <family>Arial</family>
-     <pointsize>10</pointsize>
-     <weight>75</weight>
-     <bold>true</bold>
-    </font>
-   </property>
-   <property name="text">
-    <string>Data Source:</string>
-   </property>
-  </widget>
-  <widget class="QRadioButton" name="radioButton_realtime">
-   <property name="geometry">
-    <rect>
-     <x>28</x>
-     <y>338</y>
-     <width>89</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Real Time</string>
-   </property>
-   <property name="checked">
-    <bool>false</bool>
-   </property>
-  </widget>
   <widget class="QPushButton" name="pb_scan_port">
    <property name="geometry">
     <rect>
      <x>14</x>
-     <y>208</y>
+     <y>212</y>
      <width>113</width>
      <height>31</height>
     </rect>
@@ -178,7 +141,7 @@ color: rgb(255, 255, 127);
    <property name="geometry">
     <rect>
      <x>14</x>
-     <y>242</y>
+     <y>252</y>
      <width>113</width>
      <height>31</height>
     </rect>
@@ -213,8 +176,8 @@ border-radius:10px;
   <widget class="QPushButton" name="pb_close_port">
    <property name="geometry">
     <rect>
-     <x>14</x>
-     <y>276</y>
+     <x>12</x>
+     <y>290</y>
      <width>113</width>
      <height>31</height>
     </rect>
@@ -249,9 +212,9 @@ border-radius:10px;
   <widget class="QPlainTextEdit" name="text_edit_recv_raw">
    <property name="geometry">
     <rect>
-     <x>156</x>
+     <x>154</x>
      <y>196</y>
-     <width>443</width>
+     <width>445</width>
      <height>131</height>
     </rect>
    </property>
@@ -261,8 +224,8 @@ border-radius:10px;
     <rect>
      <x>156</x>
      <y>432</y>
-     <width>273</width>
-     <height>95</height>
+     <width>351</width>
+     <height>27</height>
     </rect>
    </property>
   </widget>
@@ -405,10 +368,10 @@ border-radius:4px;
   <widget class="QPushButton" name="pb_raw_send">
    <property name="geometry">
     <rect>
-     <x>282</x>
-     <y>408</y>
-     <width>145</width>
-     <height>21</height>
+     <x>512</x>
+     <y>404</y>
+     <width>81</width>
+     <height>51</height>
     </rect>
    </property>
    <property name="cursor">
@@ -433,7 +396,7 @@ border-radius:4px;
   <widget class="QCheckBox" name="cb_send_hex">
    <property name="geometry">
     <rect>
-     <x>236</x>
+     <x>238</x>
      <y>410</y>
      <width>41</width>
      <height>19</height>
@@ -504,9 +467,9 @@ border-radius:4px;
    <property name="geometry">
     <rect>
      <x>16</x>
-     <y>410</y>
+     <y>382</y>
      <width>109</width>
-     <height>41</height>
+     <height>69</height>
     </rect>
    </property>
    <property name="font">
@@ -574,22 +537,6 @@ border-radius:10px;
  Data Cache</string>
    </property>
   </widget>
-  <widget class="QRadioButton" name="radioButton_from_file">
-   <property name="geometry">
-    <rect>
-     <x>28</x>
-     <y>360</y>
-     <width>89</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>From File</string>
-   </property>
-   <property name="checked">
-    <bool>false</bool>
-   </property>
-  </widget>
   <widget class="QLabel" name="label_43">
    <property name="geometry">
     <rect>
@@ -638,9 +585,9 @@ border-radius:10px;
   <widget class="QCheckBox" name="cb_send_to_all">
    <property name="geometry">
     <rect>
-     <x>444</x>
+     <x>448</x>
      <y>364</y>
-     <width>157</width>
+     <width>153</width>
      <height>19</height>
     </rect>
    </property>
@@ -651,8 +598,8 @@ border-radius:10px;
   <widget class="QDoubleSpinBox" name="sp_send_p_5">
    <property name="geometry">
     <rect>
-     <x>526</x>
-     <y>510</y>
+     <x>358</x>
+     <y>494</y>
      <width>79</width>
      <height>16</height>
     </rect>
@@ -675,8 +622,8 @@ color: rgb(0,255, 0);
   <widget class="QDoubleSpinBox" name="sp_send_p_2">
    <property name="geometry">
     <rect>
-     <x>526</x>
-     <y>450</y>
+     <x>214</x>
+     <y>494</y>
      <width>79</width>
      <height>16</height>
     </rect>
@@ -699,8 +646,8 @@ color: rgb(0,255, 0);
   <widget class="QCheckBox" name="cb_send_p_3">
    <property name="geometry">
     <rect>
-     <x>470</x>
-     <y>472</y>
+     <x>158</x>
+     <y>516</y>
      <width>51</width>
      <height>15</height>
     </rect>
@@ -712,8 +659,8 @@ color: rgb(0,255, 0);
   <widget class="QCheckBox" name="cb_send_p_1">
    <property name="geometry">
     <rect>
-     <x>470</x>
-     <y>432</y>
+     <x>158</x>
+     <y>476</y>
      <width>51</width>
      <height>15</height>
     </rect>
@@ -725,8 +672,8 @@ color: rgb(0,255, 0);
   <widget class="QDoubleSpinBox" name="sp_send_p_3">
    <property name="geometry">
     <rect>
-     <x>526</x>
-     <y>470</y>
+     <x>214</x>
+     <y>514</y>
      <width>79</width>
      <height>16</height>
     </rect>
@@ -749,8 +696,8 @@ color: rgb(0,255, 0);
   <widget class="QCheckBox" name="cb_send_p_4">
    <property name="geometry">
     <rect>
-     <x>470</x>
-     <y>492</y>
+     <x>302</x>
+     <y>476</y>
      <width>51</width>
      <height>15</height>
     </rect>
@@ -762,8 +709,8 @@ color: rgb(0,255, 0);
   <widget class="QDoubleSpinBox" name="sp_send_p_1">
    <property name="geometry">
     <rect>
-     <x>526</x>
-     <y>431</y>
+     <x>214</x>
+     <y>475</y>
      <width>79</width>
      <height>16</height>
     </rect>
@@ -786,8 +733,8 @@ color: rgb(0,255, 0);
   <widget class="QCheckBox" name="cb_send_p_2">
    <property name="geometry">
     <rect>
-     <x>470</x>
-     <y>452</y>
+     <x>158</x>
+     <y>496</y>
      <width>51</width>
      <height>15</height>
     </rect>
@@ -799,8 +746,8 @@ color: rgb(0,255, 0);
   <widget class="QCheckBox" name="cb_send_p_5">
    <property name="geometry">
     <rect>
-     <x>470</x>
-     <y>512</y>
+     <x>302</x>
+     <y>496</y>
      <width>51</width>
      <height>15</height>
     </rect>
@@ -812,8 +759,8 @@ color: rgb(0,255, 0);
   <widget class="QDoubleSpinBox" name="sp_send_p_4">
    <property name="geometry">
     <rect>
-     <x>526</x>
-     <y>490</y>
+     <x>358</x>
+     <y>474</y>
      <width>79</width>
      <height>16</height>
     </rect>
@@ -836,10 +783,10 @@ color: rgb(0,255, 0);
   <widget class="QPushButton" name="pb_autosend_update">
    <property name="geometry">
     <rect>
-     <x>544</x>
-     <y>408</y>
-     <width>61</width>
-     <height>21</height>
+     <x>512</x>
+     <y>476</y>
+     <width>79</width>
+     <height>55</height>
     </rect>
    </property>
    <property name="cursor">
@@ -864,10 +811,10 @@ border-radius:4px;
   <widget class="QCheckBox" name="cb_send_p_autosend">
    <property name="geometry">
     <rect>
-     <x>468</x>
+     <x>432</x>
      <y>408</y>
      <width>71</width>
-     <height>19</height>
+     <height>21</height>
     </rect>
    </property>
    <property name="toolTip">
@@ -875,28 +822,6 @@ border-radius:4px;
    </property>
    <property name="text">
     <string>AutoSend</string>
-   </property>
-  </widget>
-  <widget class="Line" name="line_6">
-   <property name="geometry">
-    <rect>
-     <x>444</x>
-     <y>410</y>
-     <width>7</width>
-     <height>117</height>
-    </rect>
-   </property>
-   <property name="styleSheet">
-    <string notr="true">color: rgb(19, 126, 124);</string>
-   </property>
-   <property name="frameShadow">
-    <enum>QFrame::Plain</enum>
-   </property>
-   <property name="lineWidth">
-    <number>2</number>
-   </property>
-   <property name="orientation">
-    <enum>Qt::Vertical</enum>
    </property>
   </widget>
   <widget class="QLabel" name="label_44">
@@ -1293,7 +1218,7 @@ border-radius:4px;
      <x>136</x>
      <y>158</y>
      <width>7</width>
-     <height>467</height>
+     <height>473</height>
     </rect>
    </property>
    <property name="styleSheet">
@@ -1376,9 +1301,9 @@ border-radius:4px;
   <widget class="QSpinBox" name="sp_num_packs">
    <property name="geometry">
     <rect>
-     <x>28</x>
+     <x>50</x>
      <y>487</y>
-     <width>99</width>
+     <width>77</width>
      <height>21</height>
     </rect>
    </property>
@@ -1428,9 +1353,9 @@ color: rgb(0,255, 0);
   <widget class="QComboBox" name="cbox_request_id">
    <property name="geometry">
     <rect>
-     <x>46</x>
+     <x>50</x>
      <y>510</y>
-     <width>79</width>
+     <width>75</width>
      <height>21</height>
     </rect>
    </property>
@@ -1488,7 +1413,7 @@ border-radius:10px;
    <property name="geometry">
     <rect>
      <x>16</x>
-     <y>380</y>
+     <y>348</y>
      <width>111</width>
      <height>25</height>
     </rect>
@@ -1518,6 +1443,128 @@ border-radius:10px;
    </property>
    <property name="text">
     <string>Protocol</string>
+   </property>
+  </widget>
+  <widget class="QCheckBox" name="cb_send_p_6">
+   <property name="geometry">
+    <rect>
+     <x>302</x>
+     <y>514</y>
+     <width>51</width>
+     <height>15</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>P_CH6</string>
+   </property>
+  </widget>
+  <widget class="QDoubleSpinBox" name="sp_send_p_6">
+   <property name="geometry">
+    <rect>
+     <x>358</x>
+     <y>514</y>
+     <width>79</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">border: 2px soild rgb(19, 126, 124);
+color: rgb(0,255, 0);
+</string>
+   </property>
+   <property name="minimum">
+    <double>-9999.000000000000000</double>
+   </property>
+   <property name="maximum">
+    <double>9999.989999999999782</double>
+   </property>
+   <property name="singleStep">
+    <double>0.010000000000000</double>
+   </property>
+  </widget>
+  <widget class="Line" name="line_10">
+   <property name="geometry">
+    <rect>
+     <x>158</x>
+     <y>460</y>
+     <width>437</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">color: rgb(19, 126, 124);</string>
+   </property>
+   <property name="frameShadow">
+    <enum>QFrame::Plain</enum>
+   </property>
+   <property name="lineWidth">
+    <number>1</number>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Horizontal</enum>
+   </property>
+  </widget>
+  <widget class="QLabel" name="et_data_flow_info">
+   <property name="geometry">
+    <rect>
+     <x>18</x>
+     <y>654</y>
+     <width>581</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <family>SimSun</family>
+     <pointsize>9</pointsize>
+     <weight>75</weight>
+     <bold>true</bold>
+    </font>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">color: rgb(19, 126, 124);
+border-top-color: rgb(0, 0, 0);</string>
+   </property>
+   <property name="frameShape">
+    <enum>QFrame::NoFrame</enum>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+  </widget>
+  <widget class="Line" name="line_16">
+   <property name="geometry">
+    <rect>
+     <x>14</x>
+     <y>634</y>
+     <width>591</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">color: rgb(19, 126, 124);</string>
+   </property>
+   <property name="frameShadow">
+    <enum>QFrame::Plain</enum>
+   </property>
+   <property name="lineWidth">
+    <number>4</number>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Horizontal</enum>
+   </property>
+  </widget>
+  <widget class="QTextEdit" name="text_edit_com_info">
+   <property name="geometry">
+    <rect>
+     <x>16</x>
+     <y>678</y>
+     <width>585</width>
+     <height>57</height>
+    </rect>
+   </property>
+   <property name="readOnly">
+    <bool>true</bool>
    </property>
   </widget>
  </widget>

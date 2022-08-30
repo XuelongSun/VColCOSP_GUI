@@ -146,7 +146,10 @@ class Controller:
         self.serial_data_model = SerialDataModel()
         # data interface
         self.thread_robot_data_capture = Process(target=self.serial_run_capture)
-        self.serial_port = serial.Serial()
+        self.serial_port = serial.Serial(baudrate=115200,
+                                         parity=serial.PARITY_NONE,
+                                         stopbits=serial.STOPBITS_ONE,
+                                         bytesize=serial.EIGHTBITS)
         self.serial_send_package_len = 32
         self.serial_recv_package_len = 96
         self.robot_data_buff = []
@@ -173,7 +176,7 @@ class Controller:
         self.exp_is_running = False
         self.exp_thread = threading.Thread(target=self.exp_task)
         # experiment data
-        self.exp_availabel_data_key = []
+        self.exp_available_data_key = []
         self.exp_detected_robot_ids = []
         ## data saving
         self.exp_save_data_selected_id = []
@@ -199,32 +202,53 @@ class Controller:
         self.viewer.main_menu.et_sys_timer.setText('SystemTime: %2d H %2d M% 2.2f S' % (h, m, s))
         
         # 2.update robot ids and data
+        self.exp_available_data_key = []
+        self.exp_detected_robot_ids = []
+        ids_from_loc = []
+        ids_from_com = []
         ## ids from localization
         if self.loc_world_locations:
             ids_from_loc = list(self.loc_world_locations.keys())
+            self.exp_available_data_key += ['POS_X', 'POS_Y']
 
         ## ids from communication
         if self.serial_data_is_running:
             ids_from_com = list(self.serial_data_model.robot_data.keys())
+            self.exp_available_data_key += list(self.serial_data_model.data_str_table.keys())
             
         ## merge
-        if self.loc_world_locations or self.serial_data_is_running:
+        if self.loc_world_locations and self.serial_data_is_running:
+            self.exp_detected_robot_ids = ids_from_com.copy()
+        elif self.loc_world_locations:
             self.exp_detected_robot_ids = ids_from_loc.copy()
+        else:
+            self.exp_detected_robot_ids = ids_from_com.copy()
         
-        # testing data
-        # fake_pos_data = []
-        # for i in (1,7,8,10):
-        #     fake_pos_data.append([i, np.random.rand(1), np.random.rand(1)])
+        # 3.update localization data counter
+        if self.serial_data_is_running:
+            if ids_from_com:
+                s = '%d robots, %d frame have received\n' % (len(ids_from_com),
+                                                            self.serial_data_model.num_package)
+                self.viewer.com.et_data_flow_info.setText(s)
+        else:
+            s = 'Waiting for data...'
+            self.viewer.com.et_data_flow_info.setText(s)
         
-        # self.loc_world_location.append(fake_pos_data)
-        
-        # visualization plots
-        # print(self.loc_world_locations, "**")
         for plot in self.viewer.plots:
             for k, v in plot.lines.items():
                 if plot.type == 'plot':
-                    v.setData(x=np.arange(len(self.loc_world_locations[4])),
-                              y=np.array(self.loc_world_locations[4], dtype=np.float)[:,0])
+                    _id, ds = k.split('/')
+                    r_id = _id[-1]
+                    if ds == 'POS_X':
+                        v.setData(x=np.arange(len(self.loc_world_locations[int(r_id)])),
+                                  y=np.array(self.loc_world_locations[int(r_id)], dtype=np.float)[:,0])
+                    elif ds == 'POS_Y':
+                        v.setData(x=np.arange(len(self.loc_world_locations[int(r_id)])),
+                                  y=np.array(self.loc_world_locations[int(r_id)], dtype=np.float)[:,1])
+                    else:
+                        d = self.serial_data_model.get_robot_data(int(r_id), ds)
+                        v.setData(x=np.arange(len(d)),
+                                  y=np.array(d))
         
     def login(self):
         self.viewer.login.close()
@@ -969,9 +993,10 @@ class Controller:
         for pl in port_list:
             self.viewer.com.comboBox_com_port.addItem(pl[0])
         if len(port_list) > 0:
-            self.viewer.system_logger("Serial Port scanned, got %d ports"%(len(port_list)))
+            self.viewer.system_logger("Serial Port scanned, got %d ports"%(len(port_list)), out='com')
         else:
-            self.viewer.system_logger("Serial Port scanned, no port is available", log_type='warning')
+            self.viewer.system_logger("Serial Port scanned, no port is available",
+                                      log_type='warning', out='com')
     
     def serial_port_open(self):
         if self.serial_port.isOpen():
@@ -984,9 +1009,9 @@ class Controller:
                     self.serial_port.open()
                 except:
                     QMessageBox.warning(self.viewer.com, 'Error', 'Cannot open port.')
-                    self.viewer.system_logger('try to open ' + com_name + ', but failed')
+                    self.viewer.system_logger('try to open ' + com_name + ', but failed', out='com')
                 if self.serial_port.isOpen():
-                    self.viewer.system_logger(com_name + ' is successfully opened')
+                    self.viewer.system_logger(com_name + ' is successfully opened', out='com')
             else:
                 QMessageBox.warning(self.viewer.com, 'Error', 'No Port is available')
     
@@ -995,7 +1020,7 @@ class Controller:
             self.serial_port.close()
             com_name = self.viewer.com.comboBox_com_port.currentText()
             if not self.serial_port.isOpen():
-                self.viewer.system_logger(com_name + ' is closed')
+                self.viewer.system_logger(com_name + ' is closed', out='com')
         else:
             QMessageBox.warning(self.viewer.com, 'Error', 'No port is open')
     
@@ -1026,7 +1051,6 @@ class Controller:
                                 d_display += d
                                 self.serial_data_model.data_transfer(data)
                                 # self.serial_port.reset_input_buffer()
-                    print(d_display)
                     # raw data display
                     if self.viewer.com.cb_show_raw.isChecked():
                         raw_data_str = ''
@@ -1035,7 +1059,7 @@ class Controller:
                                 raw_data_str += ('0'*(c <= 15) + str(hex(c))[2:]) + ' '
                         else:
                             raw_data_str = d_display.decode('utf-8', errors='replace')
-                        self.viewer.com.text_edit_recv_raw.insertPlainText(raw_data_str)
+                        self.viewer.com.raw_data_insert_text(raw_data_str)
     
     def serial_port_send(self, data, r_id=None):
         header = b''
@@ -1048,7 +1072,8 @@ class Controller:
                 r_id = self.viewer.com.cbox_send_robot_id.currentText()
                 if r_id == '':
                     QMessageBox.warning(self.viewer.com, 'Error', 'No valid Robot ID')
-                    self.viewer.system_logger('Try to send data, but failed with no valid Robot ID', 'error')
+                    self.viewer.system_logger('Try to send data, but failed with no valid Robot ID', 'error',
+                                              out='com')
                     return
                 else:
                     r_id = int(r_id)
@@ -1069,9 +1094,10 @@ class Controller:
             len_bytes = self.serial_port.write(b'\x01\xfe' + data + b'\xfe\x01')
         except:
             QMessageBox.warning(self.viewer.com, 'Error', 'Cannot send data')
-            self.viewer.system_logger('Try to send data, but failed -_-', 'error')
+            self.viewer.system_logger('Try to send data, but failed -_-', 'error', out='com')
             return
-        self.viewer.system_logger('Send %d bytes data via serial port: \n %s' % (len_bytes, data))
+        self.viewer.system_logger('Send %d bytes data via serial port: \n %s' % (len_bytes, data),
+                                  out='com')
     
     def serial_send_raw_data(self):
         send_str = self.viewer.com.text_edit_send_raw.toPlainText()
@@ -1121,7 +1147,8 @@ class Controller:
             r_id = self.viewer.com.cbox_request_id.currentText()
             if r_id == '':
                 QMessageBox.warning(self.viewer.com, 'Error', 'No valid Robot ID')
-                self.viewer.system_logger('Try to send data, but failed with no valid Robot ID', 'error')
+                self.viewer.system_logger('Try to send data, but failed with no valid Robot ID', 'error',
+                                          out='com')
                 return
             else:
                 r_id = int(r_id)
@@ -1134,8 +1161,8 @@ class Controller:
         if self.viewer.com.pb_start_capture.text() == 'Start \n Capture':
             if self.serial_port.isOpen():
                 print('start capture...')
-                self.viewer.system_logger('start capturing robot data...')
-                self.robot_data_is_running = True
+                self.viewer.system_logger('start capturing robot data...', out='com')
+                self.serial_data_is_running = True
                 if not self.thread_robot_data_capture.is_alive():
                     self.thread_robot_data_capture = threading.Thread(target=self.serial_run_capture)
                     self.thread_robot_data_capture.start()
@@ -1148,8 +1175,8 @@ class Controller:
                                     'The serial port is not open, please open the port and retry')
 
         elif self.viewer.com.pb_start_capture.text() == 'Stop \n Capture':
-            self.viewer.system_logger('stop capturing robot data')
-            self.robot_data_is_running = False
+            self.viewer.system_logger('stop capturing robot data', out='com')
+            self.serial_data_is_running = False
             self.viewer.com.pb_start_capture.setText('Start \n Capture')
             self.viewer.com.pb_open_port.setDisabled(False)
             self.viewer.com.pb_close_port.setDisabled(False)
@@ -1157,7 +1184,9 @@ class Controller:
     
     def exp_visualization_add_plot(self):
         name = self.viewer.main_menu.sender().objectName().split("_")[-1]
-        self.viewer.add_visualization_figure(['POS_X', 'POS_Y'], [str(i) for i in (1,7,8,10)], name)
+        self.viewer.add_visualization_figure(self.exp_available_data_key,
+                                             [str(i) for i in self.exp_detected_robot_ids],
+                                             name)
         self.viewer.plots[-1].signal.connect(self.exp_visualization_plot_callback)
     
     def exp_visualization_plot_callback(self, signal):
@@ -1174,17 +1203,14 @@ class Controller:
                     p.add_plots(p.cbox_data.currentText())
                     break
         elif signal.startswith('remove'):
-                # add plotting item
+            # remove plotting item
             for p in self.viewer.plots:
                 if p.plot_index == int(signal.split('_')[1]):
                     p.remove_plots(p.cbox_data.currentText())
                     break
     
     def exp_save_data_setting(self):
-        data_save_str = []
-        data_save_str += list(self.serial_data_model.data_str_table.keys())
-        data_save_str += ['POS_X', 'POS_Y']
-        self.viewer.data_save_setting.update_data_checkbox(data_save_str,
+        self.viewer.data_save_setting.update_data_checkbox(self.exp_available_data_key,
                                                            self.exp_detected_robot_ids)
         self.viewer.data_save_setting.show()
     

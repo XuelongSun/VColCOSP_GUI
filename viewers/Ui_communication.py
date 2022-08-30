@@ -15,7 +15,8 @@ class Ui_com(object):
     def setupUi(self, com):
         com.setObjectName("com")
         com.setWindowModality(QtCore.Qt.WindowModal)
-        com.resize(620, 633)
+        com.resize(620, 743)
+        com.setFocusPolicy(QtCore.Qt.NoFocus)
         com.setStyleSheet("background-color: rgb(0, 0, 0);\n"
 "color: rgb(19, 126, 124);")
         self.label_8 = QtWidgets.QLabel(com)
@@ -33,19 +34,6 @@ class Ui_com(object):
         self.frame.setFrameShape(QtWidgets.QFrame.StyledPanel)
         self.frame.setFrameShadow(QtWidgets.QFrame.Raised)
         self.frame.setObjectName("frame")
-        self.label_5 = QtWidgets.QLabel(com)
-        self.label_5.setGeometry(QtCore.QRect(16, 326, 109, 21))
-        font = QtGui.QFont()
-        font.setFamily("Arial")
-        font.setPointSize(10)
-        font.setBold(True)
-        font.setWeight(75)
-        self.label_5.setFont(font)
-        self.label_5.setObjectName("label_5")
-        self.radioButton_realtime = QtWidgets.QRadioButton(com)
-        self.radioButton_realtime.setGeometry(QtCore.QRect(28, 354, 89, 16))
-        self.radioButton_realtime.setChecked(False)
-        self.radioButton_realtime.setObjectName("radioButton_realtime")
         self.pb_scan_port = QtWidgets.QPushButton(com)
         self.pb_scan_port.setGeometry(QtCore.QRect(14, 212, 113, 31))
         font = QtGui.QFont()
@@ -81,7 +69,7 @@ class Ui_com(object):
         self.label_54.setFont(font)
         self.label_54.setObjectName("label_54")
         self.pb_open_port = QtWidgets.QPushButton(com)
-        self.pb_open_port.setGeometry(QtCore.QRect(14, 250, 113, 31))
+        self.pb_open_port.setGeometry(QtCore.QRect(14, 252, 113, 31))
         font = QtGui.QFont()
         font.setFamily("Arial")
         font.setPointSize(10)
@@ -101,7 +89,7 @@ class Ui_com(object):
 "")
         self.pb_open_port.setObjectName("pb_open_port")
         self.pb_close_port = QtWidgets.QPushButton(com)
-        self.pb_close_port.setGeometry(QtCore.QRect(14, 288, 113, 31))
+        self.pb_close_port.setGeometry(QtCore.QRect(12, 290, 113, 31))
         font = QtGui.QFont()
         font.setFamily("Arial")
         font.setPointSize(10)
@@ -121,10 +109,10 @@ class Ui_com(object):
 "")
         self.pb_close_port.setObjectName("pb_close_port")
         self.text_edit_recv_raw = QtWidgets.QPlainTextEdit(com)
-        self.text_edit_recv_raw.setGeometry(QtCore.QRect(156, 196, 443, 77))
+        self.text_edit_recv_raw.setGeometry(QtCore.QRect(154, 196, 445, 131))
         self.text_edit_recv_raw.setObjectName("text_edit_recv_raw")
         self.text_edit_send_raw = QtWidgets.QPlainTextEdit(com)
-        self.text_edit_send_raw.setGeometry(QtCore.QRect(156, 432, 273, 95))
+        self.text_edit_send_raw.setGeometry(QtCore.QRect(156, 432, 351, 27))
         self.text_edit_send_raw.setObjectName("text_edit_send_raw")
         self.label_23 = QtWidgets.QLabel(com)
         self.label_23.setGeometry(QtCore.QRect(150, 386, 165, 16))
@@ -175,7 +163,7 @@ class Ui_com(object):
         self.line_8.setFrameShape(QtWidgets.QFrame.HLine)
         self.line_8.setObjectName("line_8")
         self.pb_raw_send = QtWidgets.QPushButton(com)
-        self.pb_raw_send.setGeometry(QtCore.QRect(282, 408, 145, 21))
+        self.pb_raw_send.setGeometry(QtCore.QRect(512, 404, 81, 51))
         self.pb_raw_send.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
         self.pb_raw_send.setStyleSheet("QPushButton::disabled {\n"
 "    border: 2px solid rgb(149, 149, 149);\n"
@@ -189,7 +177,7 @@ class Ui_com(object):
 "")
         self.pb_raw_send.setObjectName("pb_raw_send")
         self.cb_send_hex = QtWidgets.QCheckBox(com)
-        self.cb_send_hex.setGeometry(QtCore.QRect(236, 410, 41, 19))
+        self.cb_send_hex.setGeometry(QtCore.QRect(238, 410, 41, 19))
         self.cb_send_hex.setObjectName("cb_send_hex")
         self.cb_send_newline = QtWidgets.QCheckBox(com)
         self.cb_send_newline.setGeometry(QtCore.QRect(158, 410, 71, 19))
@@ -209,7 +197,7 @@ class Ui_com(object):
         self.line_9.setFrameShape(QtWidgets.QFrame.HLine)
         self.line_9.setObjectName("line_9")
         self.pb_start_capture = QtWidgets.QPushButton(com)
-        self.pb_start_capture.setGeometry(QtCore.QRect(16, 398, 109, 41))
+        self.pb_start_capture.setGeometry(QtCore.QRect(16, 382, 109, 69))
         font = QtGui.QFont()
         font.setFamily("Arial")
         font.setPointSize(11)
@@ -248,92 +236,6 @@ class Ui_com(object):
 "}\n"
 "")
         self.pb_clear_cache.setObjectName("pb_clear_cache")
-        self.radioButton_from_file = QtWidgets.QRadioButton(com)
-        self.radioButton_from_file.setGeometry(QtCore.QRect(28, 376, 89, 16))
-        self.radioButton_from_file.setChecked(False)
-        self.radioButton_from_file.setObjectName("radioButton_from_file")
-        self.line_10 = QtWidgets.QFrame(com)
-        self.line_10.setGeometry(QtCore.QRect(292, 278, 307, 16))
-        self.line_10.setStyleSheet("color: rgb(19, 126, 124);")
-        self.line_10.setFrameShadow(QtWidgets.QFrame.Plain)
-        self.line_10.setLineWidth(2)
-        self.line_10.setFrameShape(QtWidgets.QFrame.HLine)
-        self.line_10.setObjectName("line_10")
-        self.label_26 = QtWidgets.QLabel(com)
-        self.label_26.setGeometry(QtCore.QRect(150, 278, 141, 16))
-        font = QtGui.QFont()
-        font.setBold(True)
-        font.setWeight(75)
-        self.label_26.setFont(font)
-        self.label_26.setObjectName("label_26")
-        self.pb_add_plot = QtWidgets.QPushButton(com)
-        self.pb_add_plot.setGeometry(QtCore.QRect(158, 300, 79, 29))
-        self.pb_add_plot.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
-        self.pb_add_plot.setStyleSheet("QPushButton::disabled {\n"
-"    border: 2px solid rgb(149, 149, 149);\n"
-"    color:rgb(149, 149, 149);\n"
-"    border-radius:4px;\n"
-"}\n"
-"QPushButton{\n"
-"border: 2px solid rgb(19, 126, 124);\n"
-"border-radius:4px;\n"
-"}\n"
-"")
-        icon = QtGui.QIcon()
-        icon.addPixmap(QtGui.QPixmap(":/resource/resources/plot.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
-        self.pb_add_plot.setIcon(icon)
-        self.pb_add_plot.setIconSize(QtCore.QSize(20, 20))
-        self.pb_add_plot.setObjectName("pb_add_plot")
-        self.pb_add_map = QtWidgets.QPushButton(com)
-        self.pb_add_map.setGeometry(QtCore.QRect(368, 300, 81, 29))
-        self.pb_add_map.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
-        self.pb_add_map.setStyleSheet("QPushButton::disabled {\n"
-"    border: 2px solid rgb(149, 149, 149);\n"
-"    color:rgb(149, 149, 149);\n"
-"    border-radius:4px;\n"
-"}\n"
-"QPushButton{\n"
-"border: 2px solid rgb(19, 126, 124);\n"
-"border-radius:4px;\n"
-"}\n"
-"")
-        icon1 = QtGui.QIcon()
-        icon1.addPixmap(QtGui.QPixmap(":/resource/resources/map.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
-        self.pb_add_map.setIcon(icon1)
-        self.pb_add_map.setIconSize(QtCore.QSize(20, 20))
-        self.pb_add_map.setObjectName("pb_add_map")
-        self.pb_add_distribution = QtWidgets.QPushButton(com)
-        self.pb_add_distribution.setGeometry(QtCore.QRect(246, 300, 113, 29))
-        self.pb_add_distribution.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
-        self.pb_add_distribution.setStyleSheet("QPushButton::disabled {\n"
-"    border: 2px solid rgb(149, 149, 149);\n"
-"    color:rgb(149, 149, 149);\n"
-"    border-radius:4px;\n"
-"}\n"
-"QPushButton{\n"
-"border: 2px solid rgb(19, 126, 124);\n"
-"border-radius:4px;\n"
-"}\n"
-"")
-        icon2 = QtGui.QIcon()
-        icon2.addPixmap(QtGui.QPixmap(":/resource/resources/distribution.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
-        self.pb_add_distribution.setIcon(icon2)
-        self.pb_add_distribution.setIconSize(QtCore.QSize(20, 20))
-        self.pb_add_distribution.setObjectName("pb_add_distribution")
-        self.pb_destroy_figure = QtWidgets.QPushButton(com)
-        self.pb_destroy_figure.setGeometry(QtCore.QRect(518, 300, 81, 27))
-        self.pb_destroy_figure.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
-        self.pb_destroy_figure.setStyleSheet("QPushButton::disabled {\n"
-"    border: 2px solid rgb(149, 149, 149);\n"
-"    color:rgb(149, 149, 149);\n"
-"    border-radius:4px;\n"
-"}\n"
-"QPushButton{\n"
-"border: 2px solid rgb(19, 126, 124);\n"
-"border-radius:4px;\n"
-"}\n"
-"")
-        self.pb_destroy_figure.setObjectName("pb_destroy_figure")
         self.label_43 = QtWidgets.QLabel(com)
         self.label_43.setGeometry(QtCore.QRect(150, 362, 23, 20))
         font = QtGui.QFont()
@@ -349,10 +251,10 @@ class Ui_com(object):
         self.cb_send_with_time.setChecked(True)
         self.cb_send_with_time.setObjectName("cb_send_with_time")
         self.cb_send_to_all = QtWidgets.QCheckBox(com)
-        self.cb_send_to_all.setGeometry(QtCore.QRect(444, 364, 157, 19))
+        self.cb_send_to_all.setGeometry(QtCore.QRect(448, 364, 153, 19))
         self.cb_send_to_all.setObjectName("cb_send_to_all")
         self.sp_send_p_5 = QtWidgets.QDoubleSpinBox(com)
-        self.sp_send_p_5.setGeometry(QtCore.QRect(526, 510, 79, 16))
+        self.sp_send_p_5.setGeometry(QtCore.QRect(358, 494, 79, 16))
         self.sp_send_p_5.setStyleSheet("border: 2px soild rgb(19, 126, 124);\n"
 "color: rgb(0,255, 0);\n"
 "")
@@ -361,7 +263,7 @@ class Ui_com(object):
         self.sp_send_p_5.setSingleStep(0.01)
         self.sp_send_p_5.setObjectName("sp_send_p_5")
         self.sp_send_p_2 = QtWidgets.QDoubleSpinBox(com)
-        self.sp_send_p_2.setGeometry(QtCore.QRect(526, 450, 79, 16))
+        self.sp_send_p_2.setGeometry(QtCore.QRect(214, 494, 79, 16))
         self.sp_send_p_2.setStyleSheet("border: 2px soild rgb(19, 126, 124);\n"
 "color: rgb(0,255, 0);\n"
 "")
@@ -370,13 +272,13 @@ class Ui_com(object):
         self.sp_send_p_2.setSingleStep(0.01)
         self.sp_send_p_2.setObjectName("sp_send_p_2")
         self.cb_send_p_3 = QtWidgets.QCheckBox(com)
-        self.cb_send_p_3.setGeometry(QtCore.QRect(470, 472, 51, 15))
+        self.cb_send_p_3.setGeometry(QtCore.QRect(158, 516, 51, 15))
         self.cb_send_p_3.setObjectName("cb_send_p_3")
         self.cb_send_p_1 = QtWidgets.QCheckBox(com)
-        self.cb_send_p_1.setGeometry(QtCore.QRect(470, 432, 51, 15))
+        self.cb_send_p_1.setGeometry(QtCore.QRect(158, 476, 51, 15))
         self.cb_send_p_1.setObjectName("cb_send_p_1")
         self.sp_send_p_3 = QtWidgets.QDoubleSpinBox(com)
-        self.sp_send_p_3.setGeometry(QtCore.QRect(526, 470, 79, 16))
+        self.sp_send_p_3.setGeometry(QtCore.QRect(214, 514, 79, 16))
         self.sp_send_p_3.setStyleSheet("border: 2px soild rgb(19, 126, 124);\n"
 "color: rgb(0,255, 0);\n"
 "")
@@ -385,10 +287,10 @@ class Ui_com(object):
         self.sp_send_p_3.setSingleStep(0.01)
         self.sp_send_p_3.setObjectName("sp_send_p_3")
         self.cb_send_p_4 = QtWidgets.QCheckBox(com)
-        self.cb_send_p_4.setGeometry(QtCore.QRect(470, 492, 51, 15))
+        self.cb_send_p_4.setGeometry(QtCore.QRect(302, 476, 51, 15))
         self.cb_send_p_4.setObjectName("cb_send_p_4")
         self.sp_send_p_1 = QtWidgets.QDoubleSpinBox(com)
-        self.sp_send_p_1.setGeometry(QtCore.QRect(526, 431, 79, 16))
+        self.sp_send_p_1.setGeometry(QtCore.QRect(214, 475, 79, 16))
         self.sp_send_p_1.setStyleSheet("border: 2px soild rgb(19, 126, 124);\n"
 "color: rgb(0,255, 0);\n"
 "")
@@ -397,13 +299,13 @@ class Ui_com(object):
         self.sp_send_p_1.setSingleStep(0.01)
         self.sp_send_p_1.setObjectName("sp_send_p_1")
         self.cb_send_p_2 = QtWidgets.QCheckBox(com)
-        self.cb_send_p_2.setGeometry(QtCore.QRect(470, 452, 51, 15))
+        self.cb_send_p_2.setGeometry(QtCore.QRect(158, 496, 51, 15))
         self.cb_send_p_2.setObjectName("cb_send_p_2")
         self.cb_send_p_5 = QtWidgets.QCheckBox(com)
-        self.cb_send_p_5.setGeometry(QtCore.QRect(470, 512, 51, 15))
+        self.cb_send_p_5.setGeometry(QtCore.QRect(302, 496, 51, 15))
         self.cb_send_p_5.setObjectName("cb_send_p_5")
         self.sp_send_p_4 = QtWidgets.QDoubleSpinBox(com)
-        self.sp_send_p_4.setGeometry(QtCore.QRect(526, 490, 79, 16))
+        self.sp_send_p_4.setGeometry(QtCore.QRect(358, 474, 79, 16))
         self.sp_send_p_4.setStyleSheet("border: 2px soild rgb(19, 126, 124);\n"
 "color: rgb(0,255, 0);\n"
 "")
@@ -412,7 +314,7 @@ class Ui_com(object):
         self.sp_send_p_4.setSingleStep(0.01)
         self.sp_send_p_4.setObjectName("sp_send_p_4")
         self.pb_autosend_update = QtWidgets.QPushButton(com)
-        self.pb_autosend_update.setGeometry(QtCore.QRect(544, 408, 61, 21))
+        self.pb_autosend_update.setGeometry(QtCore.QRect(512, 476, 79, 55))
         self.pb_autosend_update.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
         self.pb_autosend_update.setStyleSheet("QPushButton::disabled {\n"
 "    border: 2px solid rgb(149, 149, 149);\n"
@@ -426,15 +328,8 @@ class Ui_com(object):
 "")
         self.pb_autosend_update.setObjectName("pb_autosend_update")
         self.cb_send_p_autosend = QtWidgets.QCheckBox(com)
-        self.cb_send_p_autosend.setGeometry(QtCore.QRect(468, 408, 71, 19))
+        self.cb_send_p_autosend.setGeometry(QtCore.QRect(432, 408, 71, 21))
         self.cb_send_p_autosend.setObjectName("cb_send_p_autosend")
-        self.line_6 = QtWidgets.QFrame(com)
-        self.line_6.setGeometry(QtCore.QRect(444, 410, 7, 117))
-        self.line_6.setStyleSheet("color: rgb(19, 126, 124);")
-        self.line_6.setFrameShadow(QtWidgets.QFrame.Plain)
-        self.line_6.setLineWidth(2)
-        self.line_6.setFrameShape(QtWidgets.QFrame.VLine)
-        self.line_6.setObjectName("line_6")
         self.label_44 = QtWidgets.QLabel(com)
         self.label_44.setGeometry(QtCore.QRect(154, 564, 35, 20))
         font = QtGui.QFont()
@@ -594,7 +489,7 @@ class Ui_com(object):
         self.label_10.setFont(font)
         self.label_10.setObjectName("label_10")
         self.line_15 = QtWidgets.QFrame(com)
-        self.line_15.setGeometry(QtCore.QRect(136, 158, 7, 467))
+        self.line_15.setGeometry(QtCore.QRect(136, 158, 7, 473))
         self.line_15.setStyleSheet("color: rgb(19, 126, 124);")
         self.line_15.setFrameShadow(QtWidgets.QFrame.Plain)
         self.line_15.setLineWidth(2)
@@ -617,7 +512,7 @@ class Ui_com(object):
         self.line_13.setFrameShape(QtWidgets.QFrame.HLine)
         self.line_13.setObjectName("line_13")
         self.label_6 = QtWidgets.QLabel(com)
-        self.label_6.setGeometry(QtCore.QRect(18, 454, 109, 21))
+        self.label_6.setGeometry(QtCore.QRect(18, 464, 109, 21))
         font = QtGui.QFont()
         font.setFamily("Arial")
         font.setPointSize(10)
@@ -626,7 +521,7 @@ class Ui_com(object):
         self.label_6.setFont(font)
         self.label_6.setObjectName("label_6")
         self.sp_num_packs = QtWidgets.QSpinBox(com)
-        self.sp_num_packs.setGeometry(QtCore.QRect(28, 477, 87, 21))
+        self.sp_num_packs.setGeometry(QtCore.QRect(50, 487, 77, 21))
         self.sp_num_packs.setStyleSheet("border: 2px soild rgb(19, 126, 124);\n"
 "color: rgb(0,255, 0);\n"
 "")
@@ -637,20 +532,20 @@ class Ui_com(object):
         self.sp_num_packs.setDisplayIntegerBase(10)
         self.sp_num_packs.setObjectName("sp_num_packs")
         self.label_46 = QtWidgets.QLabel(com)
-        self.label_46.setGeometry(QtCore.QRect(16, 500, 23, 20))
+        self.label_46.setGeometry(QtCore.QRect(16, 510, 23, 20))
         font = QtGui.QFont()
         font.setBold(False)
         font.setWeight(50)
         self.label_46.setFont(font)
         self.label_46.setObjectName("label_46")
         self.cbox_request_id = QtWidgets.QComboBox(com)
-        self.cbox_request_id.setGeometry(QtCore.QRect(46, 500, 79, 21))
+        self.cbox_request_id.setGeometry(QtCore.QRect(50, 510, 75, 21))
         self.cbox_request_id.setObjectName("cbox_request_id")
         self.cb_request_all = QtWidgets.QCheckBox(com)
-        self.cb_request_all.setGeometry(QtCore.QRect(18, 526, 111, 19))
+        self.cb_request_all.setGeometry(QtCore.QRect(18, 536, 111, 19))
         self.cb_request_all.setObjectName("cb_request_all")
         self.pb_request_update = QtWidgets.QPushButton(com)
-        self.pb_request_update.setGeometry(QtCore.QRect(18, 550, 111, 25))
+        self.pb_request_update.setGeometry(QtCore.QRect(18, 560, 111, 25))
         font = QtGui.QFont()
         font.setFamily("Arial")
         font.setPointSize(10)
@@ -669,6 +564,69 @@ class Ui_com(object):
 "}\n"
 "")
         self.pb_request_update.setObjectName("pb_request_update")
+        self.pb_request_update_2 = QtWidgets.QPushButton(com)
+        self.pb_request_update_2.setGeometry(QtCore.QRect(16, 348, 111, 25))
+        font = QtGui.QFont()
+        font.setFamily("Arial")
+        font.setPointSize(10)
+        font.setBold(True)
+        font.setWeight(75)
+        self.pb_request_update_2.setFont(font)
+        self.pb_request_update_2.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+        self.pb_request_update_2.setStyleSheet("QPushButton::disabled {\n"
+"    border: 2px solid rgb(149, 149, 149);\n"
+"    color:rgb(149, 149, 149);\n"
+"    border-radius:10px;\n"
+"}\n"
+"QPushButton{\n"
+"border: 2px solid rgb(19, 126, 124);\n"
+"border-radius:10px;\n"
+"}\n"
+"")
+        self.pb_request_update_2.setObjectName("pb_request_update_2")
+        self.cb_send_p_6 = QtWidgets.QCheckBox(com)
+        self.cb_send_p_6.setGeometry(QtCore.QRect(302, 514, 51, 15))
+        self.cb_send_p_6.setObjectName("cb_send_p_6")
+        self.sp_send_p_6 = QtWidgets.QDoubleSpinBox(com)
+        self.sp_send_p_6.setGeometry(QtCore.QRect(358, 514, 79, 16))
+        self.sp_send_p_6.setStyleSheet("border: 2px soild rgb(19, 126, 124);\n"
+"color: rgb(0,255, 0);\n"
+"")
+        self.sp_send_p_6.setMinimum(-9999.0)
+        self.sp_send_p_6.setMaximum(9999.99)
+        self.sp_send_p_6.setSingleStep(0.01)
+        self.sp_send_p_6.setObjectName("sp_send_p_6")
+        self.line_10 = QtWidgets.QFrame(com)
+        self.line_10.setGeometry(QtCore.QRect(158, 460, 437, 16))
+        self.line_10.setStyleSheet("color: rgb(19, 126, 124);")
+        self.line_10.setFrameShadow(QtWidgets.QFrame.Plain)
+        self.line_10.setLineWidth(1)
+        self.line_10.setFrameShape(QtWidgets.QFrame.HLine)
+        self.line_10.setObjectName("line_10")
+        self.et_data_flow_info = QtWidgets.QLabel(com)
+        self.et_data_flow_info.setGeometry(QtCore.QRect(18, 654, 581, 21))
+        font = QtGui.QFont()
+        font.setFamily("SimSun")
+        font.setPointSize(9)
+        font.setBold(True)
+        font.setWeight(75)
+        self.et_data_flow_info.setFont(font)
+        self.et_data_flow_info.setStyleSheet("color: rgb(19, 126, 124);\n"
+"border-top-color: rgb(0, 0, 0);")
+        self.et_data_flow_info.setFrameShape(QtWidgets.QFrame.NoFrame)
+        self.et_data_flow_info.setText("")
+        self.et_data_flow_info.setObjectName("et_data_flow_info")
+        self.line_16 = QtWidgets.QFrame(com)
+        self.line_16.setGeometry(QtCore.QRect(14, 634, 591, 16))
+        self.line_16.setStyleSheet("color: rgb(19, 126, 124);")
+        self.line_16.setFrameShadow(QtWidgets.QFrame.Plain)
+        self.line_16.setLineWidth(4)
+        self.line_16.setFrameShape(QtWidgets.QFrame.HLine)
+        self.line_16.setObjectName("line_16")
+        self.text_edit_com_info = QtWidgets.QTextEdit(com)
+        self.text_edit_com_info.setGeometry(QtCore.QRect(16, 678, 585, 57))
+        self.text_edit_com_info.setReadOnly(True)
+        self.text_edit_com_info.setObjectName("text_edit_com_info")
 
         self.retranslateUi(com)
         self.comboBox_com_port.setCurrentIndex(-1)
@@ -676,10 +634,8 @@ class Ui_com(object):
 
     def retranslateUi(self, com):
         _translate = QtCore.QCoreApplication.translate
-        com.setWindowTitle(_translate("com", "Form"))
+        com.setWindowTitle(_translate("com", "VColCOSP-CommunicationPanel"))
         self.label_8.setText(_translate("com", "VColCOSP - Communication"))
-        self.label_5.setText(_translate("com", "Data Source:"))
-        self.radioButton_realtime.setText(_translate("com", "Real Time"))
         self.pb_scan_port.setText(_translate("com", "Scan Port"))
         self.label_54.setText(_translate("com", "Port:"))
         self.pb_open_port.setText(_translate("com", "Open Port"))
@@ -698,12 +654,6 @@ class Ui_com(object):
 " Capture"))
         self.pb_clear_cache.setText(_translate("com", "Clear \n"
 " Data Cache"))
-        self.radioButton_from_file.setText(_translate("com", "From File"))
-        self.label_26.setText(_translate("com", "| Data Visualization"))
-        self.pb_add_plot.setText(_translate("com", "+ Plot"))
-        self.pb_add_map.setText(_translate("com", "+ Map"))
-        self.pb_add_distribution.setText(_translate("com", "+ Distribution"))
-        self.pb_destroy_figure.setText(_translate("com", "Destroy All"))
         self.label_43.setText(_translate("com", "ID:"))
         self.cb_send_with_time.setText(_translate("com", "With TimeStamp"))
         self.cb_send_to_all.setText(_translate("com", "To All ID(broadcast)"))
@@ -731,4 +681,6 @@ class Ui_com(object):
         self.label_46.setText(_translate("com", "ID:"))
         self.cb_request_all.setText(_translate("com", "Request All"))
         self.pb_request_update.setText(_translate("com", "Request Update"))
+        self.pb_request_update_2.setText(_translate("com", "Protocol"))
+        self.cb_send_p_6.setText(_translate("com", "P_CH6"))
 import resources_rc

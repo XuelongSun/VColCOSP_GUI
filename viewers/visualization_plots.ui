@@ -26,11 +26,6 @@ color: rgb(19, 126, 124);</string>
      <height>25</height>
     </rect>
    </property>
-   <item>
-    <property name="text">
-     <string>test-sin(t)</string>
-    </property>
-   </item>
   </widget>
   <widget class="QPushButton" name="pb_add">
    <property name="geometry">

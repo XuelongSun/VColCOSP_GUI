@@ -258,10 +258,18 @@ class PheroBgInfoSetting(QMainWindow, Ui_phero_bg_info_setting):
 
 
 class Communication(Ui_com, QMainWindow):
+    raw_data_display = pyqtSignal(str)
     def __init__(self):
         super(Communication, self).__init__()
         self.setupUi(self)
         self.setFixedSize(self.width(), self.height())
+        self.raw_data_display.connect(self._insert_raw_data_display)
+    
+    def raw_data_insert_text(self, data):
+        self.raw_data_display.emit(data)
+    
+    def _insert_raw_data_display(self, msg):
+        self.text_edit_recv_raw.insertPlainText(msg)
 
 
 class VisualizationPlot(Ui_VisualizationPlot, QMainWindow):
@@ -421,7 +429,10 @@ class Viewer:
         self.plots.append(VisualizationPlot(len(self.plots), name))
         if name == 'map':
             self.plots[-1].cbox_data.addItems(ids)
-        else:
+        elif name == 'plot':
+            for i in ids:
+                self.plots[-1].cbox_data.addItems(["Robot_{}/{}".format(i, d) for d in data_str])
+        elif name == 'distribution':
             self.plots[-1].cbox_data.addItems(data_str)
         self.plots[-1].show()
         print(self.plots, self.plots[-1].type, self.plots[-1].plot_index)
@@ -449,6 +460,11 @@ class Viewer:
             cursor.movePosition(QTextCursor.End)
             self.main_menu.text_edit_exp_info.setTextCursor(cursor)
             self.main_menu.text_edit_exp_info.insertHtml(s)
+        elif out == "com":
+            cursor = self.com.text_edit_com_info.textCursor()
+            cursor.movePosition(QTextCursor.End)
+            self.com.text_edit_com_info.setTextCursor(cursor)
+            self.com.text_edit_com_info.insertHtml(s)
     
     def show_message_box(self, msg, msg_type='info'):
         html_str = "<p>{}</p>"
