@@ -1026,7 +1026,7 @@ class Controller:
                                 d_display += d
                                 self.serial_data_model.data_transfer(data)
                                 # self.serial_port.reset_input_buffer()
-
+                    print(d_display)
                     # raw data display
                     if self.viewer.com.cb_show_raw.isChecked():
                         raw_data_str = ''
@@ -1131,7 +1131,7 @@ class Controller:
         self.serial_port_send(data, r_id=r_id)
 
     def serial_start_capture(self):
-        if self.viewer.com.pb_start_capture.text() == 'Start Capture':
+        if self.viewer.com.pb_start_capture.text() == 'Start \n Capture':
             if self.serial_port.isOpen():
                 print('start capture...')
                 self.viewer.system_logger('start capturing robot data...')
@@ -1139,7 +1139,7 @@ class Controller:
                 if not self.thread_robot_data_capture.is_alive():
                     self.thread_robot_data_capture = threading.Thread(target=self.serial_run_capture)
                     self.thread_robot_data_capture.start()
-                self.viewer.com.pb_start_capture.setText('Stop Capture')
+                self.viewer.com.pb_start_capture.setText('Stop \n Capture')
                 self.viewer.com.pb_open_port.setDisabled(True)
                 self.viewer.com.pb_close_port.setDisabled(True)
                 self.viewer.com.pb_scan_port.setDisabled(True)
@@ -1147,10 +1147,10 @@ class Controller:
                 QMessageBox.warning(self.viewer.com, 'Error',
                                     'The serial port is not open, please open the port and retry')
 
-        elif self.viewer.com.pb_start_capture.text() == 'Stop Capture':
+        elif self.viewer.com.pb_start_capture.text() == 'Stop \n Capture':
             self.viewer.system_logger('stop capturing robot data')
             self.robot_data_is_running = False
-            self.viewer.com.pb_start_capture.setText('Start Capture')
+            self.viewer.com.pb_start_capture.setText('Start \n Capture')
             self.viewer.com.pb_open_port.setDisabled(False)
             self.viewer.com.pb_close_port.setDisabled(False)
             self.viewer.com.pb_scan_port.setDisabled(False)
