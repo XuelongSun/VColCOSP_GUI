@@ -234,21 +234,30 @@ class Controller:
             s = 'Waiting for data...'
             self.viewer.com.et_data_flow_info.setText(s)
         
+        # 4. update visualization plots
         for plot in self.viewer.plots:
-            for k, v in plot.lines.items():
-                if plot.type == 'plot':
+            if plot.type == 'plot':
+                for k, v in plot.lines.items():
                     _id, ds = k.split('/')
                     r_id = _id[-1]
                     if ds == 'POS_X':
                         v.setData(x=np.arange(len(self.loc_world_locations[int(r_id)])),
-                                  y=np.array(self.loc_world_locations[int(r_id)], dtype=np.float)[:,0])
+                                y=np.array(self.loc_world_locations[int(r_id)], dtype=np.float)[:,0])
                     elif ds == 'POS_Y':
                         v.setData(x=np.arange(len(self.loc_world_locations[int(r_id)])),
-                                  y=np.array(self.loc_world_locations[int(r_id)], dtype=np.float)[:,1])
+                                y=np.array(self.loc_world_locations[int(r_id)], dtype=np.float)[:,1])
                     else:
                         d = self.serial_data_model.get_robot_data(int(r_id), ds)
                         v.setData(x=np.arange(len(d)),
-                                  y=np.array(d))
+                                y=np.array(d))
+            elif plot.type == 'map':
+                data = []
+                for k, v in plot.texts.items():
+                    x = self.loc_world_locations[int(k)][-1][0]
+                    y = self.loc_world_locations[int(k)][-1][1]
+                    data.append((x,y))
+                    v.setPos(x, y)
+                plot.scatter_plot.setData(pos=data)
         
     def login(self):
         self.viewer.login.close()

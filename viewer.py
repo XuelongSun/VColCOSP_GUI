@@ -280,8 +280,9 @@ class VisualizationPlot(Ui_VisualizationPlot, QMainWindow):
         self._types = ['plot', 'map', 'bar']
         self.type = type
         self.plot_index = index
+        
         self.generate_figure()
-        self.lines = {}
+        
         self.COLORS = ['r','g','b','c','m','y','w']
         self.color_in_use = {}
         self.pb_add.clicked.connect(lambda:self.signal.emit('add_'+str(self.plot_index)))
@@ -293,54 +294,58 @@ class VisualizationPlot(Ui_VisualizationPlot, QMainWindow):
             self.figure.setBackground('k')
             self.vl_figure.addWidget(self.figure)
             self.legend = self.figure.getPlotItem().addLegend(brush=pg.mkBrush((255,255,255,20)))
+            self.lines = {}
         else:
-            self.figure = pg.GraphicsView(background='k')
+            self.figure = pg.plot()
             self.scatter_plot = pg.ScatterPlotItem(symbol='d',
-                                                  size=10,
-                                                  brush=pg.mkBrush('y'))
+                                                   size=20,
+                                                   brush=pg.mkBrush('y'))
             self.figure.addItem(self.scatter_plot)
-            self.text = pg.TextItem()
+            self.texts = {}
+        
+        self.vl_figure.addWidget(self.figure)
             
             
         
     def add_plots(self, data_key):
-        if not data_key in self.lines.keys():
-            # select color
-            color_used = [v for k, v in self.color_in_use.items()]
-            color_available = set(self.COLORS) - set(color_used)
-            color = list(color_available)[0]
-            if self.type == 'plot':
-                plot = self.figure.getPlotItem().plot([0], [0], pen=pg.mkPen(color, width=1))
-                self.color_in_use.update({data_key:color})
-                self.lines.update({data_key:plot})
-                self.legend.addItem(plot, data_key)
+        if self.type == 'plot':
+            if not data_key in self.lines.keys():
+                # select color
+                color_used = [v for k, v in self.color_in_use.items()]
+                color_available = set(self.COLORS) - set(color_used)
+                color = list(color_available)[0]
+                if self.type == 'plot':
+                    plot = self.figure.getPlotItem().plot([0], [0], pen=pg.mkPen(color, width=1))
+                    self.color_in_use.update({data_key:color})
+                    self.lines.update({data_key:plot})
+                    self.legend.addItem(plot, data_key)
+                    print(self.lines)
 
-            elif self.type == 'map':
-                scatter_plot = pg.ScatterPlotItem(symbol='d',
-                                                  size=10,
-                                                  brush=pg.mkBrush(color))
-                scatter_plot = self.figure.getPlotItem().scatterPlot(symbol='d',
-                                                                     size=10,
-                                                                     brush=pg.mkBrush(color),
-                                                                     )
-                self.lines.update({data_key:scatter_plot})
-                
-            elif self.type == "distribution":
-                bar_plot = pg.BarGraphItem(brush=pg.mkBrush(color))
-                self.lines.update({data_key:bar_plot})
-                self.figure.addItem(scatter_plot)
+        elif self.type == 'map':
+            if not data_key in self.texts.keys(): 
+                ti = pg.TextItem("Robot_{}".format(data_key),
+                                anchor=(0, 0),
+                                color='y')
+                # self.scatter_plot.addPoints([0], [0])
+                self.texts.update({data_key: ti})
+                self.figure.addItem(ti)
+                print(self.texts)
             
-            print(self.lines)
-        
+        elif self.type == "distribution":
+            bar_plot = pg.BarGraphItem(brush=pg.mkBrush(color))
+            self.lines.update({data_key:bar_plot})
+            # self.figure.addItem(scatter_plot)
+
     def remove_plots(self, data_key):
-        if data_key in self.lines.keys():
-            self.figure.getPlotItem().removeItem(self.lines[data_key])
-            self.legend.removeItem(data_key)
-            self.lines.pop(data_key)
-            self.color_in_use.pop(data_key)
-            
-        print(self.lines)
-        print(self.color_in_use)
+        if self.type == 'plot':
+            if data_key in self.lines.keys():
+                self.figure.getPlotItem().removeItem(self.lines[data_key])
+                self.legend.removeItem(data_key)
+                self.lines.pop(data_key)
+                self.color_in_use.pop(data_key)
+        elif self.type == 'map':
+            if data_key in self.texts.keys():
+                self.texts.pop(data_key)
         
     def closeEvent(self, event) -> None:
         super().closeEvent(event)
