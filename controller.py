@@ -1124,7 +1124,7 @@ class Controller:
         self.serial_port_send(send_data)
     
     def serial_send_motion(self):
-        m = self.viewer.com.sender().objectName()[16:]
+        m = self.viewer.com.sender().objectName().split("_")[-1] 
         speed = self.viewer.com.sp_motion_speed.value()
         data = self.robot_motion_ctl_table[m].encode('utf-8') + st.pack('f', speed)
         self.serial_port_send(data)
