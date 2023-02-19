@@ -249,7 +249,7 @@ class Controller:
                     else:
                         d = self.serial_data_model.get_robot_data(int(r_id), ds)
                         v.setData(x=np.arange(len(d)),
-                                y=np.array(d))
+                                  y=np.array(d))
             elif plot.type == 'map':
                 data = []
                 for k, v in plot.texts.items():
@@ -258,6 +258,12 @@ class Controller:
                     data.append((x,y))
                     v.setPos(x, y)
                 plot.scatter_plot.setData(pos=data)
+            
+            elif plot.type == 'distribution':
+                for k, v in plot.bars.items():
+                    d = self.serial_data_model.get_robots_data(k, t=-1)
+                    x, h = np.histogram(np.array([v_ for k_, v_ in d.items()]), bin=20)
+                    v.setOpts(x=x[1:], height=h, width=0.2)
         
     def login(self):
         self.viewer.login.close()

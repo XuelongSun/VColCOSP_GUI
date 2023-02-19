@@ -289,19 +289,24 @@ class VisualizationPlot(Ui_VisualizationPlot, QMainWindow):
         self.pb_remove.clicked.connect(lambda:self.signal.emit('remove_'+str(self.plot_index)))
         
     def generate_figure(self):
-        if not self.type == "map":
+        if self.type == "plot":
             self.figure = pg.PlotWidget()
             self.figure.setBackground('k')
             self.vl_figure.addWidget(self.figure)
-            self.legend = self.figure.getPlotItem().addLegend(brush=pg.mkBrush((255,255,255,20)))
+            self.legend = self.figure.getPlotItem().addLegend(brush=pg.mkBrush((255,255,255,50)))
             self.lines = {}
-        else:
+        elif self.type == "map":
             self.figure = pg.plot()
             self.scatter_plot = pg.ScatterPlotItem(symbol='d',
                                                    size=20,
                                                    brush=pg.mkBrush('y'))
             self.figure.addItem(self.scatter_plot)
             self.texts = {}
+        elif self.type == "distribution":
+            self.figure = pg.plot()
+            self.legend = pg.LegendItem(brush=pg.mkBrush((255,255,255,50)))
+            self.figure.addItem(self.legend)
+            self.bars = {}
         
         self.vl_figure.addWidget(self.figure)
             
@@ -332,9 +337,14 @@ class VisualizationPlot(Ui_VisualizationPlot, QMainWindow):
                 print(self.texts)
             
         elif self.type == "distribution":
-            bar_plot = pg.BarGraphItem(brush=pg.mkBrush(color))
-            self.lines.update({data_key:bar_plot})
-            # self.figure.addItem(scatter_plot)
+            # select color
+            color_used = [v for k, v in self.color_in_use.items()]
+            color_available = set(self.COLORS) - set(color_used)
+            color = list(color_available)[0]
+            bar_plot = pg.BarGraphItem(brush=pg.mkBrush(color), pen='w', name=data_key)
+            self.bars.update({data_key:bar_plot})
+            self.figure.addItem(bar_plot)
+            self.legend.addItem(bar_plot, data_key)
 
     def remove_plots(self, data_key):
         if self.type == 'plot':
@@ -345,7 +355,9 @@ class VisualizationPlot(Ui_VisualizationPlot, QMainWindow):
                 self.color_in_use.pop(data_key)
         elif self.type == 'map':
             if data_key in self.texts.keys():
+                self.figure.removeItem(self.texts[data_key])
                 self.texts.pop(data_key)
+                
         
     def closeEvent(self, event) -> None:
         super().closeEvent(event)
