@@ -152,6 +152,7 @@ class Controller:
                                          bytesize=serial.EIGHTBITS)
         self.serial_send_package_len = 32
         self.serial_recv_package_len = 96
+        self.serial_port_timer = QTimer()
         self.robot_data_buff = []
         self.serial_data_is_running = False
         self.valid_robot_ids = []
@@ -166,6 +167,8 @@ class Controller:
         self.viewer.com.pb_request_update.clicked.connect(self.serial_request_data)
         self.viewer.com.pb_raw_send.clicked.connect(self.serial_send_raw_data)
         self.viewer.com.pb_raw_clear.clicked.connect(lambda:self.viewer.com.text_edit_recv_raw.clear())
+        self.viewer.com.pb_send_ch_data.clicked.connect(self.serial_port_send_parameter)
+        
         # visualization plots
         self.viewer.main_menu.pb_add_plot.clicked.connect(self.exp_visualization_add_plot)
         self.viewer.main_menu.pb_add_map.clicked.connect(self.exp_visualization_add_plot)
@@ -1075,7 +1078,15 @@ class Controller:
                         else:
                             raw_data_str = d_display.decode('utf-8', errors='replace')
                         self.viewer.com.raw_data_insert_text(raw_data_str)
-    
+                    
+                    # update robot ID combox
+                    if self.viewer.com.cbox_request_id.count() != len(self.serial_data_model.robot_data.keys()):
+                        self.viewer.com.cbox_request_id.clear()
+                        self.viewer.com.cbox_send_robot_id.clear()
+                        for k in self.serial_data_model.robot_data.keys():
+                            self.viewer.com.cbox_request_id.addItem(k)
+                            self.viewer.com.cbox_send_robot_id.addItem(k)
+                            
     def serial_port_send(self, data, r_id=None):
         header = b''
         # add robot ID

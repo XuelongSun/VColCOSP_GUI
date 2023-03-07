@@ -163,7 +163,7 @@ class Ui_com(object):
         self.line_8.setFrameShape(QtWidgets.QFrame.HLine)
         self.line_8.setObjectName("line_8")
         self.pb_raw_send = QtWidgets.QPushButton(com)
-        self.pb_raw_send.setGeometry(QtCore.QRect(512, 404, 81, 51))
+        self.pb_raw_send.setGeometry(QtCore.QRect(512, 404, 81, 55))
         self.pb_raw_send.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
         self.pb_raw_send.setStyleSheet("QPushButton::disabled {\n"
 "    border: 2px solid rgb(149, 149, 149);\n"
@@ -313,10 +313,10 @@ class Ui_com(object):
         self.sp_send_p_4.setMaximum(9999.99)
         self.sp_send_p_4.setSingleStep(0.01)
         self.sp_send_p_4.setObjectName("sp_send_p_4")
-        self.pb_autosend_update = QtWidgets.QPushButton(com)
-        self.pb_autosend_update.setGeometry(QtCore.QRect(512, 476, 79, 55))
-        self.pb_autosend_update.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
-        self.pb_autosend_update.setStyleSheet("QPushButton::disabled {\n"
+        self.pb_send_ch_data = QtWidgets.QPushButton(com)
+        self.pb_send_ch_data.setGeometry(QtCore.QRect(470, 478, 123, 53))
+        self.pb_send_ch_data.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+        self.pb_send_ch_data.setStyleSheet("QPushButton::disabled {\n"
 "    border: 2px solid rgb(149, 149, 149);\n"
 "    color:rgb(149, 149, 149);\n"
 "    border-radius:4px;\n"
@@ -326,7 +326,7 @@ class Ui_com(object):
 "border-radius:4px;\n"
 "}\n"
 "")
-        self.pb_autosend_update.setObjectName("pb_autosend_update")
+        self.pb_send_ch_data.setObjectName("pb_send_ch_data")
         self.cb_send_p_autosend = QtWidgets.QCheckBox(com)
         self.cb_send_p_autosend.setGeometry(QtCore.QRect(432, 408, 71, 21))
         self.cb_send_p_autosend.setObjectName("cb_send_p_autosend")
@@ -564,16 +564,16 @@ class Ui_com(object):
 "}\n"
 "")
         self.pb_request_update.setObjectName("pb_request_update")
-        self.pb_request_update_2 = QtWidgets.QPushButton(com)
-        self.pb_request_update_2.setGeometry(QtCore.QRect(16, 348, 111, 25))
+        self.pb_protocol = QtWidgets.QPushButton(com)
+        self.pb_protocol.setGeometry(QtCore.QRect(16, 348, 111, 25))
         font = QtGui.QFont()
         font.setFamily("Arial")
         font.setPointSize(10)
         font.setBold(True)
         font.setWeight(75)
-        self.pb_request_update_2.setFont(font)
-        self.pb_request_update_2.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
-        self.pb_request_update_2.setStyleSheet("QPushButton::disabled {\n"
+        self.pb_protocol.setFont(font)
+        self.pb_protocol.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+        self.pb_protocol.setStyleSheet("QPushButton::disabled {\n"
 "    border: 2px solid rgb(149, 149, 149);\n"
 "    color:rgb(149, 149, 149);\n"
 "    border-radius:10px;\n"
@@ -583,7 +583,7 @@ class Ui_com(object):
 "border-radius:10px;\n"
 "}\n"
 "")
-        self.pb_request_update_2.setObjectName("pb_request_update_2")
+        self.pb_protocol.setObjectName("pb_protocol")
         self.cb_send_p_6 = QtWidgets.QCheckBox(com)
         self.cb_send_p_6.setGeometry(QtCore.QRect(302, 514, 51, 15))
         self.cb_send_p_6.setObjectName("cb_send_p_6")
@@ -597,7 +597,7 @@ class Ui_com(object):
         self.sp_send_p_6.setSingleStep(0.01)
         self.sp_send_p_6.setObjectName("sp_send_p_6")
         self.line_10 = QtWidgets.QFrame(com)
-        self.line_10.setGeometry(QtCore.QRect(158, 460, 437, 16))
+        self.line_10.setGeometry(QtCore.QRect(158, 460, 433, 16))
         self.line_10.setStyleSheet("color: rgb(19, 126, 124);")
         self.line_10.setFrameShadow(QtWidgets.QFrame.Plain)
         self.line_10.setLineWidth(1)
@@ -662,7 +662,7 @@ class Ui_com(object):
         self.cb_send_p_4.setText(_translate("com", "P_CH4"))
         self.cb_send_p_2.setText(_translate("com", "P_CH2"))
         self.cb_send_p_5.setText(_translate("com", "P_CH5"))
-        self.pb_autosend_update.setText(_translate("com", "UPDATE"))
+        self.pb_send_ch_data.setText(_translate("com", "Send CH1-6"))
         self.cb_send_p_autosend.setToolTip(_translate("com", "<html><head/><body><p>when the data in CH1-CH5 changed,data will be automatically sended if checked.</p></body></html>"))
         self.cb_send_p_autosend.setText(_translate("com", "AutoSend"))
         self.label_44.setText(_translate("com", "Speed"))
@@ -681,6 +681,6 @@ class Ui_com(object):
         self.label_46.setText(_translate("com", "ID:"))
         self.cb_request_all.setText(_translate("com", "Request All"))
         self.pb_request_update.setText(_translate("com", "Request Update"))
-        self.pb_request_update_2.setText(_translate("com", "Protocol"))
+        self.pb_protocol.setText(_translate("com", "Protocol"))
         self.cb_send_p_6.setText(_translate("com", "P_CH6"))
 import resources_rc

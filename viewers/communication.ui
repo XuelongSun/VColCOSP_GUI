@@ -371,7 +371,7 @@ border-radius:4px;
      <x>512</x>
      <y>404</y>
      <width>81</width>
-     <height>51</height>
+     <height>55</height>
     </rect>
    </property>
    <property name="cursor">
@@ -780,13 +780,13 @@ color: rgb(0,255, 0);
     <double>0.010000000000000</double>
    </property>
   </widget>
-  <widget class="QPushButton" name="pb_autosend_update">
+  <widget class="QPushButton" name="pb_send_ch_data">
    <property name="geometry">
     <rect>
-     <x>512</x>
-     <y>476</y>
-     <width>79</width>
-     <height>55</height>
+     <x>470</x>
+     <y>478</y>
+     <width>123</width>
+     <height>53</height>
     </rect>
    </property>
    <property name="cursor">
@@ -805,7 +805,7 @@ border-radius:4px;
 </string>
    </property>
    <property name="text">
-    <string>UPDATE</string>
+    <string>Send CH1-6</string>
    </property>
   </widget>
   <widget class="QCheckBox" name="cb_send_p_autosend">
@@ -1409,7 +1409,7 @@ border-radius:10px;
     <string>Request Update</string>
    </property>
   </widget>
-  <widget class="QPushButton" name="pb_request_update_2">
+  <widget class="QPushButton" name="pb_protocol">
    <property name="geometry">
     <rect>
      <x>16</x>
@@ -1487,7 +1487,7 @@ color: rgb(0,255, 0);
     <rect>
      <x>158</x>
      <y>460</y>
-     <width>437</width>
+     <width>433</width>
      <height>16</height>
     </rect>
    </property>
