@@ -641,7 +641,7 @@ class Controller:
                 # solid color fill
                 self.phero_background_image = np.ones([self.phero_model.pixel_height,
                                                         self.phero_model.pixel_width, 3],
-                                                      dtype=np.unit8)*self.phero_bg_sc
+                                                      dtype=np.uint8)*self.phero_bg_sc
             elif self.viewer.phero.radioButton_image.isChecked():
                 self.phero_background_image = self.phero_bg_loaded_image.copy()
             elif self.viewer.phero.radioButton_draw.isChecked():
@@ -740,11 +740,15 @@ class Controller:
         
         elif self.phero_mode == "Dy-Localization":
             # * dynamically interact with the localization system
-            if not self.loc_data_thread.stop:
+            if self.loc_is_running:
                 # the latest frame data
-                pos = self.loc_data_thread.loc_data_model.get_last_pos()
+                # pos = self.loc_data_thread.loc_data_model.get_last_pos()
+                pos = {}
+                for v in self.loc_image_location:
+                    pos.update({v[0]:[v[1],v[2]]})
+                print(pos)
                 # if got the positions of the robots
-                if pos:
+                if self.loc_image_location:
                     if self.viewer.phero.radioButton_info.isChecked():
                         # use information
                         image = np.zeros([self.phero_model.pixel_height,
@@ -760,11 +764,15 @@ class Controller:
                                                     self.phero_bg_info_paras['arena_border_color'],
                                                     self.phero_bg_info_paras['arena_border_width'])
                         font = cv2.FONT_HERSHEY_SIMPLEX
-                        for k,v in pos.items():
-                            if (v[0] >= 0) and (v[0] <= self.arena_length) and \
-                                (v[1]>=0) and (v[1] <= self.arena_width):
-                                y = int(v[0]/self.arena_length*self.phero_model.pixel_width)
-                                x = int(v[1]/self.arena_width*self.phero_model.pixel_height)
+                        for k, v in pos.items():
+                            # if (v[0] >= 0) and (v[0] <= self.arena_length) and \
+                            #     (v[1]>=0) and (v[1] <= self.arena_width):
+                            #     y = int(v[0]/self.arena_length*self.phero_model.pixel_width)
+                            #     x = int(v[1]/self.arena_width*self.phero_model.pixel_height)
+                            if (v[0] >= 0) and (v[0] <= self.phero_model.pixel_width) and \
+                                (v[1]>= 0) and (v[1] <= self.phero_model.pixel_height):
+                                y = int(v[0])
+                                x = int(v[1])
                                 # pos-text
                                 if self.viewer.phero_bg_setting.groupBox_pos_text.isChecked():
                                     image = cv2.putText(image, 
@@ -1084,8 +1092,8 @@ class Controller:
                         self.viewer.com.cbox_request_id.clear()
                         self.viewer.com.cbox_send_robot_id.clear()
                         for k in self.serial_data_model.robot_data.keys():
-                            self.viewer.com.cbox_request_id.addItem(k)
-                            self.viewer.com.cbox_send_robot_id.addItem(k)
+                            self.viewer.com.cbox_request_id.addItem(str(k))
+                            self.viewer.com.cbox_send_robot_id.addItem(str(k))
                             
     def serial_port_send(self, data, r_id=None):
         header = b''
