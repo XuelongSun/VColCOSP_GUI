@@ -34,10 +34,9 @@ class SerialDataModel(object):
                                'COL-S-R-R': 23,
                                'COL-S-R-G': 24,
                                'COL-S-R-B': 25,
-                               'AVDM': 26,
-                               'P-L': 27,
-                               'FFI': 28,
-                               'T-FLAG': 29
+                               'Energy': 26,
+                               'FAvoid': 27,
+                               'FGather': 28,
                                }
         # data
         # last 7B is reserved
@@ -267,14 +266,10 @@ class PheromoneModel:
     def render_pheromone(self, robot_pos, channel, arena_length, arena_width):
         injection = np.zeros([self.pixel_height, self.pixel_width, 3])
         for k, v in robot_pos.items():
-            # if (v[0] >= 0) and (v[0] <= arena_length) and \
-            #     (v[1] >= 0) and (v[1] <= arena_width):
-            #     y = int(v[0]/arena_length*self.pixel_width)
-            #     x = int(v[1]/arena_width*self.pixel_height)
-            if (v[0] >= 0) and (v[0] <= self.pixel_width) and \
-                (v[1] >= 0) and (v[1] <= self.pixel_height):
-                y = int(v[0])
-                x = int(v[1])
+            if (v[0] >= 0) and (v[0] <= arena_length) and \
+                (v[1] >= 0) and (v[1] <= arena_width):
+                y = int(v[0]/arena_length*self.pixel_width)
+                x = int(v[1]/arena_width*self.pixel_height)
                 if str(k) in channel.keys():
                     ind = self.color_channel[channel[str(k)]]
                 else:
@@ -404,8 +399,8 @@ class Pattern(object):
 
 class LocalizationModel(object):
 	def __init__(self):
-		self.is_corrected = True
-		if self.is_corrected == False:
+		is_corrected = True
+		if is_corrected == False:
 			print('The camera and coordination is not calibrated, please calibrate it first')
 			sys.exit()
 		else:

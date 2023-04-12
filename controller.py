@@ -1383,6 +1383,13 @@ class Controller:
             self.viewer.main_menu.et_exp_timer.setText('ExperimentTime: %2d H %2d M% 2.2f S' % (h, m, s))
             # task
             print('i am running')
+            # 1. receive data from prey and predator (energy, f_avoid, f_gather)
+            # 2. justify if each prey's energy is less than zero (death):
+            # if so, send the value of f_avoid, f_gather
+            # 3. send predator its position, angle and the goal angle
+            # data send format
+            # to prey: DWD + 2f:'f_avoid, f_gather'
+            # to predator: DWD + 5f:'p_x, p_y, h, g_px, g_py'
             
             # save data
             if self.viewer.main_menu.cb_auto_save.isChecked():
