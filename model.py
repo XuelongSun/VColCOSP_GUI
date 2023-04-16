@@ -560,6 +560,8 @@ class LocalizationModel(object):
 				self.world_pos.append(self.trans_corrdi_p2w(self.p2w_M, self.PresM, id_cam_pos))
 		return self.world_pos, self.id_cam_pos
 
+def distance(p1, p2):
+    return np.sqrt((p1[0]-p2[0])**2 + (p1[1]-p2[1])**2)
 
 if __name__ == "__main__":
     import time
