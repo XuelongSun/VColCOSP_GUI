@@ -137,6 +137,7 @@ class Controller:
         self.loc_current_image = None
         self.loc_world_locations = {}
         self.loc_image_location = []
+        self.loc_heading = []
         self.viewer.main_menu.pb_loc.clicked.connect(self.loc_show_window)
         self.viewer.loc_embedded.signal.connect(self.loc_event_handle)
         self.viewer.loc_embedded.pb_check_camera.clicked.connect(self.loc_check_camera)
@@ -987,24 +988,29 @@ class Controller:
             # grab image from camera
             self.loc_current_image = self.loc_camera.get_gray_image()
             # calculate locations
-            w_loc, self.loc_image_location = self.loc_model.search_pattern(self.loc_current_image)
+            w_loc, self.loc_image_location, self.loc_heading = self.loc_model.search_pattern(self.loc_current_image)
             for info in w_loc:
                 if info[0] in self.loc_world_locations.keys():
                     self.loc_world_locations[int(info[0])].append([info[1], info[2]])
                 else:
-                    self.loc_world_locations.update({int(info[0]):[[info[1], info[2]]]})
+                    self.loc_world_locations.update({int(info[0]):[[w_loc[1], w_loc[2]]]})
 
     def loc_display(self):
         # color image
         img_display = self.loc_camera.get_BGR_image()
-        for info in self.loc_image_location:
+        for info, h in zip(self.loc_image_location, self.loc_heading):
             if self.viewer.loc_embedded.cb_show_id.isChecked():
                 img_display = cv2.putText(img_display, str(info[0]), (info[1], info[2]),
                                           cv2.FONT_HERSHEY_COMPLEX_SMALL, 3, (255, 0, 0), 3)
             if self.viewer.loc_embedded.cb_show_marker.isChecked():
                 img_display = cv2.circle(img_display, (info[1], info[2]), 20, (255, 0, 0), 4)
+                img_display = cv2.arrowedLine(img_display, (info[1], info[2]),
+                                              (int(info[1] + 10*np.sin(h)),
+                                               int(info[2] + 10*np.cos(h))),
+                                               (255,0,0), 4)
             if self.viewer.loc_embedded.cb_show_location.isChecked():
-                img_display = cv2.putText(img_display, '[{:3d}, {:3d}]'.format(info[1], info[2]),
+                img_display = cv2.putText(img_display,
+                                          '[{:3d}, {:3d}, ({:2f})]'.format(info[1], info[2], np.rad2deg(h)),
                                           (info[1], info[2]+40),
                                           cv2.FONT_HERSHEY_COMPLEX_SMALL, 3, (0, 255, 255), 3)
         # if self.viewer.loc_embedded.cb_show_trajectory.isChecked():
