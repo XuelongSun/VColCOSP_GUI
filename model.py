@@ -37,6 +37,7 @@ class SerialDataModel(object):
                                'Energy': 26,
                                'FAvoid': 27,
                                'FGather': 28,
+                               'State':29
                                }
         # data
         # last 7B is reserved
@@ -503,7 +504,7 @@ class LocalizationModel(object):
         contours, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
         if len(contours) == 0:
-            return None
+            return None, None
         outer_area = self.outer_area
         outer_r_ratio = self.outer_r_ratio
         area_tolerence = outer_area*0.4
@@ -540,8 +541,8 @@ class LocalizationModel(object):
                             angle_ = np.deg2rad(outer_ellipse[-1])
                         else:
                             angle_ = np.deg2rad(outer_ellipse[-1] + 180)
-                        return np.array([iid, search_start_x + outer_ellipse[0][0],
-                       search_start_y + outer_ellipse[0][1]]).astype(int), angle_
+                        return np.array([iid, search_start_x + outer_ellipse[0][0], search_start_y + outer_ellipse[0][1]]).astype(int), angle_
+        return None, None
 
     def trans_corrdi_p2w(self, p2w_M, PresM, p_pos):
         id = p_pos[0]

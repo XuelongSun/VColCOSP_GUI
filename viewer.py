@@ -310,8 +310,6 @@ class VisualizationPlot(Ui_VisualizationPlot, QMainWindow):
         
         self.vl_figure.addWidget(self.figure)
             
-            
-        
     def add_plots(self, data_key):
         if self.type == 'plot':
             if not data_key in self.lines.keys():
@@ -320,7 +318,7 @@ class VisualizationPlot(Ui_VisualizationPlot, QMainWindow):
                 color_available = set(self.COLORS) - set(color_used)
                 color = list(color_available)[0]
                 if self.type == 'plot':
-                    plot = self.figure.getPlotItem().plot([0], [0], pen=pg.mkPen(color, width=1))
+                    plot = self.figure.getPlotItem().plot([0, 0], [0, 0], pen=pg.mkPen(color, width=1))
                     self.color_in_use.update({data_key:color})
                     self.lines.update({data_key:plot})
                     self.legend.addItem(plot, data_key)

@@ -132,6 +132,7 @@ class Controller:
         self.loc_refresh_timer = QTimer()
         self.loc_refresh_timer.timeout.connect(self.loc_display)
         self.loc_camera = HighFpsCamera.Camera()
+        self.camera_opened = False
         self.loc_has_started = False
         self.loc_is_running = False
         self.loc_current_image = None
@@ -142,7 +143,7 @@ class Controller:
         self.viewer.loc_embedded.signal.connect(self.loc_event_handle)
         self.viewer.loc_embedded.pb_check_camera.clicked.connect(self.loc_check_camera)
         self.viewer.loc_embedded.pb_start.clicked.connect(self.loc_start)
-        
+        self.viewer.loc_embedded.hS_exposure.valueChanged.connect(self.loc_camera_setting)
         #* communication
         self.viewer.main_menu.pb_com.clicked.connect(lambda: self.viewer.com.show())
         # robot data via USB-serial
@@ -962,8 +963,13 @@ class Controller:
     def loc_start(self):
         text = self.viewer.loc_embedded.sender().text()
         if text == 'Start':
+            if not self.camera_opened:
+                if self.loc_camera.open_camera() == 0:
+                    time.sleep(0.5)
+                    self.camera_opened = True
+                    print('camera opened successful')
             if self.loc_camera.start_grab_img() == 0:
-                time.sleep(1)
+                time.sleep(0.5)
                 print('start grab image success')
             else:
                 self.viewer.show_message_box("Error: cannot start capture image from")
@@ -977,6 +983,7 @@ class Controller:
         elif text == 'Pause':
             self.loc_is_running = False
             if self.loc_camera.stop_grab_img() == 0:
+                time.sleep(0.5)
                 print('Grabbing image stopped')
             self.viewer.loc_embedded.pb_start.setText("Start")
             self.loc_refresh_timer.stop()
@@ -989,11 +996,12 @@ class Controller:
             self.loc_current_image = self.loc_camera.get_gray_image()
             # calculate locations
             w_loc, self.loc_image_location, self.loc_heading = self.loc_model.search_pattern(self.loc_current_image)
-            for info in w_loc:
+            for info, h in zip(w_loc, self.loc_heading):
+                # world location
                 if info[0] in self.loc_world_locations.keys():
-                    self.loc_world_locations[int(info[0])].append([info[1], info[2]])
+                    self.loc_world_locations[int(info[0])].append([info[1], info[2], h])
                 else:
-                    self.loc_world_locations.update({int(info[0]):[[w_loc[1], w_loc[2]]]})
+                    self.loc_world_locations.update({int(info[0]):[[info[1], info[2], h]]})
 
     def loc_display(self):
         # color image
@@ -1005,12 +1013,12 @@ class Controller:
             if self.viewer.loc_embedded.cb_show_marker.isChecked():
                 img_display = cv2.circle(img_display, (info[1], info[2]), 20, (255, 0, 0), 4)
                 img_display = cv2.arrowedLine(img_display, (info[1], info[2]),
-                                              (int(info[1] + 10*np.sin(h)),
-                                               int(info[2] + 10*np.cos(h))),
-                                               (255,0,0), 4)
+                                              (int(info[1] + 26*np.sin(h)),
+                                               int(info[2] + 26*np.cos(h))),
+                                               (255, 255, 0), 4)
             if self.viewer.loc_embedded.cb_show_location.isChecked():
                 img_display = cv2.putText(img_display,
-                                          '[{:3d}, {:3d}, ({:2f})]'.format(info[1], info[2], np.rad2deg(h)),
+                                          '[{:3d}, {:3d}, {:.1f}]'.format(info[1], info[2], np.rad2deg(h-np.pi/2)),
                                           (info[1], info[2]+40),
                                           cv2.FONT_HERSHEY_COMPLEX_SMALL, 3, (0, 255, 255), 3)
         # if self.viewer.loc_embedded.cb_show_trajectory.isChecked():
@@ -1019,7 +1027,14 @@ class Controller:
         #         for i, info in enumerate(self.loc_image_location[-1:-end_ind+1]):
         #             pass
         self.viewer.loc_embedded.update_localization_display(img_display)
-        
+    
+    def loc_camera_setting(self):
+        sender = self.viewer.loc_embedded.sender()
+        if sender.objectName() == 'hS_exposure':
+            exp = self.viewer.loc_embedded.hS_exposure.value() * 100
+            if self.loc_camera.setExposureTime(self.loc_camera.camera, exp) == 0:
+                time.sleep(0.1)
+            
     def serial_ports_scan(self):
         # get the valid serial ports as a list
         port_list = serial.tools.list_ports.comports()
@@ -1358,6 +1373,11 @@ class Controller:
             pass
         else:
             print('error')
+    def exp_save_config(self):
+        pass
+    
+    def exp_load_config(self):
+        pass
     
     def exp_start(self):
         print(self.viewer.main_menu.pb_start_exp.text())
@@ -1401,12 +1421,17 @@ class Controller:
             # robot if defined: predator: 0, prey: 1,2...10
             # 1. receive data from prey and predator (energy, f_avoid, f_gather, px, py)
             pd_energy = self.serial_data_model.get_robot_data(self.exp_predator_id, 'Energy')
-            pd_position = self.loc_world_locations[self.exp_predator_id]
+            pd_position = self.loc_world_locations[self.exp_predator_id][:2]
+            pd_heading = self.loc_world_locations[self.exp_predator_id][2]
             pe_energys = {}
             pe_positions = {}
+            pe_energy_sum = 0
             for id_ in self.exp_prey_ids:
                 pe_energys.update({id_:self.serial_data_model.get_robot_data(id_, 'Energy')})
                 pe_positions.update({id_:self.loc_world_locations[id_]})
+                # prey in escaping state
+                if self.serial_data_model.get_robot_data(id_, 'state') == 2:
+                    pe_energy_sum += pe_energys[id_]
             
             # 2. justify if each prey's energy is less than zero (death):
             # if so, send the value of f_avoid, f_gather
@@ -1414,6 +1439,7 @@ class Controller:
                 send_data = b'DWD'
                 # generate f_avoid and f_gather value
                 if np.random.uniform(0, 1) > 0.1:
+                    
                     temp_a_e = [(a, a.energy) for a in self.alive_preys]
                     temp_a_e = sorted(temp_a_e, key=lambda x:x[1])
                     sum_ = sum([a_[1] for a_ in temp_a_e])
@@ -1494,13 +1520,13 @@ class Controller:
                         # ?: how to send gpx gpy data when there is no change to the previous one? 
                         g_px = pd_position[0]
                         g_py = pd_position[1]
-            send_data += st.pack('5f', pd_position[0],  pd_position[1], pd_heading, g_px, g_py)
+            send_data += st.pack('6f', pd_position[0],  pd_position[1], pd_heading, g_px, g_py, pe_energy_sum)
             print('send to predator:', send_data)
             self.serial_port_send(send_data, r_id=d_id)
             
             # data send format
             # to prey: DWD + 2f:'f_avoid, f_gather'
-            # to predator: DWD + 5f:'p_x, p_y, h, g_px, g_py'
+            # to predator: DWD + 6f:'p_x, p_y, h, g_px, g_py, prey_energy'
             
             # save data
             if self.viewer.main_menu.cb_auto_save.isChecked():
