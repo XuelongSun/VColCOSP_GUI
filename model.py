@@ -397,16 +397,35 @@ class Pattern(object):
         self.angle = 0
         self.world_pos = [[0,0]]
 
-
+        
 class LocalizationModel(object):
     def __init__(self):
-        is_corrected = True
-        if is_corrected == False:
-            print('The camera and coordination is not calibrated, please calibrate it first')
-            sys.exit()
-        else:
-            with np.load('./camera/calibration_data.npz') as X:
-                self.mtx, self.dist, rvecs, tvecs, self.PresM = [X[i] for i in ('mtx','dist','rvecs','tvecs','PresM')]
+        self.id_table_filename = 'ID.txt'
+        self.arena_size = (1.4,0.8)
+        self.image_size = (1920,1200)
+        self.pattern_size = 0.04
+        self.pat_ratio = (60,145,280,340,400)
+        self.update_pattern_info()
+        
+        self.zoom_ratio = 2
+        self.tolerence = 0.4
+        self.r_tolerence = 0.004
+        self.update_calibration_info()
+    
+    def update_pattern_info(self):
+        self.id_table = np.loadtxt(self.id_table_filename)
+        self.pat_img_r = int((self.image_size[0]/self.arena_size[0]*self.pattern_size*0.9)/2)
+        outer_r0 = self.pat_img_r*self.pat_ratio[2]/self.pat_ratio[4]
+        outer_r1 = self.pat_img_r*self.pat_ratio[3]/self.pat_ratio[4]
+        self.outer_area = np.pi * outer_r0 * outer_r1
+        self.outer_r_ratio = outer_r0/outer_r1
+        self.pattern = []
+        for [id, r1, r0] in self.id_table:
+            self.pattern.append(Pattern(int(id), r1, r0, self.id_table))
+    
+    def update_calibration_info(self):
+        with np.load('./camera/calibration_data.npz') as X:
+            self.mtx, self.dist, rvecs, tvecs, self.PresM = [X[i] for i in ('mtx','dist','rvecs','tvecs','PresM')]
         temp_array = np.array([0,0,0])
         mtx1 = np.insert(self.mtx,3,temp_array,axis=1)
         rotM = cv2.Rodrigues(rvecs)[0]
@@ -415,39 +434,57 @@ class LocalizationModel(object):
         self.w2p_M = np.matrix(np.matmul(mtx1,rot_trans_M))
         self.p2w_M = self.w2p_M.I
         self.newcameramtx, roi = cv2.getOptimalNewCameraMatrix(self.mtx, self.dist, (1920,1200), 0, (1920,1200))
+
+    def draw_chess_board(self, width, height, cheese_cell):
+        image = np.zeros((1080, 1920, 3), dtype=np.uint8)
+        image.fill(255)
+
+        color = (255,255,255)
+
+        # this is not valid for other hardware settings
+        offsetx = 17 + 3*cheese_cell
+        offsety = 3*cheese_cell
+
+        fill_color = 0
+        for j in range(0,height + 1):
+            y = j * cheese_cell
+            for i in range(0,width+1):
+                #rint(i)
+                x0 = i *cheese_cell+offsetx
+                y0 = y+offsety
+                rect_start = (x0,y0)
         
-        IDTable = np.loadtxt('./temps/ID.txt')
-
-        self.r_output = open("./temps/loc_data.txt",'w+') 
-
-        self.num_of_pattern = 16
-        self.arena_size = (1.4,0.8)
-        self.image_size = (1920,1200)
-        self.zoom_ratio = 2
-        self.pattern_size = 0.04
-        self.tolerence = 0.4
-        self.r_tolerence = 0.004
-        self.IDTable = IDTable
-
-        self.pat_ratio = (60,145,280,340,400)
-
-        self.pat_img_r = int((self.image_size[0]/self.arena_size[0]*self.pattern_size*0.9)/2)
-
-        outer_r0 = self.pat_img_r*self.pat_ratio[2]/self.pat_ratio[4]
-        outer_r1 = self.pat_img_r*self.pat_ratio[3]/self.pat_ratio[4]
-        self.outer_area = np.pi * outer_r0 * outer_r1
-        self.outer_r_ratio = outer_r0/outer_r1
-        self.search_area_num = 0
-
-        self.pattern = []
-        for [id, r1, r0] in IDTable:
-            self.pattern.append(Pattern(int(id), r1, r0, IDTable))
-
-        self.cnt = 0
+                x1 = x0 + cheese_cell
+                y1 = y0 + cheese_cell
+                rect_end = (x1,y1)
+                cv2.rectangle(image, rect_start, rect_end,color, 1, 0)
+                image[y0:y1,x0:x1] = fill_color
+                if width % 2: 
+                    if i != width:
+                        fill_color = (0 if ( fill_color == 255) else 255)
+                else:
+                    if i != width + 1:
+                        fill_color = (0 if ( fill_color == 255) else 255)
+        return image
     
-    def __del__(self):
-        self.r_output.close()
-
+    def run_calibration(self, img, cheese_width, cheese_height):
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        objp = np.zeros((cheese_width*cheese_height, 3), np.float32)
+        objp[:,:2] = np.mgrid[0:cheese_width,0:cheese_height].T.reshape(-1,2)
+        objp[:,:2] = objp[:,:2]*0.08 + 0.16 # ?
+        axis = np.float32([[0,0,0], [1.4,0,0], [0,0.8,0], [0,0,-0.15]]).reshape(-1,3)
+        criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
+        objpoints = [] # 3D points in world coordinates
+        imgpoints = [] # 2D points in image coordinates
+        ret, corners = cv2.findChessboardCorners(img, (cheese_width, cheese_height), None)
+        if ret == True:
+            # print("found")
+            objpoints.append(objp)
+            corners2 = cv2.cornerSubPix(img, corners, (11,11), (-1,-1), criteria)
+            imgpoints.append(corners)
+            cv2.drawChessboardCorners(img, (cheese_width,cheese_height), corners2, ret)
+        ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, img.shape[::-1], None, None)
+        
     def get_possible_posi(self,img):
         dim = (int(img.shape[1] /self.zoom_ratio), int(img.shape[0] /self.zoom_ratio))
         img = cv2.resize(img, dim, interpolation = cv2.INTER_AREA)

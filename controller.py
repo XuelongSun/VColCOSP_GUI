@@ -63,7 +63,6 @@ class Controller:
         self.viewer.vscene.pb_start_video.clicked.connect(self.vscene_start_video)
         self.viewer.vscene.pb_pause_video.clicked.connect(self.vscene_pause_video)
         self.viewer.vscene.pb_load_config.clicked.connect(self.vscene_load_config)
-        
         self.viewer.vscene.pb_save_config.clicked.connect(self.vscene_save_config)
         ## timer for video player
         self.vscene_timer = QTimer()
@@ -128,6 +127,7 @@ class Controller:
         self.arena_width = 0.6
         
         #* localization
+        self.viewer.main_menu.pb_loc.clicked.connect(self.loc_show_window)
         self.loc_model = LocalizationModel()
         self.loc_refresh_timer = QTimer()
         self.loc_refresh_timer.timeout.connect(self.loc_display)
@@ -139,11 +139,11 @@ class Controller:
         self.loc_world_locations = {}
         self.loc_image_location = []
         self.loc_heading = []
-        self.viewer.main_menu.pb_loc.clicked.connect(self.loc_show_window)
         self.viewer.loc_embedded.signal.connect(self.loc_event_handle)
         self.viewer.loc_embedded.pb_check_camera.clicked.connect(self.loc_check_camera)
         self.viewer.loc_embedded.pb_start.clicked.connect(self.loc_start)
         self.viewer.loc_embedded.hS_exposure.valueChanged.connect(self.loc_camera_setting)
+        self.viewer.loc_embedded.pb_generate_pattern.clicked.connect(self.loc_generate_pattern)
         #* communication
         self.viewer.main_menu.pb_com.clicked.connect(lambda: self.viewer.com.show())
         # robot data via USB-serial
@@ -197,6 +197,9 @@ class Controller:
         
         self.viewer.main_menu.pb_start_exp.clicked.connect(self.exp_start)
         self.viewer.main_menu.pb_save_data.clicked.connect(self.exp_save_data)
+        
+        self.viewer.main_menu.pb_load_config.clicked.connect(self.exp_load_config)
+        self.viewer.main_menu.pb_save_config.clicked.connect(self.exp_save_config)
         
         self.sys_timer.start(100)
         
@@ -463,49 +466,59 @@ class Controller:
     def vscene_pause_video(self):
         self.vscene_timer.stop()
     
+    def _vscene_save_config(self, config=None):
+        if config is None:
+            config = configparser.ConfigParser()
+        config.add_section('VScene')
+        # get config and write to the config file
+        config_dict = {'mode':str(self.viewer.vscene.comboBox_led_mode.currentIndex())}
+        for name in ['sled_w','sled_h','sled_r','sled_c',
+                        'sp_x','sp_y','sled_fold_c','sled_fold_r',
+                        'frame_rate','pc_display_rate']:
+            exec('config_dict[name] = str(self.viewer.vscene.spinBox_{}.value())'.format(name))
+        for k,v in config_dict.items():
+            config.set('VScene', k, v)
+        return config
+
     def vscene_save_config(self):
         filename, _ = QFileDialog.getSaveFileName(self.viewer.vscene, 
                                                  'save pheromone config',
                                                  './', 'ini(*.ini)')
         if len(filename) != 0:
             cfgfile = open(filename, 'w')
-            Config = configparser.ConfigParser()
-            Config.add_section('VScene')
-            # get config and write to the config file
-            config_dict = {'mode':str(self.viewer.vscene.comboBox_led_mode.currentIndex())}
-            for name in ['sled_w','sled_h','sled_r','sled_c',
-                         'sp_x','sp_y','sled_fold_c','sled_fold_r',
-                         'frame_rate','pc_display_rate']:
-                exec('config_dict[name] = str(self.viewer.vscene.spinBox_{}.value())'.format(name))
-            for k,v in config_dict.items():
-                Config.set('VScene', k, v)
-            Config.write(cfgfile)
+            config = self._vscene_save_config()
+            config.write(cfgfile)
             cfgfile.close()
             self.viewer.system_logger('Save config {} successfully'.format(filename))
         else:
             QMessageBox.warning(self.viewer.vscene, 'Error',
                                 'Not a valid filename!')
-        
+    
+    def _set_vscene_config(self, config):
+        if config.has_section('VScene'):
+            options = config.options('VScene')
+            if 'mode' in options:
+                mode = config.getint('VScene', 'Mode')
+                self.viewer.vscene.comboBox_led_mode.setCurrentIndex(mode)
+            for name in ['sled_w','sled_h','sled_r','sled_c',
+                            'sp_x','sp_y','sled_fold_c','sled_fold_r',
+                            'frame_rate','pc_display_rate']:
+                if name in options:
+                    value = config.getint('VScene', name)
+                    eval('self.viewer.vscene.spinBox_{}.setValue(value)'.format(name))
+        else:
+            self.viewer.system_logger('No VScene Section Found', 'warning')
+            
     def vscene_load_config(self):
         filename, _ = QFileDialog.getOpenFileName(self.viewer.vscene, 
                                                   'Load config File', './')
         if filename:
+            self.viewer.system_logger('Successful loaded config file:{}'.format(filename))
             Config = configparser.ConfigParser()
             Config.read(filename)
             # set values
-            options = Config.options('VScene')
-            if 'mode' in options:
-                mode = Config.getint('VScene', 'Mode')
-                self.viewer.vscene.comboBox_led_mode.setCurrentIndex(mode)
-            
-            for name in ['sled_w','sled_h','sled_r','sled_c',
-                         'sp_x','sp_y','sled_fold_c','sled_fold_r',
-                         'frame_rate','pc_display_rate']:
-                if name in options:
-                    value = Config.getint('VScene', name)
-                    eval('self.viewer.vscene.spinBox_{}.setValue(value)'.format(name))
-            self.viewer.system_logger('Successful loaded config file:{}'.format(filename))
-    
+            self._set_vscene_config(Config)
+
     def phero_show_window(self):
         self.viewer.main_menu.pb_phero.setDisabled(True)
         self.viewer.phero.show()
@@ -655,7 +668,9 @@ class Controller:
                 pass
         
         elif self.phero_mode == 'Loc-Calibration':
-            self.phero_image = self.phero_model.generate_calibration_pattern(self.arena_length)
+            # self.phero_image = self.phero_model.generate_calibration_pattern(self.arena_length)
+            self.phero_image = self.loc_model.draw_chess_board(self.phero_img_width, self.phero_img_height,
+                                                               int(self.phero_img_height/20))
             self.viewer.phero.show_label_image(self.viewer.phero.label_image, 
                                                            self.phero_image)
         if (self.viewer.phero.pb_show.text() == "Hide") and (self.phero_image is not None):
@@ -857,7 +872,10 @@ class Controller:
         elif self.phero_mode == "Dy-Customized":
             #* user defined
             pass
-        
+        elif self.phero_mode == 'Loc-Calibration':
+            # for localization camera calibration
+            self.phero_image = self.loc_model.draw_chess_board(self.phero_img_width, self.phero_img_height,
+                                                    int(self.phero_img_height/20))
         self.phero_frame_num += 1
 
         if (self.viewer.phero.pb_show.text() == "Hide") and (self.phero_image is not None):
@@ -879,70 +897,80 @@ class Controller:
     def phero_pause_render(self):
         self.phero_timer.stop()
     
+    def _phero_save_config(self, config=None):
+        if config is None:
+            config = configparser.ConfigParser()
+        config.add_section('Pheromone')
+        # get config and write to the config file
+        config_dict = {'mode':str(self.viewer.phero.comboBox_led_mode.currentIndex())}
+        for name in ['sled_w','sled_h','sled_r','sled_c',
+                        'sp_x','sp_y','arena_l','arena_w',
+                        'frame_rate']:
+            exec('config_dict[name] = str(self.viewer.phero.spinBox_{}.value())'.format(name))
+        for p in ['d_kernel_s','diffusion','evaporation','injection','radius']:
+            for c in ['r','g','b']:
+                value = eval('self.viewer.phero.sp_' + p + '_' + c + '.value()')
+                config_dict[p + '_' + c] = str(value)
+        diversity = self.viewer.phero.te_diversity.toPlainText()
+        config_dict['diversity_string'] = diversity
+        for k,v in config_dict.items():
+            config.set('Pheromone', k, v)
+        return config
+        
     def phero_save_config(self):
         filename, _ = QFileDialog.getSaveFileName(self.viewer.phero, 
                                                  'save pheromone config',
                                                  './', 'ini(*.ini)')
         if len(filename) != 0:
             cfgfile = open(filename, 'w')
-            Config = configparser.ConfigParser()
-            Config.add_section('Pheromone')
-            # get config and write to the config file
-            config_dict = {'mode':str(self.viewer.phero.comboBox_led_mode.currentIndex())}
-            for name in ['sled_w','sled_h','sled_r','sled_c',
-                         'sp_x','sp_y','arena_l','arena_w',
-                         'frame_rate']:
-                exec('config_dict[name] = str(self.viewer.phero.spinBox_{}.value())'.format(name))
-            for p in ['d_kernel_s','diffusion','evaporation','injection','radius']:
-                for c in ['r','g','b']:
-                    value = eval('self.viewer.phero.sp_' + p + '_' + c + '.value()')
-                    config_dict[p + '_' + c] = str(value)
-            diversity = self.viewer.phero.te_diversity.toPlainText()
-            config_dict['diversity_string'] = diversity
-            for k,v in config_dict.items():
-                Config.set('Pheromone', k, v)
-                
-            Config.write(cfgfile)
+            config = self._phero_save_config()
+            config.write(cfgfile)
             cfgfile.close()
             self.viewer.system_logger('Save config {} successfully'.format(filename))
         else:
             QMessageBox.warning(self.viewer.phero, 'Error',
                                 'Not a valid filename!')
 
-    def phero_load_config(self):
-        filename, _ = QFileDialog.getOpenFileName(self.viewer.phero, 
-                                                  'Load config File', './')
-        if filename:
-            Config = configparser.ConfigParser()
-            Config.read(filename)
-            # set values
-            options = Config.options('Pheromone')
+    def _set_phero_config(self, config):
+        if config.has_section('Pheromone'):
+            options = config.options('Pheromone')
             if 'mode' in options:
-                mode = Config.getint('Pheromone', 'Mode')
+                mode = config.getint('Pheromone', 'Mode')
                 self.viewer.phero.comboBox_led_mode.setCurrentIndex(mode)
             for p in ['d_kernel_s','diffusion','evaporation','injection','radius']:
                 for c in ['r','g','b']:
                     if p + '_' + c in options:
                         if (p == "radius") or (p == "d_kernel_s"):
-                            value = Config.getint('Pheromone', p + '_' + c)
+                            value = config.getint('Pheromone', p + '_' + c)
                         else:
-                            value = Config.getfloat('Pheromone', p + '_' + c)
+                            value = config.getfloat('Pheromone', p + '_' + c)
                         eval('self.viewer.phero.sp_'+ p + '_' + c +'.setValue(value)')
             for name in ['sled_w','sled_h','sled_r','sled_c',
-                         'sp_x','sp_y','arena_l','arena_w',
-                         'frame_rate']:
+                            'sp_x','sp_y','arena_l','arena_w',
+                            'frame_rate']:
                 if name in options:
                     if name == 'arena_l' or name == 'arena_w':
-                        value = Config.getfloat('Pheromone', name)
+                        value = config.getfloat('Pheromone', name)
                     else:
-                        value = Config.getint('Pheromone', name)
+                        value = config.getint('Pheromone', name)
                     eval('self.viewer.phero.spinBox_{}.setValue(value)'.format(name))
             if 'diversity_string' in options:
                 self.viewer.phero.te_diversity.clear()
-                self.viewer.phero.te_diversity.insertPlainText(Config.get('Pheromone',
-                                                                          'diversity_string'))
+                self.viewer.phero.te_diversity.insertPlainText(config.get('Pheromone',
+                                                                        'diversity_string'))
+        else:
+            self.viewer.system_logger('No Pheromone Section Found', 'warning')
+
+    def phero_load_config(self):
+        filename, _ = QFileDialog.getOpenFileName(self.viewer.phero, 
+                                                  'Load config File', './')
+        if filename:
             self.viewer.system_logger('Successful loaded config file:{}'.format(filename))
-            
+            Config = configparser.ConfigParser()
+            Config.read(filename)
+            # set values
+            self._set_phero_config(Config)
+
     def loc_show_window(self):
         self.viewer.main_menu.pb_loc.setDisabled(True)
         self.viewer.loc_embedded.show()
@@ -1034,7 +1062,51 @@ class Controller:
             exp = self.viewer.loc_embedded.hS_exposure.value() * 100
             if self.loc_camera.setExposureTime(self.loc_camera.camera, exp) == 0:
                 time.sleep(0.1)
-            
+    
+    def loc_generate_pattern(self):
+        image = np.ones((2100, 2970, 3), np.uint8) * 255
+        ID_table = open("ID.txt",'w+')
+        pattern_pos = [0,0]
+        pattern_size = 400
+        offset = 100
+        v = self.viewer.loc_embedded.sp_pattern_num_r.value()
+        h = self.viewer.loc_embedded.sp_pattern_num_c.value()
+        vi=100/v
+        hj=140/h
+        id = 0
+        for j in range(v):
+            for i in range(h):
+                pattern_pos = [int(offset + pattern_size/2 + pattern_size*i), int(offset + pattern_size/2+ + pattern_size*j) ]
+                cv2.circle(image, pattern_pos, int(pattern_size/2), (0,0,0), -1)
+                cv2.circle(image, pattern_pos, int(pattern_size/2), (255,255,255), 1)
+                # draw 4*4 ellipse with center at pattern_pos
+                cv2.ellipse(image, pattern_pos, (140, 170), 0, 0, 360, (255,255,255), -1)
+                r_v = int(30+vi*i)
+                r_h = int(40+hj*j)
+                cv2.ellipse(image, pattern_pos, (r_v, r_h), 0, 0, 360, (0,0,0), -1)
+                r0 = r_v/150
+                r1 = r_h/180
+                
+                cv2.putText(image, str(id), pattern_pos, cv2.FONT_HERSHEY_SCRIPT_SIMPLEX, 1, (255,255,255), 4)
+                # 保留3位小数
+                ID_table.write(str(id)+" "+str(round(r1,3))+' '+str(round(r0,3))+'\n')
+                id += 1
+        try:
+            cv2.imwrite("pattern.png",image)
+            cv2.imshow('Pattern {:d} x {:d}'.format(v, h), cv2.resize(image, (2100/4, 2970/4)))
+            ID_table.close()
+        except:
+            self.viewer.system_logger("Cannot Write File [ID.txt] or [Pattern.png]",
+                                      log_type='err', out='sys')
+            QMessageBox.warning(self.viewer.loc_embedded, 'Error', 'Cannot Write File [ID.txt] or [Pattern.png]')
+            return
+        self.viewer.system_logger("Write File [ID.txt] or [Pattern.png] successfully",
+                                      log_type='err', out='sys')
+        QMessageBox.warning(self.viewer.loc_embedded, 'Error', 'Success: ID info was write to [ID.txt], pattern saved as [Pattern.png]')
+    
+    def loc_calibrate_camera(self):
+        self.loc_model.run_calibration()
+        
     def serial_ports_scan(self):
         # get the valid serial ports as a list
         port_list = serial.tools.list_ports.comports()
@@ -1373,12 +1445,33 @@ class Controller:
             pass
         else:
             print('error')
+
     def exp_save_config(self):
-        pass
+        filename, _ = QFileDialog.getSaveFileName(self.viewer.main_menu, 
+                                                 'save pheromone config',
+                                                 './', 'ini(*.ini)')
+        if len(filename) != 0:
+            cfgfile = open(filename, 'w')
+            config = self._phero_save_config()
+            config = self._vscene_save_config(config)
+            config.write(cfgfile)
+            cfgfile.close()
+            self.viewer.system_logger('Save config {} successfully'.format(filename))
+        else:
+            QMessageBox.warning(self.viewer.vscene, 'Error',
+                                'Not a valid filename!')
     
     def exp_load_config(self):
-        pass
-    
+        filename, _ = QFileDialog.getOpenFileName(self.viewer.main_menu, 
+                                                  'Load config File', './')
+        if filename:
+            self.viewer.system_logger('Successful loaded config file:{}'.format(filename))
+            config = configparser.ConfigParser()
+            config.read(filename)
+            # set values
+            self._set_phero_config(config)
+            self._set_vscene_config(config)
+
     def exp_start(self):
         print(self.viewer.main_menu.pb_start_exp.text())
         if self.viewer.main_menu.pb_start_exp.text() == "Start \n Experiment":
@@ -1533,11 +1626,8 @@ class Controller:
                 self.exp_save_data()
 
 
-
 if __name__ == "__main__":
-
     QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
-
     App = QApplication(sys.argv)
     controller = Controller()
     controller.viewer.login.show()
