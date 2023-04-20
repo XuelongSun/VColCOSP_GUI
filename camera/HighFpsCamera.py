@@ -513,6 +513,9 @@ class Camera:
 		return 0
 
 	def open_camera(self):
+		pass
+
+	def start_grab_img(self):
 		cameraCnt, cameraList = self.enumCameras()
 		if cameraCnt is None:
 			return -1
@@ -539,8 +542,6 @@ class Camera:
 		if ( nRet != 0 ):
 			print("set ExposureTime fail")
 			return -1
-
-	def start_grab_img(self):
 		# 创建流对象
 		self.streamSourceInfo = GENICAM_StreamSourceInfo()
 		self.streamSourceInfo.channelId = 0

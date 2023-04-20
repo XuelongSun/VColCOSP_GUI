@@ -374,7 +374,7 @@ class LocDataModel:
                     return [float(data[i][4:9]), float(data[i][10:15])]
 
 class Pattern(object):
-    def __init__(self, id, ideal_r1, ideal_r0, IDTable):
+    def __init__(self, id, ideal_r1, ideal_r0, id_table):
         self.id = id
         self.thresh = 127
         self.search_img= []
@@ -389,7 +389,7 @@ class Pattern(object):
         self.r_tolerence = 0.004
         self.r0 = 0
         self.r1 = 0
-        self.IDTable = IDTable
+        self.id_table = id_table
         self.lost_frames = 61
 
         self.cam_pos = [[0,0]]
@@ -402,7 +402,7 @@ class LocalizationModel(object):
     def __init__(self):
         self.id_table_filename = 'ID.txt'
         self.arena_size = (1.4,0.8)
-        self.image_size = (1920,1200)
+        self.image_size = (1920, 1200)
         self.pattern_size = 0.04
         self.pat_ratio = (60,145,280,340,400)
         self.update_pattern_info()
@@ -427,64 +427,46 @@ class LocalizationModel(object):
         with np.load('./camera/calibration_data.npz') as X:
             self.mtx, self.dist, rvecs, tvecs, self.PresM = [X[i] for i in ('mtx','dist','rvecs','tvecs','PresM')]
         temp_array = np.array([0,0,0])
-        mtx1 = np.insert(self.mtx,3,temp_array,axis=1)
+        mtx1 = np.insert(self.mtx, 3, temp_array,axis=1)
         rotM = cv2.Rodrigues(rvecs)[0]
         rot_trans_M = np.insert(np.insert(rotM,3,tvecs.T,axis=1),3,np.array([0,0,0,1]),axis=0)
 
-        self.w2p_M = np.matrix(np.matmul(mtx1,rot_trans_M))
+        self.w2p_M = np.matrix(np.matmul(mtx1, rot_trans_M))
         self.p2w_M = self.w2p_M.I
-        self.newcameramtx, roi = cv2.getOptimalNewCameraMatrix(self.mtx, self.dist, (1920,1200), 0, (1920,1200))
+        self.newcameramtx, roi = cv2.getOptimalNewCameraMatrix(self.mtx, self.dist, self.image_size, 0, self.image_size)
 
-    def draw_chess_board(self, width, height, cheese_cell):
-        image = np.zeros((1080, 1920, 3), dtype=np.uint8)
-        image.fill(255)
-
-        color = (255,255,255)
-
-        # this is not valid for other hardware settings
-        offsetx = 17 + 3*cheese_cell
-        offsety = 3*cheese_cell
-
-        fill_color = 0
-        for j in range(0,height + 1):
-            y = j * cheese_cell
-            for i in range(0,width+1):
-                #rint(i)
-                x0 = i *cheese_cell+offsetx
-                y0 = y+offsety
-                rect_start = (x0,y0)
-        
-                x1 = x0 + cheese_cell
-                y1 = y0 + cheese_cell
-                rect_end = (x1,y1)
-                cv2.rectangle(image, rect_start, rect_end,color, 1, 0)
-                image[y0:y1,x0:x1] = fill_color
-                if width % 2: 
-                    if i != width:
-                        fill_color = (0 if ( fill_color == 255) else 255)
-                else:
-                    if i != width + 1:
-                        fill_color = (0 if ( fill_color == 255) else 255)
+    def draw_chess_board(self, image_size, c_col, c_row, c_size, offsetx, offsety):
+        image = np.ones(image_size, dtype=np.uint8)*255
+        chessboard = 255.0 * np.kron([[0, 1] * (c_col//2+1), [1, 0] * (c_col//2+1)] * (c_row//2+1), np.ones((c_size, c_size)))
+        c_h, c_w = chessboard.shape
+        img_h, img_w = image_size
+        img_end_h = min([offsety + c_h, img_h])
+        img_end_w = min([offsetx + c_w, img_w])
+        image[offsety:img_end_h, offsetx:img_end_w] = chessboard[:min([img_end_h-offsety, c_h]),
+                                                                 :min([img_end_w-offsetx, c_w])]
         return image
-    
-    def run_calibration(self, img, cheese_width, cheese_height):
+
+    def run_calibration(self, img, c_col, c_row, c_size_world):
         img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        objp = np.zeros((cheese_width*cheese_height, 3), np.float32)
-        objp[:,:2] = np.mgrid[0:cheese_width,0:cheese_height].T.reshape(-1,2)
-        objp[:,:2] = objp[:,:2]*0.08 + 0.16 # ?
-        axis = np.float32([[0,0,0], [1.4,0,0], [0,0.8,0], [0,0,-0.15]]).reshape(-1,3)
+        objp = np.zeros((c_col*c_row, 3), np.float32)
+        objp[:,:2] = np.mgrid[0:c_col,0:c_row].T.reshape(-1,2)
+        objp[:,:2] = objp[:,:2]*c_size_world + c_size_world
+        # axis = np.float32([[0,0,0], [1.4,0,0], [0,0.8,0], [0,0,-0.15]]).reshape(-1,3)
         criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
         objpoints = [] # 3D points in world coordinates
         imgpoints = [] # 2D points in image coordinates
-        ret, corners = cv2.findChessboardCorners(img, (cheese_width, cheese_height), None)
+        ret, corners = cv2.findChessboardCorners(img, (c_col, c_row), None)
         if ret == True:
-            # print("found")
+            print(len(corners))
             objpoints.append(objp)
-            corners2 = cv2.cornerSubPix(img, corners, (11,11), (-1,-1), criteria)
+            corners2 = cv2.cornerSubPix(img, corners, (11, 11), (-1,-1), criteria)
             imgpoints.append(corners)
-            cv2.drawChessboardCorners(img, (cheese_width,cheese_height), corners2, ret)
-        ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, img.shape[::-1], None, None)
-        
+            img = cv2.drawChessboardCorners(img, (c_col, c_row), corners2, ret)
+            ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, img.shape[::-1], None, None)
+        else:
+            print('not enough convers found')
+        return img
+    
     def get_possible_posi(self,img):
         dim = (int(img.shape[1] /self.zoom_ratio), int(img.shape[0] /self.zoom_ratio))
         img = cv2.resize(img, dim, interpolation = cv2.INTER_AREA)
@@ -568,7 +550,7 @@ class LocalizationModel(object):
                             r0 = (inner_ellipse[1][1] - offset)/(outer_ellipse[1][0] + offset)
                             r1 = (inner_ellipse[1][0] - offset)/(outer_ellipse[1][1] + offset)
                         # get id
-                        for i, [id, ideal_r1, ideal_r0] in enumerate(self.IDTable):
+                        for i, [id, ideal_r1, ideal_r0] in enumerate(self.id_table):
                             dis = (ideal_r0 - r0)**2 + (ideal_r1 - r1)**2
                             if dis < maxdis:
                                 maxdis = dis

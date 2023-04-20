@@ -135,7 +135,9 @@ class Controller:
         self.camera_opened = False
         self.loc_has_started = False
         self.loc_is_running = False
+        self.loc_camera_is_calibrating = False
         self.loc_current_image = None
+        self.loc_calibrated_img = None
         self.loc_world_locations = {}
         self.loc_image_location = []
         self.loc_heading = []
@@ -144,6 +146,7 @@ class Controller:
         self.viewer.loc_embedded.pb_start.clicked.connect(self.loc_start)
         self.viewer.loc_embedded.hS_exposure.valueChanged.connect(self.loc_camera_setting)
         self.viewer.loc_embedded.pb_generate_pattern.clicked.connect(self.loc_generate_pattern)
+        self.viewer.loc_embedded.pb_start_calibration.clicked.connect(self.loc_start_camera_calibration)
         #* communication
         self.viewer.main_menu.pb_com.clicked.connect(lambda: self.viewer.com.show())
         # robot data via USB-serial
@@ -669,10 +672,14 @@ class Controller:
         
         elif self.phero_mode == 'Loc-Calibration':
             # self.phero_image = self.phero_model.generate_calibration_pattern(self.arena_length)
-            self.phero_image = self.loc_model.draw_chess_board(self.phero_img_width, self.phero_img_height,
-                                                               int(self.phero_img_height/20))
-            self.viewer.phero.show_label_image(self.viewer.phero.label_image, 
-                                                           self.phero_image)
+            c_c = self.viewer.loc_embedded.sp_chessboard_c.value()
+            c_r = self.viewer.loc_embedded.sp_chessboard_r.value()
+            offsety = int(self.viewer.loc_embedded.sp_cal_offset_y.value()/self.arena_width*self.phero_img_height)
+            offsetx = int(self.viewer.loc_embedded.sp_cal_offset_x.value()/self.arena_length*self.phero_img_width)
+            chess_size = min([self.phero_img_height//c_r, self.phero_img_width//c_c])
+            self.phero_image = self.loc_model.draw_chess_board((self.phero_img_height, self.phero_img_width),
+                                                               c_c, c_r, chess_size, offsetx, offsety)
+
         if (self.viewer.phero.pb_show.text() == "Hide") and (self.phero_image is not None):
             self.phero_screen.show_label_img(self.phero_screen_start_pos[0],
                                             self.phero_screen_start_pos[1],
@@ -874,10 +881,10 @@ class Controller:
             pass
         elif self.phero_mode == 'Loc-Calibration':
             # for localization camera calibration
-            self.phero_image = self.loc_model.draw_chess_board(self.phero_img_width, self.phero_img_height,
-                                                    int(self.phero_img_height/20))
+            c_w = self.viewer.loc_embedded.sp_chessboard_w.value()
+            c_h = self.viewer.loc_embedded.sp_chessboard_h.value()
+            self.phero_image = self.loc_model.draw_chess_board(c_w, c_h, int(self.phero_img_height/20))
         self.phero_frame_num += 1
-
         if (self.viewer.phero.pb_show.text() == "Hide") and (self.phero_image is not None):
             self.phero_screen.show_label_img(self.phero_screen_start_pos[0],
                                              self.phero_screen_start_pos[1],
@@ -979,6 +986,8 @@ class Controller:
         if signal == "close":
             self.viewer.main_menu.pb_loc.setDisabled(False)
             self.viewer.loc_embedded.hide()
+            # closing camera
+            self.loc_close_camera()
     
     def loc_check_camera(self):
         cameraCnt, cameraList = self.loc_camera.enumCameras()
@@ -988,20 +997,27 @@ class Controller:
             camera = cameraList[0]
             self.viewer.show_message_box('Camera {} founded'.format(camera.getKey(camera)))
     
+    def loc_open_camera(self):
+        if self.loc_camera.start_grab_img() == 0:
+            time.sleep(0.5)
+            print('start grab image success')
+        else:
+            self.viewer.show_message_box("Error: cannot start capture image.")
+            return
+        self.camera_opened = True
+    
+    def loc_close_camera(self):
+        if self.loc_camera.stop_grab_img() == 0:
+            self.viewer.system_logger('camera stopped grabing images')
+        if self.loc_camera.closeCamera() == 0:
+            self.viewer.system_logger('camera closed')
+        self.camera_opened = False
+        
     def loc_start(self):
         text = self.viewer.loc_embedded.sender().text()
         if text == 'Start':
             if not self.camera_opened:
-                if self.loc_camera.open_camera() == 0:
-                    time.sleep(0.5)
-                    self.camera_opened = True
-                    print('camera opened successful')
-            if self.loc_camera.start_grab_img() == 0:
-                time.sleep(0.5)
-                print('start grab image success')
-            else:
-                self.viewer.show_message_box("Error: cannot start capture image from")
-                return
+                self.loc_open_camera()
             self.loc_is_running = True
             self.loc_thread_computing = threading.Thread(target=self.loc_computing)
             self.loc_thread_computing.start()
@@ -1010,9 +1026,9 @@ class Controller:
             self.viewer.loc_embedded.pb_start.setText("Pause")
         elif text == 'Pause':
             self.loc_is_running = False
-            if self.loc_camera.stop_grab_img() == 0:
-                time.sleep(0.5)
-                print('Grabbing image stopped')
+            # if self.loc_camera.stop_grab_img() == 0:
+            #     time.sleep(0.5)
+            #     print('Grabbing image stopped')
             self.viewer.loc_embedded.pb_start.setText("Start")
             self.loc_refresh_timer.stop()
         else:
@@ -1032,28 +1048,32 @@ class Controller:
                     self.loc_world_locations.update({int(info[0]):[[info[1], info[2], h]]})
 
     def loc_display(self):
-        # color image
-        img_display = self.loc_camera.get_BGR_image()
-        for info, h in zip(self.loc_image_location, self.loc_heading):
-            if self.viewer.loc_embedded.cb_show_id.isChecked():
-                img_display = cv2.putText(img_display, str(info[0]), (info[1], info[2]),
-                                          cv2.FONT_HERSHEY_COMPLEX_SMALL, 3, (255, 0, 0), 3)
-            if self.viewer.loc_embedded.cb_show_marker.isChecked():
-                img_display = cv2.circle(img_display, (info[1], info[2]), 20, (255, 0, 0), 4)
-                img_display = cv2.arrowedLine(img_display, (info[1], info[2]),
-                                              (int(info[1] + 26*np.sin(h)),
-                                               int(info[2] + 26*np.cos(h))),
-                                               (255, 255, 0), 4)
-            if self.viewer.loc_embedded.cb_show_location.isChecked():
-                img_display = cv2.putText(img_display,
-                                          '[{:3d}, {:3d}, {:.1f}]'.format(info[1], info[2], np.rad2deg(h-np.pi/2)),
-                                          (info[1], info[2]+40),
-                                          cv2.FONT_HERSHEY_COMPLEX_SMALL, 3, (0, 255, 255), 3)
-        # if self.viewer.loc_embedded.cb_show_trajectory.isChecked():
-        #     end_ind = np.min([20, len(self.loc_image_location)])
-        #     for t in range(end_ind):
-        #         for i, info in enumerate(self.loc_image_location[-1:-end_ind+1]):
-        #             pass
+        if self.loc_is_running:
+            # color image
+            img_display = self.loc_camera.get_BGR_image()
+            for info, h in zip(self.loc_image_location, self.loc_heading):
+                if self.viewer.loc_embedded.cb_show_id.isChecked():
+                    img_display = cv2.putText(img_display, str(info[0]), (info[1], info[2]),
+                                            cv2.FONT_HERSHEY_COMPLEX_SMALL, 3, (255, 0, 0), 3)
+                if self.viewer.loc_embedded.cb_show_marker.isChecked():
+                    img_display = cv2.circle(img_display, (info[1], info[2]), 20, (255, 0, 0), 4)
+                    img_display = cv2.arrowedLine(img_display, (info[1], info[2]),
+                                                (int(info[1] + 26*np.sin(h)),
+                                                int(info[2] + 26*np.cos(h))),
+                                                (255, 255, 0), 4)
+                if self.viewer.loc_embedded.cb_show_location.isChecked():
+                    img_display = cv2.putText(img_display,
+                                            '[{:3d}, {:3d}, {:.1f}]'.format(info[1], info[2], np.rad2deg(h-np.pi/2)),
+                                            (info[1], info[2]+40),
+                                            cv2.FONT_HERSHEY_COMPLEX_SMALL, 3, (0, 255, 255), 3)
+                # if self.viewer.loc_embedded.cb_show_trajectory.isChecked():
+                #     end_ind = np.min([20, len(self.loc_image_location)])
+                #     for t in range(end_ind):
+                #         for i, info in enumerate(self.loc_image_location[-1:-end_ind+1]):
+                #             pass 
+        elif self.loc_camera_is_calibrating:
+            img_display = self.loc_calibrated_img if self.loc_calibrated_img is not None else self.loc_camera.get_BGR_image()
+
         self.viewer.loc_embedded.update_localization_display(img_display)
     
     def loc_camera_setting(self):
@@ -1098,15 +1118,42 @@ class Controller:
         except:
             self.viewer.system_logger("Cannot Write File [ID.txt] or [Pattern.png]",
                                       log_type='err', out='sys')
-            QMessageBox.warning(self.viewer.loc_embedded, 'Error', 'Cannot Write File [ID.txt] or [Pattern.png]')
+            self.viewer.show_message_box('Error', 'Cannot Write File [ID.txt] or [Pattern.png]')
             return
         self.viewer.system_logger("Write File [ID.txt] or [Pattern.png] successfully",
                                       log_type='err', out='sys')
-        QMessageBox.warning(self.viewer.loc_embedded, 'Error', 'Success: ID info was write to [ID.txt], pattern saved as [Pattern.png]')
+        self.viewer.show_message_box('Error', 'Success: ID info was write to [ID.txt], pattern saved as [Pattern.png]')
     
-    def loc_calibrate_camera(self):
-        self.loc_model.run_calibration()
+    def loc_start_camera_calibration(self):
+        text = self.viewer.loc_embedded.sender().text()
+        if text == 'Run Calibration':
+            if not self.camera_opened:
+                self.loc_open_camera()
+            self.loc_camera_is_calibrating = True
+            self.loc_thread_calibration = threading.Thread(target=self.loc_calibrate_camera)
+            self.loc_thread_calibration.start()
+            # display
+            self.loc_refresh_timer.start(100)
+            self.viewer.loc_embedded.pb_start_calibration.setText("Stop")
+        elif text == 'Pause':
+            self.loc_camera_is_calibrating = False
+            self.viewer.loc_embedded.pb_start_calibration.setText("Run Calibration")
+            self.loc_refresh_timer.stop()
+        else:
+            pass
         
+    def loc_calibrate_camera(self):
+        while self.loc_camera_is_calibrating and self.camera_opened:
+            c_c = self.viewer.loc_embedded.sp_chessboard_c.value()
+            c_r = self.viewer.loc_embedded.sp_chessboard_r.value()
+            offsety = int(self.viewer.loc_embedded.sp_cal_offset_y.value()/self.arena_width*self.phero_img_height)
+            offsetx = int(self.viewer.loc_embedded.sp_cal_offset_x.value()/self.arena_length*self.phero_img_width)
+            c_size = min([self.phero_img_height//c_r, self.phero_img_width//c_c])
+            # grab image from camera
+            img = self.loc_camera.get_BGR_image()
+            self.loc_calibrated_img = self.loc_model.run_calibration(img, c_c, c_r, c_size/self.phero_img_width*self.arena_length)
+            
+
     def serial_ports_scan(self):
         # get the valid serial ports as a list
         port_list = serial.tools.list_ports.comports()

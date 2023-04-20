@@ -128,7 +128,7 @@ class LEDScreen(QMainWindow):
         self.setWindowFlags(Qt.FramelessWindowHint)
         # always on top
         # self.setWindowFlags(Qt.WindowStaysOnTopHint)
-        self.label.setScaledContents(True)
+        # self.label.setScaledContents(True)
 
     def show_label_img(self, x, y, width, height, img):
         # set the window size
