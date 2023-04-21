@@ -397,7 +397,7 @@ class Pattern(object):
         self.angle = 0
         self.world_pos = [[0,0]]
 
-        
+
 class LocalizationModel(object):
     def __init__(self):
         self.id_table_filename = 'ID.txt'
@@ -411,6 +411,8 @@ class LocalizationModel(object):
         self.tolerence = 0.4
         self.r_tolerence = 0.004
         self.update_calibration_info()
+        self.calibrate_info = []
+        self.chessboard_corners = []
     
     def update_pattern_info(self):
         self.id_table = np.loadtxt(self.id_table_filename)
@@ -444,25 +446,39 @@ class LocalizationModel(object):
         img_end_w = min([offsetx + c_w, img_w])
         image[offsety:img_end_h, offsetx:img_end_w] = chessboard[:min([img_end_h-offsety, c_h]),
                                                                  :min([img_end_w-offsetx, c_w])]
+        # padding image with white border
+        img_pad = cv2.copyMakeBorder(image, 10, 10, 10, 10, cv2.BORDER_CONSTANT, value=(255, 255, 255))
+        image = cv2.resize(img_pad, (img_w, img_h))
         return image
 
+    def draw_world_axes_in_image_plane(self, img, rvecs, tvecs, mtx, dist, axis_len=(10,10,10)):
+        axis = np.float32([[0,0,0], [axis_len[0],0,0], [0,axis_len[1],0], [0,0,axis_len[2]]]).reshape(-1,3)
+        imgpts, _ = cv2.projectPoints(axis, rvecs, tvecs, mtx, dist)
+        img = cv2.line(img, tuple(imgpts[0].ravel().astype(int)), tuple(imgpts[1].ravel().astype(int)), (255,0,0), 5)
+        img = cv2.line(img, tuple(imgpts[0].ravel().astype(int)), tuple(imgpts[2].ravel().astype(int)), (0,255,0), 5)
+        img = cv2.line(img, tuple(imgpts[0].ravel().astype(int)), tuple(imgpts[3].ravel().astype(int)), (0,0,255), 5)
+        return img
+
+    def draw_world_points_in_image_plane(self, img, points, rvecs, tvecs, mtx, dist):
+        imgpts, _ = cv2.projectPoints(points, rvecs, tvecs, mtx, dist)
+        for p in imgpts:
+            img = cv2.circle(img, tuple(p[0].ravel().astype(int)), 10, (255,0,0), 5)
+        return img
+
     def run_calibration(self, img, c_col, c_row, c_size_world):
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         objp = np.zeros((c_col*c_row, 3), np.float32)
-        objp[:,:2] = np.mgrid[0:c_col,0:c_row].T.reshape(-1,2)
+        objp[:,:2] = np.mgrid[0:c_row,0:c_col].T.reshape(-1,2)
         objp[:,:2] = objp[:,:2]*c_size_world + c_size_world
         # axis = np.float32([[0,0,0], [1.4,0,0], [0,0.8,0], [0,0,-0.15]]).reshape(-1,3)
         criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
         objpoints = [] # 3D points in world coordinates
         imgpoints = [] # 2D points in image coordinates
-        ret, corners = cv2.findChessboardCorners(img, (c_col, c_row), None)
-        if ret == True:
-            print(len(corners))
+        self.chessboard_corners[0], _ = cv2.findChessboardCorners(img, (c_row-1, c_col-1), None)
+        if self.chessboard_corners[0] == True:
             objpoints.append(objp)
-            corners2 = cv2.cornerSubPix(img, corners, (11, 11), (-1,-1), criteria)
-            imgpoints.append(corners)
-            img = cv2.drawChessboardCorners(img, (c_col, c_row), corners2, ret)
-            ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, img.shape[::-1], None, None)
+            self.chessboard_corners[1] = cv2.cornerSubPix(img, self.chessboard_corners[1], (11, 11), (-1,-1), criteria)
+            imgpoints.append(self.chessboard_corners[1])
+            self.calibrate_info = cv2.calibrateCamera(objpoints, imgpoints, img.shape[::-1], None, None)
         else:
             print('not enough convers found')
         return img

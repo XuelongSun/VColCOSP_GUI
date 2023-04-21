@@ -74,7 +74,7 @@ color: rgb(255, 255, 0);
    <property name="geometry">
     <rect>
      <x>106</x>
-     <y>382</y>
+     <y>380</y>
      <width>61</width>
      <height>22</height>
     </rect>
@@ -183,10 +183,10 @@ color: rgb(255, 255, 0);
   <widget class="QPushButton" name="pb_start_calibration">
    <property name="geometry">
     <rect>
-     <x>24</x>
-     <y>432</y>
-     <width>209</width>
-     <height>35</height>
+     <x>26</x>
+     <y>434</y>
+     <width>95</width>
+     <height>29</height>
     </rect>
    </property>
    <property name="font">
@@ -213,7 +213,7 @@ border-radius:10px;
 </string>
    </property>
    <property name="text">
-    <string>Run Calibration</string>
+    <string>Run</string>
    </property>
   </widget>
   <widget class="QPushButton" name="pb_generate_pattern">
@@ -293,6 +293,12 @@ border-radius:10px;
      <width>525</width>
      <height>311</height>
     </rect>
+   </property>
+   <property name="toolTip">
+    <string>1</string>
+   </property>
+   <property name="whatsThis">
+    <string/>
    </property>
    <property name="styleSheet">
     <string notr="true">border:2px solid rgb(19, 126, 124);</string>
@@ -926,19 +932,6 @@ border-radius:10px;
     <string>Marker</string>
    </property>
   </widget>
-  <widget class="QCheckBox" name="cb_cal_show_axes">
-   <property name="geometry">
-    <rect>
-     <x>28</x>
-     <y>502</y>
-     <width>203</width>
-     <height>23</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Show World Axes</string>
-   </property>
-  </widget>
   <widget class="QCheckBox" name="cb_show_location">
    <property name="geometry">
     <rect>
@@ -1071,7 +1064,7 @@ color: rgb(0,255, 0);
    <property name="geometry">
     <rect>
      <x>26</x>
-     <y>360</y>
+     <y>358</y>
      <width>81</width>
      <height>16</height>
     </rect>
@@ -1083,7 +1076,7 @@ color: rgb(0,255, 0);
   <widget class="QSpinBox" name="sp_chessboard_c">
    <property name="geometry">
     <rect>
-     <x>110</x>
+     <x>174</x>
      <y>356</y>
      <width>43</width>
      <height>22</height>
@@ -1113,7 +1106,7 @@ color: rgb(0,255, 0);
   <widget class="QSpinBox" name="sp_chessboard_r">
    <property name="geometry">
     <rect>
-     <x>180</x>
+     <x>108</x>
      <y>356</y>
      <width>47</width>
      <height>22</height>
@@ -1144,7 +1137,7 @@ color: rgb(0,255, 0);
    <property name="geometry">
     <rect>
      <x>158</x>
-     <y>360</y>
+     <y>358</y>
      <width>17</width>
      <height>16</height>
     </rect>
@@ -1157,7 +1150,7 @@ color: rgb(0,255, 0);
    <property name="geometry">
     <rect>
      <x>26</x>
-     <y>384</y>
+     <y>382</y>
      <width>57</width>
      <height>16</height>
     </rect>
@@ -1170,7 +1163,7 @@ color: rgb(0,255, 0);
    <property name="geometry">
     <rect>
      <x>26</x>
-     <y>408</y>
+     <y>406</y>
      <width>55</width>
      <height>16</height>
     </rect>
@@ -1183,7 +1176,7 @@ color: rgb(0,255, 0);
    <property name="geometry">
     <rect>
      <x>106</x>
-     <y>406</y>
+     <y>404</y>
      <width>61</width>
      <height>22</height>
     </rect>
@@ -1231,7 +1224,7 @@ color: rgb(255, 255, 0);
    <property name="geometry">
     <rect>
      <x>172</x>
-     <y>410</y>
+     <y>408</y>
      <width>41</width>
      <height>16</height>
     </rect>
@@ -1244,7 +1237,7 @@ color: rgb(255, 255, 0);
    <property name="geometry">
     <rect>
      <x>172</x>
-     <y>388</y>
+     <y>386</y>
      <width>41</width>
      <height>16</height>
     </rect>
@@ -1257,7 +1250,7 @@ color: rgb(255, 255, 0);
    <property name="geometry">
     <rect>
      <x>28</x>
-     <y>472</y>
+     <y>482</y>
      <width>55</width>
      <height>25</height>
     </rect>
@@ -1269,10 +1262,10 @@ color: rgb(255, 255, 0);
   <widget class="QPushButton" name="pb_save_cal_data">
    <property name="geometry">
     <rect>
-     <x>152</x>
-     <y>472</y>
-     <width>77</width>
-     <height>25</height>
+     <x>128</x>
+     <y>480</y>
+     <width>93</width>
+     <height>21</height>
     </rect>
    </property>
    <property name="font">
@@ -1300,19 +1293,6 @@ border-radius:10px;
    </property>
    <property name="text">
     <string>Save</string>
-   </property>
-  </widget>
-  <widget class="QCheckBox" name="cb_cal_show_pattern">
-   <property name="geometry">
-    <rect>
-     <x>28</x>
-     <y>530</y>
-     <width>203</width>
-     <height>23</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Show Patterns at Corner</string>
    </property>
   </widget>
   <widget class="QLabel" name="label_64">
@@ -1404,6 +1384,48 @@ border-radius:10px;
    </property>
    <property name="text">
     <string>Check Camera</string>
+   </property>
+  </widget>
+  <widget class="QCheckBox" name="cb_cal_show_corner">
+   <property name="geometry">
+    <rect>
+     <x>132</x>
+     <y>436</y>
+     <width>97</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Show Corners</string>
+   </property>
+  </widget>
+  <widget class="QRadioButton" name="rb_cal_show_points">
+   <property name="geometry">
+    <rect>
+     <x>26</x>
+     <y>534</y>
+     <width>185</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Show Random Testing Points</string>
+   </property>
+  </widget>
+  <widget class="QRadioButton" name="rb_cal_show_axes">
+   <property name="geometry">
+    <rect>
+     <x>26</x>
+     <y>512</y>
+     <width>185</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Show World (Arena) Axes</string>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
    </property>
   </widget>
  </widget>

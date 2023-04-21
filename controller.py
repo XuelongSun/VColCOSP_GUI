@@ -132,12 +132,11 @@ class Controller:
         self.loc_refresh_timer = QTimer()
         self.loc_refresh_timer.timeout.connect(self.loc_display)
         self.loc_camera = HighFpsCamera.Camera()
-        self.camera_opened = False
+        self.loc_camera_opened = False
         self.loc_has_started = False
         self.loc_is_running = False
         self.loc_camera_is_calibrating = False
         self.loc_current_image = None
-        self.loc_calibrated_img = None
         self.loc_world_locations = {}
         self.loc_image_location = []
         self.loc_heading = []
@@ -544,7 +543,7 @@ class Controller:
             self.phero_bg_info_paras['pos_marker_width'] = self.viewer.phero_bg_setting.sb_pos_marker_width.value()
             self.phero_bg_info_paras['arena_border_width'] = self.viewer.phero_bg_setting.sb_arena_border_width.value()
             self.phero_bg_info_paras['arena_border_margin'] = self.viewer.phero_bg_setting.sb_arena_border_margin.value()
-            
+            self.viewer.phero_bg_setting.hide()
         elif message == "Cancel":
             self.viewer.phero_bg_setting.hide()
         else:
@@ -704,7 +703,7 @@ class Controller:
         self.phero_bg_loaded_image_path = self.load_picture(self.viewer.phero)
 
     def phero_show_pheromone(self):
-        # self.phero_refresh_parameter()
+        self.phero_refresh_parameter()
         if (self.viewer.phero.pb_show.text() == "Show") and (self.phero_image is not None):
             self.phero_screen.show_label_img(self.phero_screen_start_pos[0],
                                              self.phero_screen_start_pos[1], 
@@ -986,8 +985,9 @@ class Controller:
         if signal == "close":
             self.viewer.main_menu.pb_loc.setDisabled(False)
             self.viewer.loc_embedded.hide()
-            # closing camera
-            self.loc_close_camera()
+            if self.loc_camera_opened:
+                # closing camera
+                self.loc_close_camera()
     
     def loc_check_camera(self):
         cameraCnt, cameraList = self.loc_camera.enumCameras()
@@ -1004,20 +1004,22 @@ class Controller:
         else:
             self.viewer.show_message_box("Error: cannot start capture image.")
             return
-        self.camera_opened = True
+        self.loc_camera_opened = True
     
     def loc_close_camera(self):
         if self.loc_camera.stop_grab_img() == 0:
             self.viewer.system_logger('camera stopped grabing images')
         if self.loc_camera.closeCamera() == 0:
             self.viewer.system_logger('camera closed')
-        self.camera_opened = False
+        self.loc_camera_opened = False
         
     def loc_start(self):
         text = self.viewer.loc_embedded.sender().text()
         if text == 'Start':
-            if not self.camera_opened:
+            if not self.loc_camera_opened:
                 self.loc_open_camera()
+            if self.loc_camera_is_calibrating:
+                self.loc_camera_is_calibrating = False
             self.loc_is_running = True
             self.loc_thread_computing = threading.Thread(target=self.loc_computing)
             self.loc_thread_computing.start()
@@ -1048,9 +1050,9 @@ class Controller:
                     self.loc_world_locations.update({int(info[0]):[[info[1], info[2], h]]})
 
     def loc_display(self):
+        img_display = self.loc_camera.get_BGR_image()
         if self.loc_is_running:
             # color image
-            img_display = self.loc_camera.get_BGR_image()
             for info, h in zip(self.loc_image_location, self.loc_heading):
                 if self.viewer.loc_embedded.cb_show_id.isChecked():
                     img_display = cv2.putText(img_display, str(info[0]), (info[1], info[2]),
@@ -1072,7 +1074,55 @@ class Controller:
                 #         for i, info in enumerate(self.loc_image_location[-1:-end_ind+1]):
                 #             pass 
         elif self.loc_camera_is_calibrating:
-            img_display = self.loc_calibrated_img if self.loc_calibrated_img is not None else self.loc_camera.get_BGR_image()
+            if self.loc_model.calibrate_info:
+                if self.viewer.loc_embedded.cb_cal_show_corner.isChecked():
+                    # show chessboard corners
+                    c_col = self.viewer.loc_embedded.sp_chessboard_c
+                    c_row = self.viewer.loc_embedded.sp_chessboard_r
+                    if self.loc_model.chessboard_corners[0]:
+                        img_display = cv2.drawChessboardCorners(img_display,
+                                                                (c_row, c_col),
+                                                                self.loc_model.chessboard_corners[1],
+                                                                self.loc_model.chessboard_corners[0])
+                if self.viewer.loc_embedded.rb_cal_show_axes.isChecked():
+                    # show world axes in the image
+                    img_display = self.loc_model.draw_world_axes_in_image_plane(img_display,
+                                                                                self.loc_model.calibrate_info[3][0],
+                                                                                self.loc_model.calibrate_info[4][0],
+                                                                                self.loc_model.calibrate_info[1],
+                                                                                self.loc_model.calibrate_info[2],
+                                                                                axis_len=(self.arena_length,
+                                                                                          self.arena_width,
+                                                                                          10))
+                elif self.viewer.loc_embedded.rb_cal_show_points.isChecked():
+                    # comparing the results with groud truth
+                    point = np.array([[self.arena_length,0,0],
+                                      [self.arena_length/2,self.arena_width/2,0],
+                                      [0,self.arena_width,0],
+                                      [self.arena_length,self.arena_width,0]
+                                      ], dtype=np.float32)
+                    # re-calculate points in image plane
+                    img_display = self.loc_model.draw_world_points_in_image_plane(img_display, point,
+                                                                                  self.loc_model.calibrate_info[3][0],
+                                                                                  self.loc_model.calibrate_info[4][0],
+                                                                                  self.loc_model.calibrate_info[1],
+                                                                                  self.loc_model.calibrate_info[2])
+                    # showing points in the arena screen
+                    img = np.zeros([self.phero_img_height, self.phero_img_width, 3], dtype=np.uint8)
+                    for p in point:
+                        img = cv2.circle(img,
+                                         (int(p[0]/self.arena_length*self.phero_img_width),
+                                          int(p[1]/self.arena_width*self.phero_img_height)),
+                                         20, (255,0,255), 2)
+                    self.phero_screen.show_label_img(self.phero_screen_start_pos[0],
+                                                     self.phero_screen_start_pos[1], 
+                                                     self.phero_img_width,
+                                                     self.phero_img_height,
+                                                     img)
+            else:
+                img_display = cv2.putText(img_display, 'cannot found {}x{} corners'.format(c_row, c_col),
+                                            (img_display.shape[1]//2, img_display.shape[0]//10),
+                                            cv2.FONT_HERSHEY_COMPLEX_SMALL, 3, (0, 255, 255), 3)
 
         self.viewer.loc_embedded.update_localization_display(img_display)
     
@@ -1108,7 +1158,6 @@ class Controller:
                 r1 = r_h/180
                 
                 cv2.putText(image, str(id), pattern_pos, cv2.FONT_HERSHEY_SCRIPT_SIMPLEX, 1, (255,255,255), 4)
-                # 保留3位小数
                 ID_table.write(str(id)+" "+str(round(r1,3))+' '+str(round(r0,3))+'\n')
                 id += 1
         try:
@@ -1126,8 +1175,10 @@ class Controller:
     
     def loc_start_camera_calibration(self):
         text = self.viewer.loc_embedded.sender().text()
-        if text == 'Run Calibration':
-            if not self.camera_opened:
+        if text == 'Run':
+            if self.loc_is_running:
+                self.loc_is_running = False
+            if not self.loc_camera_opened:
                 self.loc_open_camera()
             self.loc_camera_is_calibrating = True
             self.loc_thread_calibration = threading.Thread(target=self.loc_calibrate_camera)
@@ -1135,23 +1186,24 @@ class Controller:
             # display
             self.loc_refresh_timer.start(100)
             self.viewer.loc_embedded.pb_start_calibration.setText("Stop")
-        elif text == 'Pause':
+        elif text == 'Stop':
             self.loc_camera_is_calibrating = False
-            self.viewer.loc_embedded.pb_start_calibration.setText("Run Calibration")
+            self.viewer.loc_embedded.pb_start_calibration.setText("Run")
             self.loc_refresh_timer.stop()
         else:
             pass
         
     def loc_calibrate_camera(self):
-        while self.loc_camera_is_calibrating and self.camera_opened:
+        while self.loc_camera_is_calibrating and self.loc_camera_opened:
             c_c = self.viewer.loc_embedded.sp_chessboard_c.value()
             c_r = self.viewer.loc_embedded.sp_chessboard_r.value()
-            offsety = int(self.viewer.loc_embedded.sp_cal_offset_y.value()/self.arena_width*self.phero_img_height)
-            offsetx = int(self.viewer.loc_embedded.sp_cal_offset_x.value()/self.arena_length*self.phero_img_width)
             c_size = min([self.phero_img_height//c_r, self.phero_img_width//c_c])
             # grab image from camera
-            img = self.loc_camera.get_BGR_image()
-            self.loc_calibrated_img = self.loc_model.run_calibration(img, c_c, c_r, c_size/self.phero_img_width*self.arena_length)
+            img = self.loc_camera.get_gray_image()
+            self.loc_model.run_calibration(img, c_c, c_r, c_size/self.phero_img_width*self.arena_length)
+            if self.loc_model.calibrate_info:
+                # has found enougn corner, calibration finished
+                break
             
 
     def serial_ports_scan(self):
