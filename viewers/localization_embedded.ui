@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>777</width>
-    <height>563</height>
+    <height>584</height>
    </rect>
   </property>
   <property name="contextMenuPolicy">
@@ -184,8 +184,8 @@ color: rgb(255, 255, 0);
    <property name="geometry">
     <rect>
      <x>26</x>
-     <y>434</y>
-     <width>95</width>
+     <y>446</y>
+     <width>59</width>
      <height>29</height>
     </rect>
    </property>
@@ -291,7 +291,7 @@ border-radius:10px;
      <x>240</x>
      <y>246</y>
      <width>525</width>
-     <height>311</height>
+     <height>327</height>
     </rect>
    </property>
    <property name="toolTip">
@@ -510,6 +510,9 @@ border-radius: 4px;
    </property>
   </widget>
   <widget class="QSpinBox" name="sp_camera_height">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="geometry">
     <rect>
      <x>294</x>
@@ -527,7 +530,7 @@ color: rgb(255, 255, 127);
     <number>2560</number>
    </property>
    <property name="value">
-    <number>1080</number>
+    <number>1200</number>
    </property>
    <property name="displayIntegerBase">
     <number>10</number>
@@ -560,11 +563,14 @@ color: rgb(255, 255, 127);
    </property>
   </widget>
   <widget class="QSpinBox" name="sp_camera_width">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="geometry">
     <rect>
-     <x>296</x>
+     <x>294</x>
      <y>144</y>
-     <width>61</width>
+     <width>59</width>
      <height>19</height>
     </rect>
    </property>
@@ -981,7 +987,7 @@ border-radius:10px;
     <string>Save as Picture</string>
    </property>
   </widget>
-  <widget class="QPushButton" name="pb_check_camera">
+  <widget class="QPushButton" name="pb_start_capture">
    <property name="geometry">
     <rect>
      <x>616</x>
@@ -1249,9 +1255,9 @@ color: rgb(255, 255, 0);
   <widget class="QLabel" name="label_32">
    <property name="geometry">
     <rect>
-     <x>28</x>
-     <y>482</y>
-     <width>55</width>
+     <x>30</x>
+     <y>504</y>
+     <width>49</width>
      <height>25</height>
     </rect>
    </property>
@@ -1262,10 +1268,10 @@ color: rgb(255, 255, 0);
   <widget class="QPushButton" name="pb_save_cal_data">
    <property name="geometry">
     <rect>
-     <x>128</x>
-     <y>480</y>
-     <width>93</width>
-     <height>21</height>
+     <x>106</x>
+     <y>506</y>
+     <width>51</width>
+     <height>25</height>
     </rect>
    </property>
    <property name="font">
@@ -1350,7 +1356,7 @@ border-radius:10px;
     <string>Trajectory</string>
    </property>
   </widget>
-  <widget class="QPushButton" name="pb_start_capture">
+  <widget class="QPushButton" name="pb_check_camera">
    <property name="geometry">
     <rect>
      <x>616</x>
@@ -1389,22 +1395,22 @@ border-radius:10px;
   <widget class="QCheckBox" name="cb_cal_show_corner">
    <property name="geometry">
     <rect>
-     <x>132</x>
-     <y>436</y>
-     <width>97</width>
+     <x>96</x>
+     <y>450</y>
+     <width>127</width>
      <height>23</height>
     </rect>
    </property>
    <property name="text">
-    <string>Show Corners</string>
+    <string>Show Chess Corners</string>
    </property>
   </widget>
   <widget class="QRadioButton" name="rb_cal_show_points">
    <property name="geometry">
     <rect>
-     <x>26</x>
-     <y>534</y>
-     <width>185</width>
+     <x>28</x>
+     <y>556</y>
+     <width>201</width>
      <height>16</height>
     </rect>
    </property>
@@ -1415,9 +1421,9 @@ border-radius:10px;
   <widget class="QRadioButton" name="rb_cal_show_axes">
    <property name="geometry">
     <rect>
-     <x>26</x>
-     <y>512</y>
-     <width>185</width>
+     <x>28</x>
+     <y>534</y>
+     <width>201</width>
      <height>16</height>
     </rect>
    </property>
@@ -1426,6 +1432,164 @@ border-radius:10px;
    </property>
    <property name="checked">
     <bool>true</bool>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_33">
+   <property name="geometry">
+    <rect>
+     <x>26</x>
+     <y>428</y>
+     <width>113</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>White Border Width:</string>
+   </property>
+  </widget>
+  <widget class="QSpinBox" name="sp_cal_border_w">
+   <property name="geometry">
+    <rect>
+     <x>146</x>
+     <y>426</y>
+     <width>45</width>
+     <height>19</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">border: 2px soild rgb(19, 126, 124);
+color: rgb(255, 255, 127);
+</string>
+   </property>
+   <property name="maximum">
+    <number>999</number>
+   </property>
+   <property name="value">
+    <number>30</number>
+   </property>
+   <property name="displayIntegerBase">
+    <number>10</number>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_45">
+   <property name="geometry">
+    <rect>
+     <x>194</x>
+     <y>428</y>
+     <width>33</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>pixel</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="pb_apply_cal_data">
+   <property name="geometry">
+    <rect>
+     <x>166</x>
+     <y>506</y>
+     <width>53</width>
+     <height>25</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>10</pointsize>
+     <weight>75</weight>
+     <bold>true</bold>
+    </font>
+   </property>
+   <property name="cursor">
+    <cursorShape>PointingHandCursor</cursorShape>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">QPushButton::disabled {
+    border: 2px solid rgb(149, 149, 149);
+	color:rgb(149, 149, 149);
+	border-radius:10px;
+}
+QPushButton{
+border: 2px solid rgb(19, 126, 124);
+border-radius:10px;
+}
+</string>
+   </property>
+   <property name="text">
+    <string>Apply</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="pb_cal_load_data">
+   <property name="geometry">
+    <rect>
+     <x>26</x>
+     <y>478</y>
+     <width>99</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>10</pointsize>
+     <weight>75</weight>
+     <bold>true</bold>
+    </font>
+   </property>
+   <property name="cursor">
+    <cursorShape>PointingHandCursor</cursorShape>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">QPushButton::disabled {
+    border: 2px solid rgb(149, 149, 149);
+	color:rgb(149, 149, 149);
+	border-radius:10px;
+}
+QPushButton{
+border: 2px solid rgb(19, 126, 124);
+border-radius:10px;
+}
+</string>
+   </property>
+   <property name="text">
+    <string>Load</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="pb_cal_show_default">
+   <property name="geometry">
+    <rect>
+     <x>128</x>
+     <y>478</y>
+     <width>99</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>10</pointsize>
+     <weight>75</weight>
+     <bold>true</bold>
+    </font>
+   </property>
+   <property name="cursor">
+    <cursorShape>PointingHandCursor</cursorShape>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">QPushButton::disabled {
+    border: 2px solid rgb(149, 149, 149);
+	color:rgb(149, 149, 149);
+	border-radius:10px;
+}
+QPushButton{
+border: 2px solid rgb(19, 126, 124);
+border-radius:10px;
+}
+</string>
+   </property>
+   <property name="text">
+    <string>Show Default</string>
    </property>
   </widget>
  </widget>

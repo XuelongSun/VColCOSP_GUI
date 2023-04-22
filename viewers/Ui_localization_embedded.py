@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'd:\BaiduSyncdisk\Research\Swarm\VColCOS_GUI\viewers\localization_embedded.ui'
+# Form implementation generated from reading ui file 'c:\WorkSpace\VColCOSP_GUI\viewers\localization_embedded.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.4
 #
@@ -14,7 +14,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_localization_embedded(object):
     def setupUi(self, localization_embedded):
         localization_embedded.setObjectName("localization_embedded")
-        localization_embedded.resize(777, 563)
+        localization_embedded.resize(777, 584)
         localization_embedded.setContextMenuPolicy(QtCore.Qt.PreventContextMenu)
         localization_embedded.setStyleSheet("background-color: rgb(0, 0, 0);\n"
 "color: rgb(19, 126, 124);")
@@ -72,7 +72,7 @@ class Ui_localization_embedded(object):
         self.frame.setFrameShadow(QtWidgets.QFrame.Raised)
         self.frame.setObjectName("frame")
         self.pb_start_calibration = QtWidgets.QPushButton(localization_embedded)
-        self.pb_start_calibration.setGeometry(QtCore.QRect(26, 434, 95, 29))
+        self.pb_start_calibration.setGeometry(QtCore.QRect(26, 446, 59, 29))
         font = QtGui.QFont()
         font.setFamily("Arial")
         font.setPointSize(10)
@@ -123,7 +123,7 @@ class Ui_localization_embedded(object):
         self.label_22.setGeometry(QtCore.QRect(37, 182, 41, 16))
         self.label_22.setObjectName("label_22")
         self.label_localization_display = QtWidgets.QLabel(localization_embedded)
-        self.label_localization_display.setGeometry(QtCore.QRect(240, 246, 525, 311))
+        self.label_localization_display.setGeometry(QtCore.QRect(240, 246, 525, 327))
         self.label_localization_display.setWhatsThis("")
         self.label_localization_display.setStyleSheet("border:2px solid rgb(19, 126, 124);")
         self.label_localization_display.setText("")
@@ -212,12 +212,13 @@ class Ui_localization_embedded(object):
         self.label_40.setGeometry(QtCore.QRect(358, 166, 41, 19))
         self.label_40.setObjectName("label_40")
         self.sp_camera_height = QtWidgets.QSpinBox(localization_embedded)
+        self.sp_camera_height.setEnabled(False)
         self.sp_camera_height.setGeometry(QtCore.QRect(294, 168, 61, 19))
         self.sp_camera_height.setStyleSheet("border: 2px soild rgb(19, 126, 124);\n"
 "color: rgb(255, 255, 127);\n"
 "")
         self.sp_camera_height.setMaximum(2560)
-        self.sp_camera_height.setProperty("value", 1080)
+        self.sp_camera_height.setProperty("value", 1200)
         self.sp_camera_height.setDisplayIntegerBase(10)
         self.sp_camera_height.setObjectName("sp_camera_height")
         self.label_11 = QtWidgets.QLabel(localization_embedded)
@@ -227,7 +228,8 @@ class Ui_localization_embedded(object):
         self.label_12.setGeometry(QtCore.QRect(240, 166, 51, 21))
         self.label_12.setObjectName("label_12")
         self.sp_camera_width = QtWidgets.QSpinBox(localization_embedded)
-        self.sp_camera_width.setGeometry(QtCore.QRect(296, 144, 61, 19))
+        self.sp_camera_width.setEnabled(False)
+        self.sp_camera_width.setGeometry(QtCore.QRect(294, 144, 59, 19))
         self.sp_camera_width.setStyleSheet("border: 2px soild rgb(19, 126, 124);\n"
 "color: rgb(255, 255, 127);\n"
 "")
@@ -385,9 +387,6 @@ class Ui_localization_embedded(object):
         self.cb_show_marker = QtWidgets.QCheckBox(localization_embedded)
         self.cb_show_marker.setGeometry(QtCore.QRect(290, 222, 61, 19))
         self.cb_show_marker.setObjectName("cb_show_marker")
-        self.cb_cal_show_axes = QtWidgets.QCheckBox(localization_embedded)
-        self.cb_cal_show_axes.setGeometry(QtCore.QRect(28, 506, 197, 23))
-        self.cb_cal_show_axes.setObjectName("cb_cal_show_axes")
         self.cb_show_location = QtWidgets.QCheckBox(localization_embedded)
         self.cb_show_location.setGeometry(QtCore.QRect(356, 222, 89, 19))
         self.cb_show_location.setObjectName("cb_show_location")
@@ -411,16 +410,16 @@ class Ui_localization_embedded(object):
 "}\n"
 "")
         self.pb_save_as_img.setObjectName("pb_save_as_img")
-        self.pb_check_camera = QtWidgets.QPushButton(localization_embedded)
-        self.pb_check_camera.setGeometry(QtCore.QRect(616, 64, 137, 41))
+        self.pb_start_capture = QtWidgets.QPushButton(localization_embedded)
+        self.pb_start_capture.setGeometry(QtCore.QRect(616, 64, 137, 41))
         font = QtGui.QFont()
         font.setFamily("Arial")
         font.setPointSize(10)
         font.setBold(True)
         font.setWeight(75)
-        self.pb_check_camera.setFont(font)
-        self.pb_check_camera.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
-        self.pb_check_camera.setStyleSheet("QPushButton::disabled {\n"
+        self.pb_start_capture.setFont(font)
+        self.pb_start_capture.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+        self.pb_start_capture.setStyleSheet("QPushButton::disabled {\n"
 "    border: 2px solid rgb(149, 149, 149);\n"
 "    color:rgb(149, 149, 149);\n"
 "    border-radius:10px;\n"
@@ -430,7 +429,7 @@ class Ui_localization_embedded(object):
 "border-radius:10px;\n"
 "}\n"
 "")
-        self.pb_check_camera.setObjectName("pb_check_camera")
+        self.pb_start_capture.setObjectName("pb_start_capture")
         self.sp_pattern_num_c = QtWidgets.QSpinBox(localization_embedded)
         self.sp_pattern_num_c.setGeometry(QtCore.QRect(168, 258, 61, 22))
         self.sp_pattern_num_c.setStyleSheet("border: 2px soild rgb(19, 126, 124);\n"
@@ -449,7 +448,7 @@ class Ui_localization_embedded(object):
         self.label_26.setGeometry(QtCore.QRect(26, 358, 81, 16))
         self.label_26.setObjectName("label_26")
         self.sp_chessboard_c = QtWidgets.QSpinBox(localization_embedded)
-        self.sp_chessboard_c.setGeometry(QtCore.QRect(110, 354, 43, 22))
+        self.sp_chessboard_c.setGeometry(QtCore.QRect(174, 356, 43, 22))
         self.sp_chessboard_c.setStyleSheet("border: 2px soild rgb(19, 126, 124);\n"
 "color: rgb(0,255, 0);\n"
 "")
@@ -460,7 +459,7 @@ class Ui_localization_embedded(object):
         self.sp_chessboard_c.setDisplayIntegerBase(10)
         self.sp_chessboard_c.setObjectName("sp_chessboard_c")
         self.sp_chessboard_r = QtWidgets.QSpinBox(localization_embedded)
-        self.sp_chessboard_r.setGeometry(QtCore.QRect(180, 354, 47, 22))
+        self.sp_chessboard_r.setGeometry(QtCore.QRect(108, 356, 47, 22))
         self.sp_chessboard_r.setStyleSheet("border: 2px soild rgb(19, 126, 124);\n"
 "color: rgb(0,255, 0);\n"
 "")
@@ -504,10 +503,10 @@ class Ui_localization_embedded(object):
         self.label_44.setGeometry(QtCore.QRect(172, 386, 41, 16))
         self.label_44.setObjectName("label_44")
         self.label_32 = QtWidgets.QLabel(localization_embedded)
-        self.label_32.setGeometry(QtCore.QRect(28, 482, 55, 25))
+        self.label_32.setGeometry(QtCore.QRect(30, 504, 49, 25))
         self.label_32.setObjectName("label_32")
         self.pb_save_cal_data = QtWidgets.QPushButton(localization_embedded)
-        self.pb_save_cal_data.setGeometry(QtCore.QRect(128, 480, 93, 21))
+        self.pb_save_cal_data.setGeometry(QtCore.QRect(106, 506, 51, 25))
         font = QtGui.QFont()
         font.setFamily("Arial")
         font.setPointSize(10)
@@ -526,10 +525,6 @@ class Ui_localization_embedded(object):
 "}\n"
 "")
         self.pb_save_cal_data.setObjectName("pb_save_cal_data")
-        self.cb_cal_show_points = QtWidgets.QCheckBox(localization_embedded)
-        self.cb_cal_show_points.setGeometry(QtCore.QRect(28, 526, 203, 23))
-        self.cb_cal_show_points.setToolTip("")
-        self.cb_cal_show_points.setObjectName("cb_cal_show_points")
         self.label_64 = QtWidgets.QLabel(localization_embedded)
         self.label_64.setGeometry(QtCore.QRect(240, 190, 231, 20))
         font = QtGui.QFont()
@@ -548,16 +543,16 @@ class Ui_localization_embedded(object):
         self.cb_show_trajectory = QtWidgets.QCheckBox(localization_embedded)
         self.cb_show_trajectory.setGeometry(QtCore.QRect(452, 222, 85, 19))
         self.cb_show_trajectory.setObjectName("cb_show_trajectory")
-        self.pb_start_capture = QtWidgets.QPushButton(localization_embedded)
-        self.pb_start_capture.setGeometry(QtCore.QRect(616, 8, 137, 43))
+        self.pb_check_camera = QtWidgets.QPushButton(localization_embedded)
+        self.pb_check_camera.setGeometry(QtCore.QRect(616, 8, 137, 43))
         font = QtGui.QFont()
         font.setFamily("Arial")
         font.setPointSize(10)
         font.setBold(True)
         font.setWeight(75)
-        self.pb_start_capture.setFont(font)
-        self.pb_start_capture.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
-        self.pb_start_capture.setStyleSheet("QPushButton::disabled {\n"
+        self.pb_check_camera.setFont(font)
+        self.pb_check_camera.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+        self.pb_check_camera.setStyleSheet("QPushButton::disabled {\n"
 "    border: 2px solid rgb(149, 149, 149);\n"
 "    color:rgb(149, 149, 149);\n"
 "    border-radius:10px;\n"
@@ -567,10 +562,92 @@ class Ui_localization_embedded(object):
 "border-radius:10px;\n"
 "}\n"
 "")
-        self.pb_start_capture.setObjectName("pb_start_capture")
+        self.pb_check_camera.setObjectName("pb_check_camera")
         self.cb_cal_show_corner = QtWidgets.QCheckBox(localization_embedded)
-        self.cb_cal_show_corner.setGeometry(QtCore.QRect(132, 436, 97, 23))
+        self.cb_cal_show_corner.setGeometry(QtCore.QRect(96, 450, 127, 23))
         self.cb_cal_show_corner.setObjectName("cb_cal_show_corner")
+        self.rb_cal_show_points = QtWidgets.QRadioButton(localization_embedded)
+        self.rb_cal_show_points.setGeometry(QtCore.QRect(28, 556, 201, 16))
+        self.rb_cal_show_points.setObjectName("rb_cal_show_points")
+        self.rb_cal_show_axes = QtWidgets.QRadioButton(localization_embedded)
+        self.rb_cal_show_axes.setGeometry(QtCore.QRect(28, 534, 201, 16))
+        self.rb_cal_show_axes.setChecked(True)
+        self.rb_cal_show_axes.setObjectName("rb_cal_show_axes")
+        self.label_33 = QtWidgets.QLabel(localization_embedded)
+        self.label_33.setGeometry(QtCore.QRect(26, 428, 113, 16))
+        self.label_33.setObjectName("label_33")
+        self.sp_cal_border_w = QtWidgets.QSpinBox(localization_embedded)
+        self.sp_cal_border_w.setGeometry(QtCore.QRect(146, 426, 45, 19))
+        self.sp_cal_border_w.setStyleSheet("border: 2px soild rgb(19, 126, 124);\n"
+"color: rgb(255, 255, 127);\n"
+"")
+        self.sp_cal_border_w.setMaximum(999)
+        self.sp_cal_border_w.setProperty("value", 30)
+        self.sp_cal_border_w.setDisplayIntegerBase(10)
+        self.sp_cal_border_w.setObjectName("sp_cal_border_w")
+        self.label_45 = QtWidgets.QLabel(localization_embedded)
+        self.label_45.setGeometry(QtCore.QRect(194, 428, 33, 16))
+        self.label_45.setObjectName("label_45")
+        self.pb_apply_cal_data = QtWidgets.QPushButton(localization_embedded)
+        self.pb_apply_cal_data.setGeometry(QtCore.QRect(166, 506, 53, 25))
+        font = QtGui.QFont()
+        font.setFamily("Arial")
+        font.setPointSize(10)
+        font.setBold(True)
+        font.setWeight(75)
+        self.pb_apply_cal_data.setFont(font)
+        self.pb_apply_cal_data.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+        self.pb_apply_cal_data.setStyleSheet("QPushButton::disabled {\n"
+"    border: 2px solid rgb(149, 149, 149);\n"
+"    color:rgb(149, 149, 149);\n"
+"    border-radius:10px;\n"
+"}\n"
+"QPushButton{\n"
+"border: 2px solid rgb(19, 126, 124);\n"
+"border-radius:10px;\n"
+"}\n"
+"")
+        self.pb_apply_cal_data.setObjectName("pb_apply_cal_data")
+        self.pb_cal_load_data = QtWidgets.QPushButton(localization_embedded)
+        self.pb_cal_load_data.setGeometry(QtCore.QRect(26, 478, 99, 23))
+        font = QtGui.QFont()
+        font.setFamily("Arial")
+        font.setPointSize(10)
+        font.setBold(True)
+        font.setWeight(75)
+        self.pb_cal_load_data.setFont(font)
+        self.pb_cal_load_data.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+        self.pb_cal_load_data.setStyleSheet("QPushButton::disabled {\n"
+"    border: 2px solid rgb(149, 149, 149);\n"
+"    color:rgb(149, 149, 149);\n"
+"    border-radius:10px;\n"
+"}\n"
+"QPushButton{\n"
+"border: 2px solid rgb(19, 126, 124);\n"
+"border-radius:10px;\n"
+"}\n"
+"")
+        self.pb_cal_load_data.setObjectName("pb_cal_load_data")
+        self.pb_cal_show_default = QtWidgets.QPushButton(localization_embedded)
+        self.pb_cal_show_default.setGeometry(QtCore.QRect(128, 478, 99, 23))
+        font = QtGui.QFont()
+        font.setFamily("Arial")
+        font.setPointSize(10)
+        font.setBold(True)
+        font.setWeight(75)
+        self.pb_cal_show_default.setFont(font)
+        self.pb_cal_show_default.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+        self.pb_cal_show_default.setStyleSheet("QPushButton::disabled {\n"
+"    border: 2px solid rgb(149, 149, 149);\n"
+"    color:rgb(149, 149, 149);\n"
+"    border-radius:10px;\n"
+"}\n"
+"QPushButton{\n"
+"border: 2px solid rgb(19, 126, 124);\n"
+"border-radius:10px;\n"
+"}\n"
+"")
+        self.pb_cal_show_default.setObjectName("pb_cal_show_default")
 
         self.retranslateUi(localization_embedded)
         QtCore.QMetaObject.connectSlotsByName(localization_embedded)
@@ -605,10 +682,9 @@ class Ui_localization_embedded(object):
         self.pb_load_id_txt.setText(_translate("localization_embedded", "Load ID "))
         self.cb_show_id.setText(_translate("localization_embedded", "ID"))
         self.cb_show_marker.setText(_translate("localization_embedded", "Marker"))
-        self.cb_cal_show_axes.setText(_translate("localization_embedded", "Show World (Arena) Axes"))
         self.cb_show_location.setText(_translate("localization_embedded", "location"))
         self.pb_save_as_img.setText(_translate("localization_embedded", "Save as Picture"))
-        self.pb_check_camera.setText(_translate("localization_embedded", "Start Capture"))
+        self.pb_start_capture.setText(_translate("localization_embedded", "Start Capture"))
         self.label_25.setText(_translate("localization_embedded", "column"))
         self.label_26.setText(_translate("localization_embedded", "Chess Board:"))
         self.label_27.setText(_translate("localization_embedded", "X"))
@@ -618,10 +694,15 @@ class Ui_localization_embedded(object):
         self.label_44.setText(_translate("localization_embedded", "m"))
         self.label_32.setText(_translate("localization_embedded", "Results:"))
         self.pb_save_cal_data.setText(_translate("localization_embedded", "Save"))
-        self.cb_cal_show_points.setWhatsThis(_translate("localization_embedded", "1"))
-        self.cb_cal_show_points.setText(_translate("localization_embedded", "Show Random Testing Points"))
         self.label_64.setText(_translate("localization_embedded", "| Localization Results"))
         self.cb_show_trajectory.setText(_translate("localization_embedded", "Trajectory"))
-        self.pb_start_capture.setText(_translate("localization_embedded", "Check Camera"))
-        self.cb_cal_show_corner.setText(_translate("localization_embedded", "Show Corners"))
+        self.pb_check_camera.setText(_translate("localization_embedded", "Check Camera"))
+        self.cb_cal_show_corner.setText(_translate("localization_embedded", "Show Chess Corners"))
+        self.rb_cal_show_points.setText(_translate("localization_embedded", "Show Random Testing Points"))
+        self.rb_cal_show_axes.setText(_translate("localization_embedded", "Show World (Arena) Axes"))
+        self.label_33.setText(_translate("localization_embedded", "White Border Width:"))
+        self.label_45.setText(_translate("localization_embedded", "pixel"))
+        self.pb_apply_cal_data.setText(_translate("localization_embedded", "Apply"))
+        self.pb_cal_load_data.setText(_translate("localization_embedded", "Load"))
+        self.pb_cal_show_default.setText(_translate("localization_embedded", "Show Default"))
 import resources_rc

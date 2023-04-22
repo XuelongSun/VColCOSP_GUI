@@ -46,6 +46,11 @@ class SerialDataModel(object):
         self.num_package = 0
         # robot
         self.robot_data = {}
+    
+    def clear_data(self):
+        self.num_package = 0
+        # robot
+        self.robot_data = {}
 
     def data_transfer(self, b):
         # unpack data
@@ -412,7 +417,7 @@ class LocalizationModel(object):
         self.r_tolerence = 0.004
         self.update_calibration_info()
         self.calibrate_info = []
-        self.chessboard_corners = []
+        self.chessboard_corners = [0, 0]
     
     def update_pattern_info(self):
         self.id_table = np.loadtxt(self.id_table_filename)
@@ -427,17 +432,17 @@ class LocalizationModel(object):
     
     def update_calibration_info(self):
         with np.load('./camera/calibration_data.npz') as X:
-            self.mtx, self.dist, rvecs, tvecs, self.PresM = [X[i] for i in ('mtx','dist','rvecs','tvecs','PresM')]
+            self.mtx, self.dist, self.rvecs, self.tvecs, self.PresM = [X[i] for i in ('mtx','dist','rvecs','tvecs','PresM')]
         temp_array = np.array([0,0,0])
-        mtx1 = np.insert(self.mtx, 3, temp_array,axis=1)
-        rotM = cv2.Rodrigues(rvecs)[0]
-        rot_trans_M = np.insert(np.insert(rotM,3,tvecs.T,axis=1),3,np.array([0,0,0,1]),axis=0)
+        mtx1 = np.insert(self.mtx, 3, temp_array, axis=1)
+        rotM = cv2.Rodrigues(self.rvecs)[0]
+        rot_trans_M = np.insert(np.insert(rotM, 3, self.tvecs.T, axis=1),3,np.array([0,0,0,1]),axis=0)
 
         self.w2p_M = np.matrix(np.matmul(mtx1, rot_trans_M))
         self.p2w_M = self.w2p_M.I
         self.newcameramtx, roi = cv2.getOptimalNewCameraMatrix(self.mtx, self.dist, self.image_size, 0, self.image_size)
 
-    def draw_chess_board(self, image_size, c_col, c_row, c_size, offsetx, offsety):
+    def draw_chess_board(self, image_size, c_col, c_row, c_size, offsetx, offsety, border_width=30):
         image = np.ones(image_size, dtype=np.uint8)*255
         chessboard = 255.0 * np.kron([[0, 1] * (c_col//2+1), [1, 0] * (c_col//2+1)] * (c_row//2+1), np.ones((c_size, c_size)))
         c_h, c_w = chessboard.shape
@@ -447,12 +452,13 @@ class LocalizationModel(object):
         image[offsety:img_end_h, offsetx:img_end_w] = chessboard[:min([img_end_h-offsety, c_h]),
                                                                  :min([img_end_w-offsetx, c_w])]
         # padding image with white border
-        img_pad = cv2.copyMakeBorder(image, 10, 10, 10, 10, cv2.BORDER_CONSTANT, value=(255, 255, 255))
+        img_pad = cv2.copyMakeBorder(image, border_width, border_width, border_width, border_width,
+                                     cv2.BORDER_CONSTANT, value=(255, 255, 255))
         image = cv2.resize(img_pad, (img_w, img_h))
         return image
 
     def draw_world_axes_in_image_plane(self, img, rvecs, tvecs, mtx, dist, axis_len=(10,10,10)):
-        axis = np.float32([[0,0,0], [axis_len[0],0,0], [0,axis_len[1],0], [0,0,axis_len[2]]]).reshape(-1,3)
+        axis = np.float32([[0,0,0], [axis_len[0],0,0], [0,axis_len[1],0], [0,0,-axis_len[2]/10]]).reshape(-1,3)
         imgpts, _ = cv2.projectPoints(axis, rvecs, tvecs, mtx, dist)
         img = cv2.line(img, tuple(imgpts[0].ravel().astype(int)), tuple(imgpts[1].ravel().astype(int)), (255,0,0), 5)
         img = cv2.line(img, tuple(imgpts[0].ravel().astype(int)), tuple(imgpts[2].ravel().astype(int)), (0,255,0), 5)
@@ -465,23 +471,28 @@ class LocalizationModel(object):
             img = cv2.circle(img, tuple(p[0].ravel().astype(int)), 10, (255,0,0), 5)
         return img
 
-    def run_calibration(self, img, c_col, c_row, c_size_world):
+    def run_calibration(self, img, c_col, c_row, c_size_world, offsetx=0, offsety=0, border=0):
+        c_size_world -= 0.0046
         objp = np.zeros((c_col*c_row, 3), np.float32)
-        objp[:,:2] = np.mgrid[0:c_row,0:c_col].T.reshape(-1,2)
-        objp[:,:2] = objp[:,:2]*c_size_world + c_size_world
+        objp[:,:2] = np.mgrid[0:c_col,0:c_row].T.reshape(-1,2)
+        objp[:,:2] = objp[:,:2]*c_size_world + c_size_world + border
+        # ONLY FOR THE CURRENT HARDWARE SETTING !! (PARTS OF THE SCREEN ON THE LEFT AND RIGHT SIDE ARE COVERED)
+        objp[:,0] = objp[:,0] - 0.0125
+        # objp[:,1] = objp[:,1] - offsety
         # axis = np.float32([[0,0,0], [1.4,0,0], [0,0.8,0], [0,0,-0.15]]).reshape(-1,3)
         criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
         objpoints = [] # 3D points in world coordinates
         imgpoints = [] # 2D points in image coordinates
-        self.chessboard_corners[0], _ = cv2.findChessboardCorners(img, (c_row-1, c_col-1), None)
-        if self.chessboard_corners[0] == True:
+        self.chessboard_corners[0], corners = cv2.findChessboardCorners(img, (c_col, c_row), None)
+        if self.chessboard_corners[0]:
             objpoints.append(objp)
-            self.chessboard_corners[1] = cv2.cornerSubPix(img, self.chessboard_corners[1], (11, 11), (-1,-1), criteria)
+            self.chessboard_corners[1] = cv2.cornerSubPix(img, corners, (11, 11), (-1,-1), criteria)
             imgpoints.append(self.chessboard_corners[1])
+            # ret, mtx, dist, rvecs, tvecs
             self.calibrate_info = cv2.calibrateCamera(objpoints, imgpoints, img.shape[::-1], None, None)
         else:
-            print('not enough convers found')
-        return img
+            print('not enough corners found')
+        return self.chessboard_corners[0]
     
     def get_possible_posi(self,img):
         dim = (int(img.shape[1] /self.zoom_ratio), int(img.shape[0] /self.zoom_ratio))

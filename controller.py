@@ -137,6 +137,7 @@ class Controller:
         self.loc_is_running = False
         self.loc_camera_is_calibrating = False
         self.loc_current_image = None
+        self.loc_img_display = None
         self.loc_world_locations = {}
         self.loc_image_location = []
         self.loc_heading = []
@@ -146,6 +147,10 @@ class Controller:
         self.viewer.loc_embedded.hS_exposure.valueChanged.connect(self.loc_camera_setting)
         self.viewer.loc_embedded.pb_generate_pattern.clicked.connect(self.loc_generate_pattern)
         self.viewer.loc_embedded.pb_start_calibration.clicked.connect(self.loc_start_camera_calibration)
+        self.viewer.loc_embedded.pb_start_capture.clicked.connect(self.loc_open_camera)
+        self.viewer.loc_embedded.pb_save_as_img.clicked.connect(self.loc_save_as_imgae)
+        self.viewer.loc_embedded.pb_cal_show_default.clicked.connect(self.loc_dispaly_calibration_data)
+        # self.viewer.loc_embedded.pb_cal_load_data.clicked.connect(self.loc_save_as_imgae)
         #* communication
         self.viewer.main_menu.pb_com.clicked.connect(lambda: self.viewer.com.show())
         # robot data via USB-serial
@@ -676,8 +681,9 @@ class Controller:
             offsety = int(self.viewer.loc_embedded.sp_cal_offset_y.value()/self.arena_width*self.phero_img_height)
             offsetx = int(self.viewer.loc_embedded.sp_cal_offset_x.value()/self.arena_length*self.phero_img_width)
             chess_size = min([self.phero_img_height//c_r, self.phero_img_width//c_c])
+            border = self.viewer.loc_embedded.sp_cal_border_w.value()
             self.phero_image = self.loc_model.draw_chess_board((self.phero_img_height, self.phero_img_width),
-                                                               c_c, c_r, chess_size, offsetx, offsety)
+                                                               c_c, c_r, chess_size, offsetx, offsety, border)
 
         if (self.viewer.phero.pb_show.text() == "Hide") and (self.phero_image is not None):
             self.phero_screen.show_label_img(self.phero_screen_start_pos[0],
@@ -692,7 +698,7 @@ class Controller:
     def phero_load_video(self):
         filename, _ = QFileDialog.getOpenFileName(self.viewer.phero, 
                                                   'Load Video', 
-                                                  './', 'Picture File(*.mp4;)')
+                                                  './', 'Video File(*.mp4;)')
         if filename:
             print(filename)
             self.phero_loaded_video_path = filename
@@ -964,6 +970,7 @@ class Controller:
                 self.viewer.phero.te_diversity.clear()
                 self.viewer.phero.te_diversity.insertPlainText(config.get('Pheromone',
                                                                         'diversity_string'))
+            self.phero_refresh_parameter()
         else:
             self.viewer.system_logger('No Pheromone Section Found', 'warning')
 
@@ -997,20 +1004,35 @@ class Controller:
             camera = cameraList[0]
             self.viewer.show_message_box('Camera {} founded'.format(camera.getKey(camera)))
     
-    def loc_open_camera(self):
+    def loc_start_camera_capture(self):
         if self.loc_camera.start_grab_img() == 0:
             time.sleep(0.5)
-            print('start grab image success')
+            self.viewer.system_logger('Start grabing image success')
+            return 0
         else:
             self.viewer.show_message_box("Error: cannot start capture image.")
-            return
-        self.loc_camera_opened = True
+            return -1
+            
+    def loc_open_camera(self):
+        text = self.viewer.loc_embedded.sender().text()
+        if text == "Start Capture":
+            if not self.loc_camera_opened:
+                if self.loc_start_camera_capture() == 0:
+                    self.loc_camera_opened = True
+                    self.viewer.loc_embedded.pb_start_capture.setText('Stop Capture')
+            else:
+                print('Already in capturing')
+        elif text == "Stop Capture":
+            if self.loc_camera_opened:
+                # closing camera
+                self.loc_close_camera()
+                self.viewer.loc_embedded.pb_start_capture.setText('Start Capture')
     
     def loc_close_camera(self):
+        # if self.loc_camera.closeCamera(self.loc_camera) == 0:
+        #     self.viewer.system_logger('camera closed')
         if self.loc_camera.stop_grab_img() == 0:
             self.viewer.system_logger('camera stopped grabing images')
-        if self.loc_camera.closeCamera() == 0:
-            self.viewer.system_logger('camera closed')
         self.loc_camera_opened = False
         
     def loc_start(self):
@@ -1050,21 +1072,21 @@ class Controller:
                     self.loc_world_locations.update({int(info[0]):[[info[1], info[2], h]]})
 
     def loc_display(self):
-        img_display = self.loc_camera.get_BGR_image()
+        self.loc_img_display = self.loc_camera.get_BGR_image()
         if self.loc_is_running:
             # color image
             for info, h in zip(self.loc_image_location, self.loc_heading):
                 if self.viewer.loc_embedded.cb_show_id.isChecked():
-                    img_display = cv2.putText(img_display, str(info[0]), (info[1], info[2]),
+                    self.loc_img_display = cv2.putText(self.loc_img_display, str(info[0]), (info[1], info[2]),
                                             cv2.FONT_HERSHEY_COMPLEX_SMALL, 3, (255, 0, 0), 3)
                 if self.viewer.loc_embedded.cb_show_marker.isChecked():
-                    img_display = cv2.circle(img_display, (info[1], info[2]), 20, (255, 0, 0), 4)
-                    img_display = cv2.arrowedLine(img_display, (info[1], info[2]),
+                    self.loc_img_display = cv2.circle(self.loc_img_display, (info[1], info[2]), 20, (255, 0, 0), 4)
+                    self.loc_img_display = cv2.arrowedLine(self.loc_img_display, (info[1], info[2]),
                                                 (int(info[1] + 26*np.sin(h)),
                                                 int(info[2] + 26*np.cos(h))),
                                                 (255, 255, 0), 4)
                 if self.viewer.loc_embedded.cb_show_location.isChecked():
-                    img_display = cv2.putText(img_display,
+                    self.loc_img_display = cv2.putText(self.loc_img_display,
                                             '[{:3d}, {:3d}, {:.1f}]'.format(info[1], info[2], np.rad2deg(h-np.pi/2)),
                                             (info[1], info[2]+40),
                                             cv2.FONT_HERSHEY_COMPLEX_SMALL, 3, (0, 255, 255), 3)
@@ -1077,16 +1099,18 @@ class Controller:
             if self.loc_model.calibrate_info:
                 if self.viewer.loc_embedded.cb_cal_show_corner.isChecked():
                     # show chessboard corners
-                    c_col = self.viewer.loc_embedded.sp_chessboard_c
-                    c_row = self.viewer.loc_embedded.sp_chessboard_r
+                    c_col = self.viewer.loc_embedded.sp_chessboard_c.value()
+                    c_row = self.viewer.loc_embedded.sp_chessboard_r.value()
                     if self.loc_model.chessboard_corners[0]:
-                        img_display = cv2.drawChessboardCorners(img_display,
+                        self.loc_img_display = cv2.drawChessboardCorners(self.loc_img_display,
                                                                 (c_row, c_col),
                                                                 self.loc_model.chessboard_corners[1],
                                                                 self.loc_model.chessboard_corners[0])
                 if self.viewer.loc_embedded.rb_cal_show_axes.isChecked():
+                    # make sure that the screen still displays chessboard
+                    self.phero_refresh_parameter()
                     # show world axes in the image
-                    img_display = self.loc_model.draw_world_axes_in_image_plane(img_display,
+                    self.loc_img_display = self.loc_model.draw_world_axes_in_image_plane(self.loc_img_display,
                                                                                 self.loc_model.calibrate_info[3][0],
                                                                                 self.loc_model.calibrate_info[4][0],
                                                                                 self.loc_model.calibrate_info[1],
@@ -1095,14 +1119,23 @@ class Controller:
                                                                                           self.arena_width,
                                                                                           10))
                 elif self.viewer.loc_embedded.rb_cal_show_points.isChecked():
+                    c_col = self.viewer.loc_embedded.sp_chessboard_c.value()
+                    c_row = self.viewer.loc_embedded.sp_chessboard_r.value()
+                    s_ = min([self.phero_img_height//c_row, self.phero_img_width//c_col])
+                    size = s_/self.phero_img_height*self.arena_width
                     # comparing the results with groud truth
-                    point = np.array([[self.arena_length,0,0],
-                                      [self.arena_length/2,self.arena_width/2,0],
-                                      [0,self.arena_width,0],
-                                      [self.arena_length,self.arena_width,0]
+                    # point = np.array([[3*self.arena_width/4,0,0],
+                    #                   [self.arena_length/2,self.arena_width/2,0],
+                    #                   [0,3*self.arena_width/4,0],
+                    #                   [3*self.arena_length/4,self.arena_width/4,0]
+                    #                   ], dtype=np.float32)
+                    point = np.array([[size,size,0],
+                                      [size,self.arena_width-size,0],
+                                      [self.arena_length-size,size,0],
+                                      [self.arena_length-size,self.arena_width-size,0]
                                       ], dtype=np.float32)
                     # re-calculate points in image plane
-                    img_display = self.loc_model.draw_world_points_in_image_plane(img_display, point,
+                    self.loc_img_display = self.loc_model.draw_world_points_in_image_plane(self.loc_img_display, point,
                                                                                   self.loc_model.calibrate_info[3][0],
                                                                                   self.loc_model.calibrate_info[4][0],
                                                                                   self.loc_model.calibrate_info[1],
@@ -1111,20 +1144,59 @@ class Controller:
                     img = np.zeros([self.phero_img_height, self.phero_img_width, 3], dtype=np.uint8)
                     for p in point:
                         img = cv2.circle(img,
-                                         (int(p[0]/self.arena_length*self.phero_img_width),
-                                          int(p[1]/self.arena_width*self.phero_img_height)),
-                                         20, (255,0,255), 2)
+                                         (int(p[0]/self.arena_width*self.phero_img_height),
+                                          int(p[1]/self.arena_length*self.phero_img_width)),
+                                         30, (0,255,0), 4)
                     self.phero_screen.show_label_img(self.phero_screen_start_pos[0],
                                                      self.phero_screen_start_pos[1], 
                                                      self.phero_img_width,
                                                      self.phero_img_height,
                                                      img)
             else:
-                img_display = cv2.putText(img_display, 'cannot found {}x{} corners'.format(c_row, c_col),
-                                            (img_display.shape[1]//2, img_display.shape[0]//10),
-                                            cv2.FONT_HERSHEY_COMPLEX_SMALL, 3, (0, 255, 255), 3)
+                c_col = self.viewer.loc_embedded.sp_chessboard_c.value()
+                c_row = self.viewer.loc_embedded.sp_chessboard_r.value()
+                s_ = np.array([self.phero_img_height//c_row, self.phero_img_width//c_col], dtype=np.uint8)
+                if np.argmin(s_) == 0:
+                    c_row -= 1
+                else:
+                    c_col -= 1
+                self.loc_img_display = cv2.putText(self.loc_img_display, 'cannot found {}x{} corners'.format(c_row, c_col),
+                                            (20, self.loc_img_display.shape[0]//10),
+                                            cv2.FONT_HERSHEY_COMPLEX_SMALL, 3, (255, 0, 0), 2)
 
-        self.viewer.loc_embedded.update_localization_display(img_display)
+        self.viewer.loc_embedded.update_localization_display(self.loc_img_display)
+    
+    def loc_dispaly_calibration_data(self):
+        if self.loc_camera_opened:
+            self.loc_img_display = self.loc_camera.get_BGR_image()
+        else:
+            self.loc_img_display = np.zeros([1200, 1920, 3], dtype=np.uint8)
+        c_col = self.viewer.loc_embedded.sp_chessboard_c.value()
+        c_row = self.viewer.loc_embedded.sp_chessboard_r.value()
+        s_ = min([self.phero_img_height//c_row, self.phero_img_width//c_col])
+        size = s_/self.phero_img_height*self.arena_width
+        point = np.array([[size,size,0],
+                            [size,self.arena_width-size,0],
+                            [self.arena_length-size,size,0],
+                            [self.arena_length-size,self.arena_width-size,0]
+                            ], dtype=np.float32)
+        self.loc_img_display = self.loc_model.draw_world_points_in_image_plane(self.loc_img_display, point,
+                                                                      self.loc_model.rvecs,
+                                                                      self.loc_model.tvecs,
+                                                                      self.loc_model.mtx,
+                                                                      self.loc_model.dist)
+        img = np.zeros([self.phero_img_height, self.phero_img_width, 3], dtype=np.uint8)
+        for p in point:
+            img = cv2.circle(img,
+                                (int(p[0]/self.arena_width*self.phero_img_height),
+                                int(p[1]/self.arena_length*self.phero_img_width)),
+                                30, (0,255,0), 4)
+        self.phero_screen.show_label_img(self.phero_screen_start_pos[0],
+                                            self.phero_screen_start_pos[1], 
+                                            self.phero_img_width,
+                                            self.phero_img_height,
+                                            img)
+        self.viewer.loc_embedded.update_localization_display(self.loc_img_display)
     
     def loc_camera_setting(self):
         sender = self.viewer.loc_embedded.sender()
@@ -1179,7 +1251,8 @@ class Controller:
             if self.loc_is_running:
                 self.loc_is_running = False
             if not self.loc_camera_opened:
-                self.loc_open_camera()
+                if self.loc_start_camera_capture() == 0:
+                    self.loc_camera_opened = True
             self.loc_camera_is_calibrating = True
             self.loc_thread_calibration = threading.Thread(target=self.loc_calibrate_camera)
             self.loc_thread_calibration.start()
@@ -1197,15 +1270,41 @@ class Controller:
         while self.loc_camera_is_calibrating and self.loc_camera_opened:
             c_c = self.viewer.loc_embedded.sp_chessboard_c.value()
             c_r = self.viewer.loc_embedded.sp_chessboard_r.value()
-            c_size = min([self.phero_img_height//c_r, self.phero_img_width//c_c])
+            offsety = self.viewer.loc_embedded.sp_cal_offset_y.value()
+            offsetx = self.viewer.loc_embedded.sp_cal_offset_x.value()
+            border = self.viewer.loc_embedded.sp_cal_border_w.value()/self.phero_img_height*self.arena_width
+            s_ = np.array([self.phero_img_height//c_r, self.phero_img_width//c_c], dtype=np.uint8)
+            i_ = np.argmin(s_)
+            c_size = s_[i_]/self.phero_img_height*self.arena_width
+            if i_ == 0:
+                c_r -= 1
+            else:
+                c_c -= 1
             # grab image from camera
             img = self.loc_camera.get_gray_image()
-            self.loc_model.run_calibration(img, c_c, c_r, c_size/self.phero_img_width*self.arena_length)
-            if self.loc_model.calibrate_info:
+            if self.loc_model.run_calibration(img, c_c, c_r, c_size, offsetx, offsety, border):
                 # has found enougn corner, calibration finished
                 break
-            
 
+    def loc_load_calibration_data(self):
+        filename, _ = QFileDialog.getOpenFileName(self.viewer.loc_embedded, 
+                                                  'Load Calibration File', './')
+        if filename:
+            with np.load(filename) as X:
+                for i in ('mtx','dist','rvecs','tvecs'):
+                    self.loc_model.calibrate_info[i+1] = X[i]
+
+    def loc_save_as_imgae(self):
+        filename, _ = QFileDialog.getSaveFileName(self.viewer.phero, 
+                                            'save localization image',
+                                            './', 'image(*.png; *.jpg)')
+        if len(filename) != 0:
+            try:
+                cv2.imwrite(filename, self.loc_img_display)
+            except:
+                self.viewer.system_logger('Cannot write image to: ' + filename)
+        self.viewer.system_logger('Successfully write image to: ' + filename)
+        
     def serial_ports_scan(self):
         # get the valid serial ports as a list
         port_list = serial.tools.list_ports.comports()
@@ -1409,6 +1508,10 @@ class Controller:
             self.viewer.com.pb_open_port.setDisabled(False)
             self.viewer.com.pb_close_port.setDisabled(False)
             self.viewer.com.pb_scan_port.setDisabled(False)
+    
+    def serial_clear_data_cached(self):
+        self.serial_data_model.clear_data()
+        
     
     def exp_visualization_add_plot(self):
         name = self.viewer.main_menu.sender().objectName().split("_")[-1]
@@ -1631,7 +1734,6 @@ class Controller:
                 send_data = b'DWD'
                 # generate f_avoid and f_gather value
                 if np.random.uniform(0, 1) > 0.1:
-                    
                     temp_a_e = [(a, a.energy) for a in self.alive_preys]
                     temp_a_e = sorted(temp_a_e, key=lambda x:x[1])
                     sum_ = sum([a_[1] for a_ in temp_a_e])
