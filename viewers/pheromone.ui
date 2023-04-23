@@ -20,8 +20,8 @@ color: rgb(19, 126, 124);</string>
   <widget class="QPushButton" name="pb_refresh">
    <property name="geometry">
     <rect>
-     <x>470</x>
-     <y>280</y>
+     <x>468</x>
+     <y>236</y>
      <width>141</width>
      <height>31</height>
     </rect>
@@ -48,8 +48,8 @@ border-radius:10px;</string>
   <widget class="QPushButton" name="pb_show">
    <property name="geometry">
     <rect>
-     <x>470</x>
-     <y>340</y>
+     <x>466</x>
+     <y>286</y>
      <width>141</width>
      <height>31</height>
     </rect>
@@ -729,7 +729,7 @@ color: rgb(255, 0, 0)
     <rect>
      <x>450</x>
      <y>160</y>
-     <width>181</width>
+     <width>169</width>
      <height>16</height>
     </rect>
    </property>
@@ -740,7 +740,7 @@ color: rgb(255, 0, 0)
     </font>
    </property>
    <property name="text">
-    <string>| Frame Rate</string>
+    <string>| Pheromone Frame Rate</string>
    </property>
   </widget>
   <widget class="QSpinBox" name="spinBox_frame_rate">
@@ -1498,7 +1498,7 @@ border-radius:10px;</string>
      <x>520</x>
      <y>190</y>
      <width>31</width>
-     <height>16</height>
+     <height>21</height>
     </rect>
    </property>
    <property name="text">
@@ -1781,7 +1781,7 @@ border-radius:10px;</string>
    <property name="geometry">
     <rect>
      <x>470</x>
-     <y>400</y>
+     <y>360</y>
      <width>141</width>
      <height>31</height>
     </rect>
@@ -1819,7 +1819,7 @@ border-radius:10px;
    <property name="geometry">
     <rect>
      <x>470</x>
-     <y>440</y>
+     <y>400</y>
      <width>141</width>
      <height>31</height>
     </rect>
@@ -1857,7 +1857,7 @@ border-radius:10px;
    <property name="geometry">
     <rect>
      <x>470</x>
-     <y>480</y>
+     <y>440</y>
      <width>141</width>
      <height>31</height>
     </rect>
@@ -2215,6 +2215,34 @@ color: rgb(0, 0, 255);
    </property>
    <property name="displayIntegerBase">
     <number>10</number>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="pb_screen_shot">
+   <property name="geometry">
+    <rect>
+     <x>470</x>
+     <y>476</y>
+     <width>141</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>12</pointsize>
+     <weight>75</weight>
+     <bold>true</bold>
+    </font>
+   </property>
+   <property name="cursor">
+    <cursorShape>PointingHandCursor</cursorShape>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">border: 2px solid rgb(19, 126, 124);
+border-radius:10px;</string>
+   </property>
+   <property name="text">
+    <string>Screenshot</string>
    </property>
   </widget>
  </widget>

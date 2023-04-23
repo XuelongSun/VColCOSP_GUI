@@ -201,7 +201,7 @@ class PheromoneModel:
         self.evaporation_factor = np.zeros(3)
         self.injection_factor = np.zeros(3)
         self.radius_factor = np.ones(3).astype('int')
-        self.dt = 0.1
+        self.dt = 0.1 #s
         self.update_parameters()
         
         # pheromone
@@ -211,7 +211,6 @@ class PheromoneModel:
         self.pheromone_field = np.zeros([self.pixel_height, 
                                          self.pixel_width, 
                                          3])
-
     def update_parameters(self):
         # diffusion_kernel
         # self.diffusion_kernel = np.ones([3,3,3])
@@ -276,6 +275,9 @@ class PheromoneModel:
                 (v[1] >= 0) and (v[1] <= arena_width):
                 y = int(v[0]/arena_length*self.pixel_width)
                 x = int(v[1]/arena_width*self.pixel_height)
+                # offset by the height
+                y += int((self.pixel_width/2 - y)*0.023)
+                x += int((self.pixel_height/2 - x)*0.023)
                 if str(k) in channel.keys():
                     ind = self.color_channel[channel[str(k)]]
                 else:
@@ -405,7 +407,7 @@ class Pattern(object):
 
 class LocalizationModel(object):
     def __init__(self):
-        self.id_table_filename = 'ID.txt'
+        self.id_table_filename = 'ID1.txt'
         self.arena_size = (1.4,0.8)
         self.image_size = (1920, 1200)
         self.pattern_size = 0.04
@@ -494,7 +496,7 @@ class LocalizationModel(object):
             print('not enough corners found')
         return self.chessboard_corners[0]
     
-    def get_possible_posi(self,img):
+    def get_possible_posi(self, img):
         dim = (int(img.shape[1] /self.zoom_ratio), int(img.shape[0] /self.zoom_ratio))
         img = cv2.resize(img, dim, interpolation = cv2.INTER_AREA)
         img_gray = img
@@ -567,30 +569,66 @@ class LocalizationModel(object):
                     elli_ratio2 = outer_ellipse[1][0]/outer_ellipse[1][1]
                     if abs(outerArea - outer_area) < area_tolerence and abs(elli_ratio2 - outer_r_ratio) < ratio_tolerence:
                         offset = 2
-                        if abs(outer_ellipse[1][0]/outer_ellipse[1][1] -1) < 0.1:
+                        if abs(outer_ellipse[1][0]/outer_ellipse[1][1] - 1) < 0.1:
+                            # check the special pattern for calibration
                             r0 = (inner_ellipse[1][0] - offset)/(outer_ellipse[1][0] + offset)
                             r1 = (inner_ellipse[1][1] - offset)/(outer_ellipse[1][1] + offset)
+                            # m_sin = np.sin(np.deg2rad(inner_ellipse[-1])) + np.sin(np.deg2rad(outer_ellipse[-1]))
+                            # m_cos = np.cos(np.deg2rad(inner_ellipse[-1])) + np.cos(np.deg2rad(outer_ellipse[-1]))
+                            # angle_ = np.arctan2(m_sin, m_cos)
                         elif abs(inner_ellipse[2] - outer_ellipse[2]) <= 45 or abs(inner_ellipse[2] - outer_ellipse[2]) >= 135:
+                            # paralle aligned
                             r0 = (inner_ellipse[1][0] - offset)/(outer_ellipse[1][0] + offset)
                             r1 = (inner_ellipse[1][1] - offset)/(outer_ellipse[1][1] + offset)
+                            # m_sin = np.sin(np.deg2rad(inner_ellipse[-1])) + np.sin(np.deg2rad(outer_ellipse[-1]))
+                            # m_cos = np.cos(np.deg2rad(inner_ellipse[-1])) + np.cos(np.deg2rad(outer_ellipse[-1]))
+                            # angle_ = np.arctan2(m_sin, m_cos)
+                            # angle_ = np.deg2rad(inner_ellipse[-1])
+                            # angle_ = np.deg2rad(outer_ellipse[-1])
                         elif abs(abs(inner_ellipse[2] - outer_ellipse[2]) - 90) < 45:
+                            # vertically aligned
                             r0 = (inner_ellipse[1][1] - offset)/(outer_ellipse[1][0] + offset)
                             r1 = (inner_ellipse[1][0] - offset)/(outer_ellipse[1][1] + offset)
+                            # m_sin = np.sin(np.deg2rad(inner_ellipse[-1])) + np.sin(np.deg2rad(outer_ellipse[-1] - 90))
+                            # m_cos = np.cos(np.deg2rad(inner_ellipse[-1])) + np.cos(np.deg2rad(outer_ellipse[-1] - 90))
+                            # angle_ = np.arctan2(m_sin, m_cos)
+                            # angle_ = np.deg2rad(inner_ellipse[-1]) - np.pi/2
+                            # angle_ = np.deg2rad(outer_ellipse[-1])
                         # get id
                         for i, [id, ideal_r1, ideal_r0] in enumerate(self.id_table):
                             dis = (ideal_r0 - r0)**2 + (ideal_r1 - r1)**2
                             if dis < maxdis:
                                 maxdis = dis
                                 iid = id
-                        # get heading direction
-                        if inner_ellipse[0][1] - outer_ellipse[0][1] > 0:
-                            angle_ = np.deg2rad(outer_ellipse[-1])
-                        else:
-                            angle_ = np.deg2rad(outer_ellipse[-1] + 180)
-                        return np.array([iid, search_start_x + outer_ellipse[0][0], search_start_y + outer_ellipse[0][1]]).astype(int), angle_
+                                
+                        # get heading direction accoding to the bias
+                        # _x_diff = inner_ellipse[0][0] - outer_ellipse[0][0]
+                        # if _x_diff > 0:
+                        #     _offset_angle = np.arctan2(inner_ellipse[0][1] - outer_ellipse[0][1], _x_diff)
+                        # else:
+                        #     _offset_angle = np.arctan2(inner_ellipse[0][1] - outer_ellipse[0][1], _x_diff) + np.pi
+                        
+                        _offset_angle = np.arctan2(inner_ellipse[0][1] - outer_ellipse[0][1],
+                                                   inner_ellipse[0][0] - outer_ellipse[0][0]) + np.pi
+                        _offset_angle = (_offset_angle - np.pi) % (np.pi*2) + np.pi
+                        # angle_ = (angle_ - np.pi) % (np.pi*2) + np.pi
+                        
+                        # if abs(_offset_angle - angle_) < np.pi/2:
+                        #     angle_ = (np.pi/2 + angle_ - np.pi) % (np.pi*2) + np.pi
+                        # else:
+                        #     angle_ = (3*np.pi/2 + angle_ - np.pi) % (np.pi*2) + np.pi
+                        
+                        # if inner_ellipse[0][1] - outer_ellipse[0][1] > 0:
+                        #     # angle_ = (np.pi/2 - angle_ - np.pi) % (np.pi*2) + np.pi
+                        #     angle_ = (np.pi/2 + angle_ - np.pi) % (np.pi*2) + np.pi
+                        # else:
+                        #     # angle_ = (3*np.pi/2 - angle_ - np.pi) % (np.pi*2) + np.pi
+                        #     angle_ = (3*np.pi/2 + angle_ - np.pi) % (np.pi*2) + np.pi
+                       
+                        return np.array([iid, search_start_x + outer_ellipse[0][0], search_start_y + outer_ellipse[0][1]]).astype(int), _offset_angle
         return None, None
 
-    def trans_corrdi_p2w(self, p2w_M, PresM, p_pos):
+    def trans_corrdi_p2w(self, p2w_M, PresM, p_pos, heading):
         id = p_pos[0]
         p_pos[:-1] = p_pos[1:]
         p_pos[-1] = 1
@@ -601,6 +639,7 @@ class LocalizationModel(object):
         w_pos = w_pos/w_pos[2]
         w_pos[1:] = w_pos[:-1]
         w_pos[0] = int(id)
+        w_pos = np.append(w_pos, heading)
         return w_pos
 
     def search_pattern(self, img_ori):
@@ -612,7 +651,7 @@ class LocalizationModel(object):
             id_cam_pos, h = self.segment(img_ori, pos, i)
             if id_cam_pos is not None:
                 self.id_cam_pos.append(copy.deepcopy(id_cam_pos))
-                self.world_pos.append(self.trans_corrdi_p2w(self.p2w_M, self.PresM, id_cam_pos))
+                self.world_pos.append(self.trans_corrdi_p2w(self.p2w_M, self.PresM, id_cam_pos, h))
                 self.heading.append(h)
         return self.world_pos, self.id_cam_pos, self.heading
 
@@ -620,39 +659,55 @@ def distance(p1, p2):
     return np.sqrt((p1[0]-p2[0])**2 + (p1[1]-p2[1])**2)
 
 if __name__ == "__main__":
-    import time
-    import matplotlib.pyplot as plt
-    from matplotlib import animation
-    from scipy.stats import norm
-    phero_model = PheromoneModel()
-    phero_model.evaporation_factor = np.array([100000,100000,100000])
-    phero_model.diffusion_factor = np.array([0.2,0.1,0.2])
-    phero_model.d_kernel_s_factor = np.array([51,91,21])
-    phero_model.injection_factor = np.array([200.0,200.0,300.0])
-    phero_model.radius_factor = np.ones(3).astype('int')*10
-    phero_model.update_parameters()
-    data = []
-    while True:
-        img = phero_model.render_pheromone({0:[0.0,0.0],1:[0.2,0.4],2:[0.6,0.5]}, 
-                                           {'0':'red','1':'green','2':'blue'}, 
-                                           0.8, 0.6)
-        cv2.imshow('phero', cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
-        K = cv2.waitKey(10)                # 等待一个键盘的输入
-        if K == 27:                       # 若键入ESC后退出
-            cv2.destroyAllWindows()       # 销毁我们创建的所有窗口
-            break
-        time.sleep(0.1)
-        print(np.max(img))
-        data.append(img[int(phero_model.pixel_height/2),:,0])
+    
+    loc = LocalizationModel()
+    img_raw = cv2.imread("img.png")
+    img = cv2.cvtColor(img_raw, cv2.COLOR_BGR2GRAY)
+
+    loc_world_location, loc_image_location, loc_heading = loc.search_pattern(img)
+
+    for i, info in enumerate(loc_image_location):
+        # loc_img_display = cv2.circle(img_raw, (int(info[1]), int(info[2])), 20, (255, 0, 0), 4)
+        loc_img_display = cv2.arrowedLine(img_raw, (int(info[1]), int(info[2])),
+                                                    (int(info[1] + 100*np.cos(loc_heading[i])),
+                                                    int(info[2] + 100*np.sin(loc_heading[i]))),
+                                                    (255, 255, 255), 2)
+    fig, ax = plt.subplots(figsize=(20, 16))
+    ax.imshow(loc_img_display)
+    plt.show()
+    # import time
+    # import matplotlib.pyplot as plt
+    # from matplotlib import animation
+    # from scipy.stats import norm
+    # phero_model = PheromoneModel()
+    # phero_model.evaporation_factor = np.array([100000,100000,100000])
+    # phero_model.diffusion_factor = np.array([0.2,0.1,0.2])
+    # phero_model.d_kernel_s_factor = np.array([51,91,21])
+    # phero_model.injection_factor = np.array([200.0,200.0,300.0])
+    # phero_model.radius_factor = np.ones(3).astype('int')*10
+    # phero_model.update_parameters()
+    # data = []
+    # while True:
+    #     img = phero_model.render_pheromone({0:[0.0,0.0],1:[0.2,0.4],2:[0.6,0.5]}, 
+    #                                        {'0':'red','1':'green','2':'blue'}, 
+    #                                        0.8, 0.6)
+    #     cv2.imshow('phero', cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
+    #     K = cv2.waitKey(10)
+    #     if K == 27: 
+    #         cv2.destroyAllWindows()
+    #         break
+    #     time.sleep(0.1)
+    #     print(np.max(img))
+    #     data.append(img[int(phero_model.pixel_height/2),:,0])
     
     # data = img[int(phero_model.pixel_height/2),:,2]
     # plt.plot(data, color="red")
-    fig, ax = plt.subplots()
-    lines = []
-    for d in data:
-        l, = ax.plot(d, color="red")
-        lines.append([l])
-    ani = animation.ArtistAnimation(fig, lines, interval=20)
+    # fig, ax = plt.subplots()
+    # lines = []
+    # for d in data:
+    #     l, = ax.plot(d, color="red")
+    #     lines.append([l])
+    # ani = animation.ArtistAnimation(fig, lines, interval=20)
     
     
     # Gaussian curve fit
@@ -661,8 +716,8 @@ if __name__ == "__main__":
     # n, bins, patches = plt.hist(data, 30, alpha=0.2)
     # y = norm.pdf(bins, mu, sigma)
     # plt.plot(y)
-    plt.grid(True)
-    plt.show()
+    # plt.grid(True)
+    # plt.show()
 
 
 

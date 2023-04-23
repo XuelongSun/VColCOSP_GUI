@@ -269,7 +269,7 @@ color: rgb(255, 255, 127);
      <x>20</x>
      <y>240</y>
      <width>241</width>
-     <height>71</height>
+     <height>87</height>
     </rect>
    </property>
    <property name="styleSheet">
@@ -347,7 +347,7 @@ color: rgb(255, 255, 127);
       <x>120</x>
       <y>40</y>
       <width>41</width>
-      <height>21</height>
+      <height>35</height>
      </rect>
     </property>
     <property name="styleSheet">
@@ -361,8 +361,8 @@ border-radius:10px;</string>
    <widget class="QLabel" name="lv_pos_marker">
     <property name="geometry">
      <rect>
-      <x>180</x>
-      <y>10</y>
+      <x>174</x>
+      <y>18</y>
       <width>51</width>
       <height>51</height>
      </rect>
@@ -403,6 +403,46 @@ color: rgb(255, 255, 127);
     </property>
     <property name="value">
      <number>2</number>
+    </property>
+    <property name="displayIntegerBase">
+     <number>10</number>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_17">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>62</y>
+      <width>41</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Radius</string>
+    </property>
+   </widget>
+   <widget class="QSpinBox" name="sb_pos_marker_radius">
+    <property name="geometry">
+     <rect>
+      <x>66</x>
+      <y>62</y>
+      <width>41</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: 2px soild rgb(19, 126, 124);
+color: rgb(255, 255, 127);
+</string>
+    </property>
+    <property name="minimum">
+     <number>10</number>
+    </property>
+    <property name="maximum">
+     <number>200</number>
+    </property>
+    <property name="value">
+     <number>20</number>
     </property>
     <property name="displayIntegerBase">
      <number>10</number>
@@ -498,7 +538,7 @@ color:rgb(255, 255, 127)</string>
    <property name="geometry">
     <rect>
      <x>20</x>
-     <y>330</y>
+     <y>338</y>
      <width>241</width>
      <height>71</height>
     </rect>

@@ -95,9 +95,12 @@ class Controller:
         self.viewer.phero.pb_save_config.clicked.connect(self.phero_save_config)
         self.viewer.phero.pb_load_config.clicked.connect(self.phero_load_config)
         self.viewer.phero.pb_bg_load_img.clicked.connect(self.phero_load_bg_img)
+        self.viewer.phero.pb_screen_shot.clicked.connect(self.phero_screenshot)
+        
         self.phero_screen = LEDScreen()
         #* pheromone background settings
-        self.phero_background_image = None
+        self.phero_background_image = np.zeros([self.phero_model.pixel_height,
+                                                self.phero_model.pixel_width, 3]).astype(np.uint8)
         self.phero_bg_sc = (0,0,0) # black
         self.phero_bg_loaded_image = None
         self.phero_bg_drawn_image = None
@@ -109,7 +112,7 @@ class Controller:
                                     'pos_marker_style':'circle',
                                     'pos_marker_width':2,
                                     'pos_marker_color':(0,255,255), 
-                                    'pos_marker_radius':20,
+                                    'pos_marker_radius':30,
                                     'arena_border_color':(255,255,255),
                                     'arena_border_width':4,
                                     'arena_border_margin':2}
@@ -118,10 +121,13 @@ class Controller:
         self.phero_image = None
         self.phero_timer = QTimer()
         self.phero_timer.timeout.connect(self.phero_render)
+        self.phero_is_rendering = False
         self.phero_loaded_image_path = None
         self.phero_bg_loaded_image_path = None
         self.phero_loaded_video_path = None
         self.phero_video_capture = None
+        self.phero_field_display = np.zeros([self.phero_model.pixel_height,
+                                             self.phero_model.pixel_width, 3]).astype(np.uint8)
         self.phero_frame_num = 0
         self.arena_length = 0.8
         self.arena_width = 0.6
@@ -140,6 +146,7 @@ class Controller:
         self.loc_img_display = None
         self.loc_world_locations = {}
         self.loc_image_location = []
+        self.loc_world_location = []
         self.loc_heading = []
         self.viewer.loc_embedded.signal.connect(self.loc_event_handle)
         self.viewer.loc_embedded.pb_check_camera.clicked.connect(self.loc_check_camera)
@@ -307,12 +314,12 @@ class Controller:
 
     def vscene_show_screen(self):
         if (self.viewer.vscene.pb_show.text() == "Show") and (self.vscene_image is not None):
-            self.viewer.vscene.pb_show.setText("Hide")
             self.vscene_screen.show_label_img(self.vscene_screen_start_pos[0],
-                                           self.vscene_screen_start_pos[1],
-                                           self.vscene_img_width,
-                                           self.vscene_img_height,
-                                           self.vscene_image)
+                                              self.vscene_screen_start_pos[1],
+                                              self.vscene_img_width,
+                                              self.vscene_img_height,
+                                              self.vscene_image)
+            self.viewer.vscene.pb_show.setText("Hide")
             self.vscene_screen.show()
         elif self.viewer.vscene.pb_show.text() == "Hide":
             self.viewer.vscene.pb_show.setText("Show")
@@ -373,7 +380,6 @@ class Controller:
             else:
                 #TODO: other modes
                 self.vscene_image = None
-                
         if (self.viewer.vscene.pb_show.text() == "Hide") and (self.vscene_image is not None):
             self.vscene_screen.show_label_img(self.vscene_screen_start_pos[0],
                                            self.vscene_screen_start_pos[1],
@@ -536,6 +542,9 @@ class Controller:
             self.viewer.main_menu.pb_phero.setDisabled(False)
             self.viewer.phero.hide()
             self.phero_screen.hide()
+            # kill pheromone rendering thread
+            if self.phero_is_rendering:
+                self.phero_is_rendering = False
     
     def phero_bg_setting_message_handle(self,message):
         if message == "OK":
@@ -543,6 +552,7 @@ class Controller:
             self.phero_bg_info_paras['pos_text_color'] = self.viewer.phero_bg_setting.pos_text_color
             self.phero_bg_info_paras['pos_line_color'] = self.viewer.phero_bg_setting.pos_line_color
             self.phero_bg_info_paras['pos_marker_color'] = self.viewer.phero_bg_setting.pos_marker_color
+            self.phero_bg_info_paras['pos_marker_radius'] = self.viewer.phero_bg_setting.sb_pos_marker_radius.value()
             self.phero_bg_info_paras['arena_border_color'] = self.viewer.phero_bg_setting.arena_border_color
             self.phero_bg_info_paras['pos_text_width'] = self.viewer.phero_bg_setting.sb_pos_text_width.value()
             self.phero_bg_info_paras['pos_line_width'] = self.viewer.phero_bg_setting.sb_pos_line_width.value()
@@ -561,16 +571,21 @@ class Controller:
         self.phero_led_unit_row = self.viewer.phero.spinBox_sled_r.value()
         self.phero_led_unit_column = self.viewer.phero.spinBox_sled_c.value()
         self.phero_screen_start_pos = [int(self.viewer.phero.spinBox_sp_x.value()),
-                                        int(self.viewer.phero.spinBox_sp_y.value())]
+                                       int(self.viewer.phero.spinBox_sp_y.value())]
         self.phero_img_width = int(self.phero_led_unit_width * self.phero_led_unit_row)
         self.phero_img_height = int(self.phero_led_unit_height * self.phero_led_unit_column)
-        
+        self.phero_screen.set_window_position(self.phero_screen_start_pos[0],
+                                              self.phero_screen_start_pos[1],
+                                              self.phero_img_width,
+                                              self.phero_img_height,)
         self.phero_mode = self.viewer.phero.comboBox_led_mode.currentText()
         
         self.phero_model.dt = 1.0/self.viewer.phero.spinBox_frame_rate.value()
         
         self.arena_length = self.viewer.phero.spinBox_arena_l.value()
         self.arena_width = self.viewer.phero.spinBox_arena_w.value()
+        
+        self.phero_image = None
         
         if self.phero_mode == "Static":
             #* static: just show the loaded picture
@@ -685,13 +700,31 @@ class Controller:
             border = self.viewer.loc_embedded.sp_cal_border_w.value()
             self.phero_image = self.loc_model.draw_chess_board((self.phero_img_height, self.phero_img_width),
                                                                c_c, c_r, chess_size, offsetx, offsety, border)
-
+        
+        # if no pheromone image defined, generate onr
+        if self.phero_image is None:
+            self.phero_image = np.zeros([self.phero_img_height, self.phero_img_width, 3], dtype=np.uint8)
+            str_para = {'font':cv2.FONT_HERSHEY_SIMPLEX,
+                        'font_scale':self.phero_img_width/960,
+                        'thickness':1,
+                        'text':"Welcome to VColCOSP, Happy Swarming! ^V^ "}
+            str_size1 = cv2.getTextSize(str_para['text'], str_para['font'], str_para['font_scale'], str_para['thickness'])[0]
+            self.phero_image = cv2.putText(self.phero_image, str_para['text'],
+                                           ((self.phero_img_width - str_size1[0])//2, (self.phero_img_height - str_size1[1])//2),
+                                           str_para['font'],
+                                           str_para['font_scale'],
+                                           (255, 255, 0),
+                                           str_para['thickness'])
+            str_para['text'] = "Press [Start] to start rendering dynamically or select static mode..."
+            str_para['font_scale'] = self.phero_img_width/1920
+            str_size2 = cv2.getTextSize(str_para['text'], str_para['font'], str_para['font_scale'], str_para['thickness'])[0]
+            self.phero_image = cv2.putText(self.phero_image, str_para['text'],
+                                           ((self.phero_img_width - str_size2[0])//2, (self.phero_img_height + str_size2[1])//2 + str_size1[1]),
+                                           str_para['font'], str_para['font_scale'],
+                                           (255, 255, 255), str_para['thickness'])
+            
         if (self.viewer.phero.pb_show.text() == "Hide") and (self.phero_image is not None):
-            self.phero_screen.show_label_img(self.phero_screen_start_pos[0],
-                                            self.phero_screen_start_pos[1],
-                                            self.phero_img_width,
-                                            self.phero_img_height,
-                                            self.phero_image)
+            self.phero_screen.show_label_img(self.phero_image)
         
     def phero_load_picture(self):
         self.phero_loaded_image_path = self.load_picture(self.viewer.phero)
@@ -710,83 +743,27 @@ class Controller:
         self.phero_bg_loaded_image_path = self.load_picture(self.viewer.phero)
 
     def phero_show_pheromone(self):
-        self.phero_refresh_parameter()
-        if (self.viewer.phero.pb_show.text() == "Show") and (self.phero_image is not None):
-            self.phero_screen.show_label_img(self.phero_screen_start_pos[0],
-                                             self.phero_screen_start_pos[1], 
-                                             self.phero_img_width,
-                                             self.phero_img_height,
-                                             self.phero_image)
+        if self.phero_image is None:
+            self.phero_refresh_parameter()
+        if self.viewer.phero.pb_show.text() == "Show":
+            self.phero_screen.show_label_img(self.phero_image)
             self.phero_screen.show()
             self.viewer.phero.pb_show.setText("Hide")
         else:
             self.phero_screen.hide()
             self.viewer.phero.pb_show.setText("Show")
     
-    def phero_render(self):
-        self.phero_mode = self.viewer.phero.comboBox_led_mode.currentText()
-        if self.phero_mode == "Static":
-            #* static: just show the loaded picture
-            if self.phero_image is None:
-                if self.phero_loaded_image_path is None:
-                    QMessageBox.warning(self.viewer.phero,
-                                        'Error',
-                                        'Please load image first.')
-                    self.phero_timer.stop()
-                else:
-                    image = cv2.imread(self.vscene_loaded_image_path)
-                    if image is None:
-                        QMessageBox.warning(self.viewer.vscene, 
-                                            'Error', 
-                                            'Cannot load image:{}'.format(self.vscene_loaded_image_path))
-                        self.phero_timer.stop()
-                    else:
-                        gray = self.viewer.phero.cb_img_gray.isChecked()
-                        self.phero_image = self.phero_model.transform_loaded_image(image,
-                                                                                   self.phero_img_width,
-                                                                                   self.phero_img_height,
-                                                                                   gray=gray)
-        elif self.phero_mode == "Video":
-            #* video: play the video
-            if self.phero_video_capture is None:
-                QMessageBox.warning(self.viewer.phero,
-                                    'Error',
-                                    'Please load video first.')
-                self.phero_timer.stop()
-            else:
-                self.phero_video_capture.set(1, self.phero_frame_num)
-                ret, frame = self.phero_video_capture.read()
-                if ret:
-                    gray = self.viewer.phero.cb_video_gray.isChecked()
-                    self.phero_image = self.phero_model.transform_loaded_image(frame,
-                                                                               self.phero_img_width,
-                                                                               self.phero_img_height,
-                                                                               gray=gray)
-                    if self.viewer.phero.cb_video_preview.isChecked():
-                        self.viewer.phero.show_label_image(self.viewer.phero.label_video, 
-                                                           self.phero_image)
-                    p, f = os.path.split(self.phero_loaded_video_path)
-                    self.viewer.phero.label_video_filename.setText("{}: {}/{}".format(f, 
-                                                                                      self.phero_frame_num, 
-                                                                                      self.phero_video_t_frame))
-        
-        elif self.phero_mode == "Dy-Localization":
-            # * dynamically interact with the localization system
-            if self.loc_is_running:
-                # the latest frame data
-                # pos = self.loc_data_thread.loc_data_model.get_last_pos()
-                info = {}
-                for k, v in self.loc_world_locations.items():
-                    # x,y,h
-                    info.update({k:[v[-1][0],v[-1][1],v[-1][2]]})
-                # print(pos)
-                # if got the positions of the robots
-                if len(self.loc_world_locations) > 0:
+    def phero_compute_pheromone(self):
+        while self.phero_is_rendering:
+            if self.phero_mode == "Dy-Localization":
+                if self.loc_is_running:
+                    info = {}
+                    for v in self.loc_world_location:
+                        # id,x,y,h
+                        info.update({int(v[0]):[v[1],v[2],v[3]]})
                     if self.viewer.phero.radioButton_info.isChecked():
-                        # use information
                         image = np.zeros([self.phero_model.pixel_height,
-                                          self.phero_model.pixel_width, 3],
-                                         dtype=np.uint8)
+                                self.phero_model.pixel_width, 3], dtype=np.uint8)
                         # arena border
                         if self.viewer.phero_bg_setting.groupBox_arena_border.isChecked():
                             m = self.phero_bg_info_paras['arena_border_margin']
@@ -802,14 +779,13 @@ class Controller:
                                 (v[1]>=0) and (v[1] <= self.arena_width):
                                 y = int(v[0]/self.arena_length*self.phero_model.pixel_width)
                                 x = int(v[1]/self.arena_width*self.phero_model.pixel_height)
-                            # if (v[0] >= 0) and (v[0] <= self.phero_model.pixel_width) and \
-                            #     (v[1]>= 0) and (v[1] <= self.phero_model.pixel_height):
-                            #     y = int(v[0])
-                            #     x = int(v[1])
+                                # offset by the height
+                                y += int((self.phero_model.pixel_width/2 - y)*0.023)
+                                x += int((self.phero_model.pixel_height/2 - x)*0.023)
                                 # pos-text
                                 if self.viewer.phero_bg_setting.groupBox_pos_text.isChecked():
                                     image = cv2.putText(image, 
-                                                        "{:d}:({:.2f},{:.2f})".format(k,v[0],v[1]),
+                                                        "{:d}:({:.2f},{:.2f},{:.2f})".format(k,v[0],v[1],np.rad2deg(v[2])),
                                                         (y+self.phero_bg_info_paras['pos_marker_radius']+2,
                                                         x+self.phero_bg_info_paras['pos_marker_radius']+2),
                                                         font,0.5,
@@ -825,17 +801,17 @@ class Controller:
                                 # marker
                                 if self.viewer.phero_bg_setting.groupBox_pos_marker.isChecked():
                                     image = cv2.circle(image, (y,x),
-                                                        self.phero_bg_info_paras['pos_marker_radius'],
+                                                        int(self.phero_bg_info_paras['pos_marker_radius']),
                                                         self.phero_bg_info_paras['pos_marker_color'],
                                                         self.phero_bg_info_paras['pos_marker_width'])
                                     image = cv2.arrowedLine(image, (y, x),
-                                                            (int(y + 26*np.sin(v[2])),
-                                                             int(x + 26*np.cos(v[2]))),
+                                                            (int(y + (self.phero_bg_info_paras['pos_marker_radius']+10)*np.cos(v[2])),
+                                                            int(x + (self.phero_bg_info_paras['pos_marker_radius']+10)*np.sin(v[2]))),
                                                             self.phero_bg_info_paras['pos_marker_color'],
                                                             4)
                             else:
                                 self.viewer.system_logger('Invalid position value from LOCALIZATION:({},{}) of ID:({})'.format(v[0],v[1],k),
-                                                          log_type='warning')                    
+                                                        log_type='warning')                    
                         self.phero_background_image = image.copy()
                     elif self.viewer.phero.radioButton_image.isChecked():
                         # use background image
@@ -867,47 +843,112 @@ class Controller:
                         phero_image = np.zeros([self.phero_model.pixel_height, 
                                                 self.phero_model.pixel_width, 3]).astype(np.uint8)
                     else:
-                        try:
-                            phero_image = self.phero_model.render_pheromone(info, self.phero_channel,
-                                                                        self.arena_length, self.arena_width)
-                        except:
-                            QMessageBox.warning(self.viewer.phero, 'error', 'Please try to refresh parameters.')
-                            self.phero_stop_render()
+                        # phero_image = self.phero_field_display.copy()
+                        phero_image = self.phero_model.render_pheromone(info, self.phero_channel, self.arena_length, self.arena_width)
+                    #     try:
+                    #         phero_image = self.phero_model.render_pheromone(info, self.phero_channel,
+                    #                                                     self.arena_length, self.arena_width)
+                    #     except:
+                    #         QMessageBox.warning(self.viewer.phero, 'error', 'Please try to refresh parameters.')
+                    #         self.phero_stop_render()
                     if self.phero_background_image is None:
                         QMessageBox.warning(self.viewer.phero,'Error','No valide background image!')
                         self.phero_timer.stop()
+                        return
                     else:
                         # merge the background and pheromone, pheromone z-index is lower
                         img_temp = (phero_image/np.max(phero_image)*255).astype(np.uint8)
                         mask = cv2.bitwise_and(cv2.cvtColor(img_temp,cv2.COLOR_RGB2GRAY),
-                                               cv2.cvtColor(self.phero_background_image,cv2.COLOR_RGB2GRAY))
+                                            cv2.cvtColor(self.phero_background_image,cv2.COLOR_RGB2GRAY))
                         if np.sum(mask) > 0:
-                           phero_image[np.where(mask>0)] = self.phero_background_image[np.where(mask>0)]
-                        phero_image[np.where(mask<=0)] = self.phero_background_image[np.where(mask<=0)] + phero_image[np.where(mask<=0)]
+                            phero_image[np.where(mask>0)] = self.phero_background_image[np.where(mask>0)]
+                            phero_image[np.where(mask<=0)] = self.phero_background_image[np.where(mask<=0)] + phero_image[np.where(mask<=0)]
                         self.phero_image = phero_image.copy()
-            else:
+                    # time.sleep(1/self.phero_frame_rate)
+                else:
+                    self.phero_stop_render()
+                    break
+
+            elif self.phero_mode == "Video":
+                 if self.phero_video_capture is None:
+                     QMessageBox.warning(self.viewer.phero,
+                                         'Error',
+                                         'Please load video first.')
+                     self.phero_timer.stop()
+                     self.phero_is_rendering = False
+                     break
+                 else:
+                    self.phero_video_capture.set(1, self.phero_frame_num)
+                    ret, frame = self.phero_video_capture.read()
+                    if ret:
+                        gray = self.viewer.phero.cb_video_gray.isChecked()
+                        self.phero_image = self.phero_model.transform_loaded_image(frame,
+                                                                                self.phero_img_width,
+                                                                                self.phero_img_height,
+                                                                                gray=gray)
+                    time.sleep(1/self.phero_frame_rate)
+    
+    def phero_render(self):
+        # if self.phero_mode == "Static":
+        #     #* static: just show the loaded picture
+        #     if self.phero_image is None:
+        #         if self.phero_loaded_image_path is None:
+        #             QMessageBox.warning(self.viewer.phero,
+        #                                 'Error',
+        #                                 'Please load image first.')
+        #             self.phero_timer.stop()
+        #         else:
+        #             image = cv2.imread(self.vscene_loaded_image_path)
+        #             if image is None:
+        #                 QMessageBox.warning(self.viewer.vscene, 
+        #                                     'Error', 
+        #                                     'Cannot load image:{}'.format(self.vscene_loaded_image_path))
+        #                 self.phero_timer.stop()
+        #             else:
+        #                 gray = self.viewer.phero.cb_img_gray.isChecked()
+        #                 self.phero_image = self.phero_model.transform_loaded_image(image,
+        #                                                                            self.phero_img_width,
+        #                                                                            self.phero_img_height,
+        #                                                                            gray=gray)
+        # elif self.phero_mode == 'Loc-Calibration':
+        # # for localization camera calibration
+        #     c_w = self.viewer.loc_embedded.sp_chessboard_w.value()
+        #     c_h = self.viewer.loc_embedded.sp_chessboard_h.value()
+        #     self.phero_image = self.loc_model.draw_chess_board(c_w, c_h, int(self.phero_img_height/20))
+
+        if self.phero_mode == "Video":
+            #* video: play the video
+            if self.viewer.phero.cb_video_preview.isChecked():
+                self.viewer.phero.show_label_image(self.viewer.phero.label_video,
+                                                    self.phero_image)
+            p, f = os.path.split(self.phero_loaded_video_path)
+            self.viewer.phero.label_video_filename.setText("{}: {}/{}".format(f, 
+                                                                            self.phero_frame_num, 
+                                                                            self.phero_video_t_frame))
+        elif self.phero_mode == "Dy-Localization":
+            # * dynamically interact with the localization system
+            if not self.loc_is_running:
+                # the latest frame data
+                # pos = self.loc_data_thread.loc_data_model.get_last_pos()
                 QMessageBox.warning(self.viewer.phero,'Error','Please read the localization data first!')
                 self.phero_timer.stop()
-                    
+
         elif self.phero_mode == "Dy-Customized":
             #* user defined
             pass
-        elif self.phero_mode == 'Loc-Calibration':
-            # for localization camera calibration
-            c_w = self.viewer.loc_embedded.sp_chessboard_w.value()
-            c_h = self.viewer.loc_embedded.sp_chessboard_h.value()
-            self.phero_image = self.loc_model.draw_chess_board(c_w, c_h, int(self.phero_img_height/20))
+
         self.phero_frame_num += 1
+        
         if (self.viewer.phero.pb_show.text() == "Hide") and (self.phero_image is not None):
-            self.phero_screen.show_label_img(self.phero_screen_start_pos[0],
-                                             self.phero_screen_start_pos[1],
-                                             self.phero_img_width,
-                                             self.phero_img_height,
-                                             self.phero_image)
+            self.phero_screen.show_label_img(self.phero_image)
         
     def phero_start_render(self):
         self.phero_frame_rate = self.viewer.phero.spinBox_frame_rate.value()
         self.phero_model.dt = 1.0/self.phero_frame_rate
+        self.phero_is_rendering = True
+        self.phero_render_start_t = time.time()
+        self.phero_render_thread = threading.Thread(target=self.phero_compute_pheromone)
+        self.phero_render_thread.start()
         self.phero_timer.start(int(1000/self.phero_frame_rate))
         self.viewer.phero.pb_start.setDisabled(True)
         self.viewer.phero.pb_pause.setDisabled(False)
@@ -916,6 +957,7 @@ class Controller:
     def phero_stop_render(self):
         self.phero_timer.stop()
         self.phero_frame_num = 0
+        self.phero_is_rendering = False
         self.viewer.phero.pb_start.setDisabled(False)
         self.viewer.phero.pb_pause.setDisabled(True)
         self.viewer.phero.pb_stop.setDisabled(True)
@@ -924,7 +966,7 @@ class Controller:
         self.phero_timer.stop()
         self.viewer.phero.pb_start.setDisabled(False)
         self.viewer.phero.pb_pause.setDisabled(True)
-        self.viewer.phero.pb_sto.setDisabled(False)
+        self.viewer.phero.pb_stop.setDisabled(False)
     
     def _phero_save_config(self, config=None):
         if config is None:
@@ -1000,7 +1042,19 @@ class Controller:
             Config.read(filename)
             # set values
             self._set_phero_config(Config)
-
+    
+    def phero_screenshot(self):
+        filename, _ = QFileDialog.getSaveFileName(self.viewer.phero, 
+                                                 'save pheromone screenshot',
+                                                 './', 'picture (*.png;*jpg;)')
+        if len(filename) != 0:
+            try:
+                cv2.imwrite(filename, self.phero_image)
+            except:
+                QMessageBox.warning(self.viewer.phero, "Error", "Cannot save screenshot as file:" + filename)
+                self.viewer.system_logger("Cannot save screenshot as file:" + filename)
+            self.viewer.system_logger("Successfully save screenshot as file:" + filename)
+    
     def loc_show_window(self):
         self.viewer.main_menu.pb_loc.setDisabled(True)
         self.viewer.loc_embedded.show()
@@ -1037,28 +1091,34 @@ class Controller:
                 if self.loc_start_camera_capture() == 0:
                     self.loc_camera_opened = True
                     self.viewer.loc_embedded.pb_start_capture.setText('Stop Capture')
+                    return 0
+                else:
+                    return -1
             else:
                 print('Already in capturing')
+                return -1
         elif text == "Stop Capture":
             if self.loc_camera_opened:
                 # closing camera
                 self.loc_close_camera()
                 self.viewer.loc_embedded.pb_start_capture.setText('Start Capture')
+                return 0
     
     def loc_close_camera(self):
-        # if self.loc_camera.closeCamera(self.loc_camera) == 0:
-        #     self.viewer.system_logger('camera closed')
         if self.loc_camera.stop_grab_img() == 0:
             self.viewer.system_logger('camera stopped grabing images')
+        # if self.loc_camera.closeCamera(self.loc_camera) == 0:
+        #     self.viewer.system_logger('camera closed')
         self.loc_camera_opened = False
         
     def loc_start(self):
         text = self.viewer.loc_embedded.sender().text()
         if text == 'Start':
-            if not self.loc_camera_opened:
-                self.loc_open_camera()
             if self.loc_camera_is_calibrating:
                 self.loc_camera_is_calibrating = False
+            if not self.loc_camera_opened:
+                if not self.loc_open_camera() == 0:
+                    return
             self.loc_is_running = True
             self.loc_thread_computing = threading.Thread(target=self.loc_computing)
             self.loc_thread_computing.start()
@@ -1080,8 +1140,8 @@ class Controller:
             # grab image from camera
             self.loc_current_image = self.loc_camera.get_gray_image()
             # calculate locations
-            w_loc, self.loc_image_location, self.loc_heading = self.loc_model.search_pattern(self.loc_current_image)
-            for info, h in zip(w_loc, self.loc_heading):
+            self.loc_world_location, self.loc_image_location, self.loc_heading = self.loc_model.search_pattern(self.loc_current_image)
+            for info, h in zip(self.loc_world_location, self.loc_heading):
                 # world location
                 if info[0] in self.loc_world_locations.keys():
                     self.loc_world_locations[int(info[0])].append([info[1], info[2], h])
@@ -1099,12 +1159,12 @@ class Controller:
                 if self.viewer.loc_embedded.cb_show_marker.isChecked():
                     self.loc_img_display = cv2.circle(self.loc_img_display, (info[1], info[2]), 20, (255, 0, 0), 4)
                     self.loc_img_display = cv2.arrowedLine(self.loc_img_display, (info[1], info[2]),
-                                                (int(info[1] + 26*np.sin(h)),
-                                                int(info[2] + 26*np.cos(h))),
+                                                (int(info[1] + 26*np.cos(h)),
+                                                int(info[2] + 26*np.sin(h))),
                                                 (255, 255, 0), 4)
                 if self.viewer.loc_embedded.cb_show_location.isChecked():
                     self.loc_img_display = cv2.putText(self.loc_img_display,
-                                            '[{:3d}, {:3d}, {:.1f}]'.format(info[1], info[2], np.rad2deg(h-np.pi/2)),
+                                            '[{:3d}, {:3d}, {:.1f}]'.format(info[1], info[2], np.rad2deg(h)),
                                             (info[1], info[2]+40),
                                             cv2.FONT_HERSHEY_COMPLEX_SMALL, 3, (0, 255, 255), 3)
                 # if self.viewer.loc_embedded.cb_show_trajectory.isChecked():
@@ -1164,11 +1224,7 @@ class Controller:
                                          (int(p[0]/self.arena_width*self.phero_img_height),
                                           int(p[1]/self.arena_length*self.phero_img_width)),
                                          30, (0,255,0), 4)
-                    self.phero_screen.show_label_img(self.phero_screen_start_pos[0],
-                                                     self.phero_screen_start_pos[1], 
-                                                     self.phero_img_width,
-                                                     self.phero_img_height,
-                                                     img)
+                    self.phero_screen.show_label_img(img)
             else:
                 c_col = self.viewer.loc_embedded.sp_chessboard_c.value()
                 c_row = self.viewer.loc_embedded.sp_chessboard_r.value()
@@ -1208,11 +1264,7 @@ class Controller:
                                 (int(p[0]/self.arena_width*self.phero_img_height),
                                 int(p[1]/self.arena_length*self.phero_img_width)),
                                 30, (0,255,0), 4)
-        self.phero_screen.show_label_img(self.phero_screen_start_pos[0],
-                                            self.phero_screen_start_pos[1], 
-                                            self.phero_img_width,
-                                            self.phero_img_height,
-                                            img)
+        self.phero_screen.show_label_img(img)
         self.viewer.loc_embedded.update_localization_display(self.loc_img_display)
     
     def loc_camera_setting(self):
@@ -1226,13 +1278,14 @@ class Controller:
         image = np.ones((2100, 2970, 3), np.uint8) * 255
         ID_table = open("ID.txt",'w+')
         pattern_pos = [0,0]
-        pattern_size = 400
+        pattern_size = 440
         offset = 100
         v = self.viewer.loc_embedded.sp_pattern_num_r.value()
         h = self.viewer.loc_embedded.sp_pattern_num_c.value()
         vi=100/v
         hj=140/h
         id = 0
+        bias = 10
         for j in range(v):
             for i in range(h):
                 pattern_pos = [int(offset + pattern_size/2 + pattern_size*i), int(offset + pattern_size/2+ + pattern_size*j) ]
@@ -1242,25 +1295,26 @@ class Controller:
                 cv2.ellipse(image, pattern_pos, (140, 170), 0, 0, 360, (255,255,255), -1)
                 r_v = int(30+vi*i)
                 r_h = int(40+hj*j)
-                cv2.ellipse(image, pattern_pos, (r_v, r_h), 0, 0, 360, (0,0,0), -1)
+                cv2.ellipse(image, (pattern_pos[0],pattern_pos[1]+bias), (r_v, r_h), 0, 0, 360, (0,0,0), -1)
+                # cv2.ellipse(image, pattern_pos, (r_v, r_h), 0, 0, 360, (0,0,0), -1)
                 r0 = r_v/150
                 r1 = r_h/180
                 
-                cv2.putText(image, str(id), pattern_pos, cv2.FONT_HERSHEY_SCRIPT_SIMPLEX, 1, (255,255,255), 4)
+                cv2.putText(image, str(id), pattern_pos, cv2.FONT_HERSHEY_SCRIPT_SIMPLEX, 0.5, (255,255,255), 1)
                 ID_table.write(str(id)+" "+str(round(r1,3))+' '+str(round(r0,3))+'\n')
                 id += 1
         try:
-            cv2.imwrite("pattern.png",image)
+            cv2.imwrite("pattern1.png", image)
             cv2.imshow('Pattern {:d} x {:d}'.format(v, h), cv2.resize(image, (2100/4, 2970/4)))
             ID_table.close()
         except:
             self.viewer.system_logger("Cannot Write File [ID.txt] or [Pattern.png]",
                                       log_type='err', out='sys')
-            self.viewer.show_message_box('Error', 'Cannot Write File [ID.txt] or [Pattern.png]')
+            self.viewer.show_message_box('Cannot Write File [ID.txt] or [Pattern.png]', 'err')
             return
         self.viewer.system_logger("Write File [ID.txt] or [Pattern.png] successfully",
                                       log_type='err', out='sys')
-        self.viewer.show_message_box('Error', 'Success: ID info was write to [ID.txt], pattern saved as [Pattern.png]')
+        self.viewer.show_message_box('Success: ID info was write to [ID.txt], pattern saved as [Pattern.png]','err')
     
     def loc_start_camera_calibration(self):
         text = self.viewer.loc_embedded.sender().text()
@@ -1268,14 +1322,15 @@ class Controller:
             if self.loc_is_running:
                 self.loc_is_running = False
             if not self.loc_camera_opened:
-                if self.loc_start_camera_capture() == 0:
-                    self.loc_camera_opened = True
+                if not self.loc_open_camera() == 0:
+                    return
             self.loc_camera_is_calibrating = True
             self.loc_thread_calibration = threading.Thread(target=self.loc_calibrate_camera)
             self.loc_thread_calibration.start()
             # display
             self.loc_refresh_timer.start(100)
             self.viewer.loc_embedded.pb_start_calibration.setText("Stop")
+
         elif text == 'Stop':
             self.loc_camera_is_calibrating = False
             self.viewer.loc_embedded.pb_start_calibration.setText("Run")

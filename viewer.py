@@ -130,10 +130,7 @@ class LEDScreen(QMainWindow):
         # self.setWindowFlags(Qt.WindowStaysOnTopHint)
         # self.label.setScaledContents(True)
 
-    def show_label_img(self, x, y, width, height, img):
-        # set the window size
-        self.setGeometry(QRect(x, y, width, height))
-        self.label.setGeometry(QRect(0, 0, width, height))
+    def show_label_img(self, img):
         # color
         if len(img.shape) == 3:
             _image = QImage(img[:], img.shape[1], img.shape[0], img.shape[1] * 3, QImage.Format_RGB888)
@@ -145,6 +142,11 @@ class LEDScreen(QMainWindow):
             # image = QPixmap(_image).scaled(self.label.width(), self.label.height())
             image = QPixmap(_image)
         self.label.setPixmap(image)
+    
+    def set_window_position(self, x, y, width, height,):
+        # set the window size
+        self.setGeometry(QRect(x, y, width, height))
+        self.label.setGeometry(QRect(0, 0, width, height))
 
 
 class PheroBgInfoSetting(QMainWindow, Ui_phero_bg_info_setting):
@@ -232,6 +234,7 @@ class PheroBgInfoSetting(QMainWindow, Ui_phero_bg_info_setting):
                        dtype=np.uint8)
         width = int(self.sb_pos_marker_width.value())
         img = cv2.circle(img, (50,50), 20, self.pos_marker_color, width)
+        img = cv2.arrowedLine(img, (50,50), (50, 60), self.pos_marker_color, width)
         _image = QImage(img[:], img.shape[1], img.shape[0], 
                         img.shape[1] * 3, QImage.Format_RGB888)
         image = QPixmap(_image)
