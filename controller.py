@@ -179,6 +179,7 @@ class Controller:
         self.viewer.com.pb_raw_send.clicked.connect(self.serial_send_raw_data)
         self.viewer.com.pb_raw_clear.clicked.connect(lambda:self.viewer.com.text_edit_recv_raw.clear())
         self.viewer.com.pb_send_ch_data.clicked.connect(self.serial_port_send_parameter)
+        self.viewer.com.pb_clear_cache.clicked.connect(self.serial_clear_data_cached)
         
         # visualization plots
         self.viewer.main_menu.pb_add_plot.clicked.connect(self.exp_visualization_add_plot)
@@ -774,12 +775,13 @@ class Controller:
             if self.loc_is_running:
                 # the latest frame data
                 # pos = self.loc_data_thread.loc_data_model.get_last_pos()
-                pos = {}
-                for v in self.loc_image_location:
-                    pos.update({v[0]:[v[1],v[2]]})
-                print(pos)
+                info = {}
+                for k, v in self.loc_world_locations.items():
+                    # x,y,h
+                    info.update({k:[v[-1][0],v[-1][1],v[-1][2]]})
+                # print(pos)
                 # if got the positions of the robots
-                if self.loc_image_location:
+                if len(self.loc_world_locations) > 0:
                     if self.viewer.phero.radioButton_info.isChecked():
                         # use information
                         image = np.zeros([self.phero_model.pixel_height,
@@ -795,19 +797,19 @@ class Controller:
                                                     self.phero_bg_info_paras['arena_border_color'],
                                                     self.phero_bg_info_paras['arena_border_width'])
                         font = cv2.FONT_HERSHEY_SIMPLEX
-                        for k, v in pos.items():
-                            # if (v[0] >= 0) and (v[0] <= self.arena_length) and \
-                            #     (v[1]>=0) and (v[1] <= self.arena_width):
-                            #     y = int(v[0]/self.arena_length*self.phero_model.pixel_width)
-                            #     x = int(v[1]/self.arena_width*self.phero_model.pixel_height)
-                            if (v[0] >= 0) and (v[0] <= self.phero_model.pixel_width) and \
-                                (v[1]>= 0) and (v[1] <= self.phero_model.pixel_height):
-                                y = int(v[0])
-                                x = int(v[1])
+                        for k, v in info.items():
+                            if (v[0] >= 0) and (v[0] <= self.arena_length) and \
+                                (v[1]>=0) and (v[1] <= self.arena_width):
+                                y = int(v[0]/self.arena_length*self.phero_model.pixel_width)
+                                x = int(v[1]/self.arena_width*self.phero_model.pixel_height)
+                            # if (v[0] >= 0) and (v[0] <= self.phero_model.pixel_width) and \
+                            #     (v[1]>= 0) and (v[1] <= self.phero_model.pixel_height):
+                            #     y = int(v[0])
+                            #     x = int(v[1])
                                 # pos-text
                                 if self.viewer.phero_bg_setting.groupBox_pos_text.isChecked():
                                     image = cv2.putText(image, 
-                                                        "{}:({},{})".format(k,v[0],v[1]),
+                                                        "{:d}:({:.2f},{:.2f})".format(k,v[0],v[1]),
                                                         (y+self.phero_bg_info_paras['pos_marker_radius']+2,
                                                         x+self.phero_bg_info_paras['pos_marker_radius']+2),
                                                         font,0.5,
@@ -826,6 +828,11 @@ class Controller:
                                                         self.phero_bg_info_paras['pos_marker_radius'],
                                                         self.phero_bg_info_paras['pos_marker_color'],
                                                         self.phero_bg_info_paras['pos_marker_width'])
+                                    image = cv2.arrowedLine(image, (y, x),
+                                                            (int(y + 26*np.sin(v[2])),
+                                                             int(x + 26*np.cos(v[2]))),
+                                                            self.phero_bg_info_paras['pos_marker_color'],
+                                                            4)
                             else:
                                 self.viewer.system_logger('Invalid position value from LOCALIZATION:({},{}) of ID:({})'.format(v[0],v[1],k),
                                                           log_type='warning')                    
@@ -861,10 +868,11 @@ class Controller:
                                                 self.phero_model.pixel_width, 3]).astype(np.uint8)
                     else:
                         try:
-                            phero_image = self.phero_model.render_pheromone(pos, self.phero_channel,
+                            phero_image = self.phero_model.render_pheromone(info, self.phero_channel,
                                                                         self.arena_length, self.arena_width)
                         except:
                             QMessageBox.warning(self.viewer.phero, 'error', 'Please try to refresh parameters.')
+                            self.phero_stop_render()
                     if self.phero_background_image is None:
                         QMessageBox.warning(self.viewer.phero,'Error','No valide background image!')
                         self.phero_timer.stop()
@@ -901,13 +909,22 @@ class Controller:
         self.phero_frame_rate = self.viewer.phero.spinBox_frame_rate.value()
         self.phero_model.dt = 1.0/self.phero_frame_rate
         self.phero_timer.start(int(1000/self.phero_frame_rate))
+        self.viewer.phero.pb_start.setDisabled(True)
+        self.viewer.phero.pb_pause.setDisabled(False)
+        self.viewer.phero.pb_stop.setDisabled(False)
     
     def phero_stop_render(self):
-        self.phero_frame_num = 0
         self.phero_timer.stop()
+        self.phero_frame_num = 0
+        self.viewer.phero.pb_start.setDisabled(False)
+        self.viewer.phero.pb_pause.setDisabled(True)
+        self.viewer.phero.pb_stop.setDisabled(True)
     
     def phero_pause_render(self):
         self.phero_timer.stop()
+        self.viewer.phero.pb_start.setDisabled(False)
+        self.viewer.phero.pb_pause.setDisabled(True)
+        self.viewer.phero.pb_sto.setDisabled(False)
     
     def _phero_save_config(self, config=None):
         if config is None:
@@ -1069,7 +1086,7 @@ class Controller:
                 if info[0] in self.loc_world_locations.keys():
                     self.loc_world_locations[int(info[0])].append([info[1], info[2], h])
                 else:
-                    self.loc_world_locations.update({int(info[0]):[[info[1], info[2], h]]})
+                    self.loc_world_locations.update({int(info[0]):[info[1], info[2], h]})
 
     def loc_display(self):
         self.loc_img_display = self.loc_camera.get_BGR_image()
@@ -1381,13 +1398,16 @@ class Controller:
                         self.viewer.com.raw_data_insert_text(raw_data_str)
                     
                     # update robot ID combox
-                    if self.viewer.com.cbox_request_id.count() != len(self.serial_data_model.robot_data.keys()):
-                        self.viewer.com.cbox_request_id.clear()
-                        self.viewer.com.cbox_send_robot_id.clear()
-                        for k in self.serial_data_model.robot_data.keys():
-                            self.viewer.com.cbox_request_id.addItem(str(k))
-                            self.viewer.com.cbox_send_robot_id.addItem(str(k))
-                            
+                    self.serial_update_robot_id()
+    
+    def serial_update_robot_id(self):
+        if self.viewer.com.cbox_request_id.count() != len(self.serial_data_model.robot_data.keys()):
+            self.viewer.com.cbox_request_id.clear()
+            self.viewer.com.cbox_send_robot_id.clear()
+        for k in self.serial_data_model.robot_data.keys():
+            self.viewer.com.cbox_request_id.addItem(str(k))
+            self.viewer.com.cbox_send_robot_id.addItem(str(k))
+
     def serial_port_send(self, data, r_id=None):
         header = b''
         # add robot ID
@@ -1510,8 +1530,11 @@ class Controller:
             self.viewer.com.pb_scan_port.setDisabled(False)
     
     def serial_clear_data_cached(self):
+        len_ = len(self.serial_data_model.robot_data)
         self.serial_data_model.clear_data()
-        
+        if len(self.serial_data_model.robot_data) == 0:
+            self.viewer.system_logger('Cleared {} Robot Data.'.format(len))
+            self.serial_update_robot_id()
     
     def exp_visualization_add_plot(self):
         name = self.viewer.main_menu.sender().objectName().split("_")[-1]
