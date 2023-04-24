@@ -21,7 +21,41 @@ from viewers.Ui_communication import Ui_com
 from viewers.Ui_visualization_plots import Ui_VisualizationPlot
 from viewers.Ui_message_box import Ui_message
 from viewers.Ui_data_save_setting import Ui_DataSavingSetting
+from viewers.Ui_loc_pattern import Ui_loc_pattern
 
+
+class WinLocPattern(QMainWindow, Ui_loc_pattern):
+    def __init__(self):
+        super(WinLocPattern, self).__init__()
+        self.setupUi(self)
+        self.setFixedSize(self.width(), self.height())
+
+        self.update_id_combox()
+        self.sp_pattern_num_c.valueChanged.connect(self.update_id_combox)
+        self.sp_pattern_num_r.valueChanged.connect(self.update_id_combox)
+        # self.show_id_text(['0 0.258 0.194\n', '1 0.258 0.355\n', '2 0.258 0.516\n', '3 0.258 0.677\n', '4 0.484 0.194\n', '5 0.484 0.355\n', '6 0.484 0.516\n', '7 0.484 0.677\n', '8 0.71 0.194\n', '9 0.71 0.355\n', '10 0.71 0.516\n', '11 0.71 0.677\n', '12 0.935 0.194\n', '13 0.935 0.355\n', '14 0.935 0.516\n', '15 0.935 0.677\n'],h_id=5)
+        
+    def update_id_combox(self):
+        for i in range(self.sp_pattern_num_c.value()*self.sp_pattern_num_r.value()):
+            self.cbox_id_prew.addItem(str(i))
+            
+    def show_id_text(self, ids, h_id=None):
+        self.te_preview_id.clear()
+        html = '<p style="font-size:16px">'
+        for i_, i in enumerate(ids):
+            if i_ == h_id:
+                html += ('<font color="yellow">' + i[:-1] + "</font>")
+                html += '<br>'
+            else:
+                html += i[:-1] 
+                html += '<br>'
+
+        html += '</p>'
+        # html = """
+        # <p>{}<p>
+        # """.format(id_s)
+        
+        self.te_preview_id.setHtml(html)
 
 class WinLogin(QMainWindow, Ui_Login):
     def __init__(self):
@@ -457,6 +491,7 @@ class Viewer:
         self.plots = []
         
         self.phero_bg_setting = PheroBgInfoSetting()
+        self.loc_pattern = WinLocPattern()
         
         self.logger_str_header = {'error': '--Err: ', 'info': '-Info: ', 'warning': '-Warn: '}
         self.logger_str_color = {'error': 'red', 'info': 'green', 'warning': 'orange'}
@@ -506,11 +541,21 @@ class Viewer:
         html_str = "<p>{}</p>"
         self.message_box.textEdit.setHtml(html_str.format(msg))
         self.message_box.show()
+    
+    def show_label_image(self, label, img):
+        if len(img.shape) == 3:
+            _image = QImage(img[:], img.shape[1], img.shape[0], img.shape[1] * 3, QImage.Format_RGB888)
+            image = QPixmap(_image)
+        else:
+            _image = QImage(img[:], img.shape[1], img.shape[0], img.shape[1], QImage.Format_Grayscale8)
+            image = QPixmap(_image)
+        label.setPixmap(image)
         
 
 if __name__ == '__main__':
     App = QApplication(sys.argv)
-    view = PheroBgInfoSetting()
+    # view = PheroBgInfoSetting()
+    view = WinLocPattern()
     view.show()
     sys.exit(App.exec_())
 

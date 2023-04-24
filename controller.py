@@ -157,6 +157,12 @@ class Controller:
         self.viewer.loc_embedded.pb_start_capture.clicked.connect(self.loc_open_camera)
         self.viewer.loc_embedded.pb_save_as_img.clicked.connect(self.loc_save_as_imgae)
         self.viewer.loc_embedded.pb_cal_show_default.clicked.connect(self.loc_dispaly_calibration_data)
+        # for localization patterns
+        self.viewer.loc_pattern.pb_save_img.clicked.connect(self.loc_patter_save_img)
+        self.viewer.loc_pattern.pb_preview.clicked.connect(self.loc_pattern_preview)
+        self.viewer.loc_pattern.pb_write_id.clicked.connect(self.loc_pattern_write_id)
+        self.viewer.loc_pattern.cbox_id_prew.currentIndexChanged.connect(self.loc_pattern_preview_changed)
+        
         # self.viewer.loc_embedded.pb_cal_load_data.clicked.connect(self.loc_save_as_imgae)
         #* communication
         self.viewer.main_menu.pb_com.clicked.connect(lambda: self.viewer.com.show())
@@ -1275,47 +1281,119 @@ class Controller:
                 time.sleep(0.1)
     
     def loc_generate_pattern(self):
-        image = np.ones((2100, 2970, 3), np.uint8) * 255
-        ID_table = open("ID.txt",'w+')
-        pattern_pos = [0,0]
-        pattern_size = 440
-        offset = 100
-        v = self.viewer.loc_embedded.sp_pattern_num_r.value()
-        h = self.viewer.loc_embedded.sp_pattern_num_c.value()
-        vi=100/v
-        hj=140/h
+        self.viewer.loc_pattern.show()
+        self.loc_pattern_preview()
+        
+    def loc_pattern_event_handle(self):
+        pass
+    
+    def loc_pattern_write_id(self):
+        filename, _ = QFileDialog.getSaveFileName(self.viewer.vscene, 
+                                                 'save pattern ID',
+                                                 './', 'txt(*.txt)')
+        if len(filename) != 0:
+            ID_table = open(filename,'w+')
+            image, ids = self.loc_pattern_preview()
+            for id in ids:
+                ID_table.write(id)
+            ID_table.close()
+            self.viewer.system_logger("Write Pattern ID File {} successfully".format(filename),
+                                        log_type='err', out='sys')
+        else:
+            self.viewer.show_message_box('Cannot Write File: ' + filename, 'err')
+
+    def loc_patter_save_img(self):
+        image, _ = self.loc_pattern_preview()
+        filename, _ = QFileDialog.getSaveFileName(self.viewer.vscene, 
+                                                 'save pattern image',
+                                                 './', 'image(*.png;*.jpg)')
+        if len(filename) != 0:
+            try:
+                cv2.imwrite(filename, image)
+                self.viewer.show_message_box('Cannot Save File: ' + filename, 'err')
+            except:
+                return
+            self.viewer.system_logger("Save Pattern Image File {} successfully".format(filename),
+                                        log_type='err', out='sys')
+
+    def loc_pattern_preview(self):
+        img_w = self.viewer.loc_pattern.sp_image_width.value()
+        img_h = self.viewer.loc_pattern.sp_image_height.value()
+        image = np.ones((img_h, img_w), np.uint8) * 255
+        pattern_size = self.viewer.loc_pattern.sp_pattern_size.value()
+        offset = self.viewer.loc_pattern.sp_pattern_offset.value()
+        v = self.viewer.loc_pattern.sp_pattern_num_r.value()
+        h = self.viewer.loc_pattern.sp_pattern_num_c.value()
+        vi = self.viewer.loc_pattern.sp_inner_x_max.value() / v
+        hj = self.viewer.loc_pattern.sp_inner_y_max.value() / h
         id = 0
-        bias = 10
+        bias_x = self.viewer.loc_pattern.sp_inner_x_bias.value()
+        bias_y = self.viewer.loc_pattern.sp_inner_y_bias.value()
+        outer_short = self.viewer.loc_pattern.sp_outer_short_axis.value()
+        outer_long = self.viewer.loc_pattern.sp_outer_long_axis.value()
+        interval = self.viewer.loc_pattern.sp_pattern_interval.value()
+        ids = []
+       
+        self.loc_pattern_p_imgs = {}
         for j in range(v):
             for i in range(h):
-                pattern_pos = [int(offset + pattern_size/2 + pattern_size*i), int(offset + pattern_size/2+ + pattern_size*j) ]
+                pattern_pos = [int(offset + pattern_size/2 + (pattern_size + interval)*i),
+                               int(offset + pattern_size/2 + (pattern_size + interval)*j) ]
                 cv2.circle(image, pattern_pos, int(pattern_size/2), (0,0,0), -1)
                 cv2.circle(image, pattern_pos, int(pattern_size/2), (255,255,255), 1)
-                # draw 4*4 ellipse with center at pattern_pos
-                cv2.ellipse(image, pattern_pos, (140, 170), 0, 0, 360, (255,255,255), -1)
-                r_v = int(30+vi*i)
-                r_h = int(40+hj*j)
-                cv2.ellipse(image, (pattern_pos[0],pattern_pos[1]+bias), (r_v, r_h), 0, 0, 360, (0,0,0), -1)
-                # cv2.ellipse(image, pattern_pos, (r_v, r_h), 0, 0, 360, (0,0,0), -1)
-                r0 = r_v/150
-                r1 = r_h/180
+                # outer ellipse
+                cv2.ellipse(image, pattern_pos, (outer_short, outer_long), 0, 0, 360, (255,255,255), -1)
+                # inner ellipse
+                r_v = int(30 + vi*i)
+                r_h = int(40 + hj*j)
+                cv2.ellipse(image, (pattern_pos[0]+bias_x, pattern_pos[1]+bias_y), (r_v, r_h), 0, 0, 360, (0,0,0), -1)
+                # ID definition
+                r0 = r_v / outer_short
+                r1 = r_h / outer_long
+                if self.viewer.loc_pattern.cb_show_id.isChecked():
+                    cv2.putText(image, str(id), pattern_pos, cv2.FONT_HERSHEY_SCRIPT_SIMPLEX,
+                                self.viewer.loc_pattern.sp_id_fontsize.value()/10, (255,255,255),
+                                self.viewer.loc_pattern.sp_id_font_thickness.value())
+                ids.append(str(id)+" "+str(round(r1,3))+' '+str(round(r0,3))+'\n')
                 
-                cv2.putText(image, str(id), pattern_pos, cv2.FONT_HERSHEY_SCRIPT_SIMPLEX, 0.5, (255,255,255), 1)
-                ID_table.write(str(id)+" "+str(round(r1,3))+' '+str(round(r0,3))+'\n')
+                # generate single pattern image
+                p_img = np.ones([int(pattern_size*1.2), int(pattern_size*1.2/0.7)], np.uint8) * 255
+                p_pos = [p_img.shape[1]//2, p_img.shape[0]//2]
+                cv2.circle(p_img, p_pos, pattern_size//2, (0,0,0), -1)
+                cv2.circle(p_img, p_pos, pattern_size//2, (255,255,255), 1)
+                cv2.ellipse(p_img, p_pos, (outer_short, outer_long), 0, 0, 360, (255,255,255), -1)
+                cv2.ellipse(p_img,
+                            [p_pos[0] + bias_x, p_pos[1] + bias_y],
+                            (r_v, r_h), 0, 0, 360, (0,0,0), -1)
+                if self.viewer.loc_pattern.cb_show_id.isChecked():
+                    cv2.putText(p_img, str(id), p_pos, cv2.FONT_HERSHEY_SCRIPT_SIMPLEX,
+                                self.viewer.loc_pattern.sp_id_fontsize.value()/10, (255,255,255),
+                                self.viewer.loc_pattern.sp_id_font_thickness.value())
+                self.loc_pattern_p_imgs.update({id:p_img})
+                
                 id += 1
-        try:
-            cv2.imwrite("pattern1.png", image)
-            cv2.imshow('Pattern {:d} x {:d}'.format(v, h), cv2.resize(image, (2100/4, 2970/4)))
-            ID_table.close()
-        except:
-            self.viewer.system_logger("Cannot Write File [ID.txt] or [Pattern.png]",
-                                      log_type='err', out='sys')
-            self.viewer.show_message_box('Cannot Write File [ID.txt] or [Pattern.png]', 'err')
-            return
-        self.viewer.system_logger("Write File [ID.txt] or [Pattern.png] successfully",
-                                      log_type='err', out='sys')
-        self.viewer.show_message_box('Success: ID info was write to [ID.txt], pattern saved as [Pattern.png]','err')
+        
+        self.loc_pattern_image = image.copy()
+        self.loc_id_strings = ids.copy()
+        show = self.viewer.loc_pattern.cbox_id_prew.currentText()
+        if  show == 'ALL':
+            self.viewer.show_label_image(self.viewer.loc_pattern.lb_preview, image)
+        else:
+            self.viewer.show_label_image(self.viewer.loc_pattern.lb_preview, self.loc_pattern_p_imgs[int(show)])
+            self.viewer.loc_pattern.show_id_text(ids, h_id=int(show))
+        self.viewer.loc_pattern.show_id_text(ids)
+
+        return  image, ids
     
+    def loc_pattern_preview_changed(self):
+        show = self.viewer.loc_pattern.cbox_id_prew.currentText()
+        if  show == 'ALL':
+            self.viewer.show_label_image(self.viewer.loc_pattern.lb_preview, self.loc_pattern_image)
+            self.viewer.loc_pattern.show_id_text(self.loc_id_strings)
+        else:
+            self.viewer.show_label_image(self.viewer.loc_pattern.lb_preview, self.loc_pattern_p_imgs[int(show)])
+            self.viewer.loc_pattern.show_id_text(self.loc_id_strings, h_id=int(show))
+            
     def loc_start_camera_calibration(self):
         text = self.viewer.loc_embedded.sender().text()
         if text == 'Run':

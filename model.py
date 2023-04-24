@@ -609,8 +609,8 @@ class LocalizationModel(object):
                         #     _offset_angle = np.arctan2(inner_ellipse[0][1] - outer_ellipse[0][1], _x_diff) + np.pi
                         
                         _offset_angle = np.arctan2(inner_ellipse[0][1] - outer_ellipse[0][1],
-                                                   inner_ellipse[0][0] - outer_ellipse[0][0]) + np.pi
-                        _offset_angle = (_offset_angle - np.pi) % (np.pi*2) + np.pi
+                                                   outer_ellipse[0][0] - inner_ellipse[0][0])
+                        # _offset_angle = (_offset_angle - np.pi) % (np.pi*2) + np.pi
                         # angle_ = (angle_ - np.pi) % (np.pi*2) + np.pi
                         
                         # if abs(_offset_angle - angle_) < np.pi/2:
