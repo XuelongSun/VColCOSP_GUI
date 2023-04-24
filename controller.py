@@ -679,7 +679,7 @@ class Controller:
                 else:
                     QMessageBox.warning(self.viewer.phero, 'Error', 'Not a valid Diversity define, please check!')
             if 'other' not in ch_str:
-                phero_channel.update({'other':'red'})
+                phero_channel.update({'other':'no'})
                 
             self.phero_channel = phero_channel
             # pheromone background
@@ -816,8 +816,7 @@ class Controller:
                                                             self.phero_bg_info_paras['pos_marker_color'],
                                                             4)
                             else:
-                                self.viewer.system_logger('Invalid position value from LOCALIZATION:({},{}) of ID:({})'.format(v[0],v[1],k),
-                                                        log_type='warning')                    
+                                print('Invalid position value from LOCALIZATION:({},{}) of ID:({})'.format(v[0],v[1],k))               
                         self.phero_background_image = image.copy()
                     elif self.viewer.phero.radioButton_image.isChecked():
                         # use background image
@@ -1444,6 +1443,9 @@ class Controller:
                 for i in ('mtx','dist','rvecs','tvecs'):
                     self.loc_model.calibrate_info[i+1] = X[i]
 
+    def loc_apply_calibration_data(self):
+        pass
+        
     def loc_save_as_imgae(self):
         filename, _ = QFileDialog.getSaveFileName(self.viewer.phero, 
                                             'save localization image',
@@ -1666,7 +1668,7 @@ class Controller:
         len_ = len(self.serial_data_model.robot_data)
         self.serial_data_model.clear_data()
         if len(self.serial_data_model.robot_data) == 0:
-            self.viewer.system_logger('Cleared {} Robot Data.'.format(len))
+            self.viewer.system_logger('Cleared {} Robot Data.'.format(len_))
             self.serial_update_robot_id()
     
     def exp_visualization_add_plot(self):
@@ -1853,8 +1855,8 @@ class Controller:
             self.viewer.main_menu.pb_start_exp.setText("Start \n Experiment")
 
     def exp_task(self):
-        self.exp_predator_id = 0
-        self.exp_prey_ids = range(10)
+        self.exp_predator_id = 1
+        self.exp_prey_ids = [0, 2] + list(range(3, 11))
         self.exp_prey_cluster = {}
         self.exp_prey_cluster_id = dict.fromkeys(self.exp_prey_ids, 1)
         self.exp_prey_robot_size = dict.fromkeys(self.exp_prey_ids, 0.04)
@@ -1867,7 +1869,6 @@ class Controller:
             s = t - h * 3600 - m * 60
             self.viewer.main_menu.et_exp_timer.setText('ExperimentTime: %2d H %2d M% 2.2f S' % (h, m, s))
             # task
-            print('i am running')
             self.exp_prey_cluster = {}
             # robot if defined: predator: 0, prey: 1,2...10
             # 1. receive data from prey and predator (energy, f_avoid, f_gather, px, py)

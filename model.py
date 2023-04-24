@@ -207,7 +207,8 @@ class PheromoneModel:
         # pheromone
         self.color_channel = {'red':0, 
                               'green':1, 
-                              'blue':2}
+                              'blue':2,
+                              'no':None}
         self.pheromone_field = np.zeros([self.pixel_height, 
                                          self.pixel_width, 
                                          3])
@@ -271,25 +272,31 @@ class PheromoneModel:
     def render_pheromone(self, robot_pos, channel, arena_length, arena_width):
         injection = np.zeros([self.pixel_height, self.pixel_width, 3])
         for k, v in robot_pos.items():
-            if (v[0] >= 0) and (v[0] <= arena_length) and \
-                (v[1] >= 0) and (v[1] <= arena_width):
-                y = int(v[0]/arena_length*self.pixel_width)
-                x = int(v[1]/arena_width*self.pixel_height)
-                # offset by the height
-                y += int((self.pixel_width/2 - y)*0.023)
-                x += int((self.pixel_height/2 - x)*0.023)
-                if str(k) in channel.keys():
-                    ind = self.color_channel[channel[str(k)]]
-                else:
-                    ind = self.color_channel[channel['other']]
-                r = int(self.radius_factor[ind])
-                s_x = np.max([0, x-r])
-                s_y = np.max([0, y-r])
-                e_x = np.min([x+r, self.pixel_height])
-                e_y = np.min([y+r, self.pixel_width])
-                s_k_x = 0 if x-r > 0 else r-x
-                s_k_y = 0 if y-r > 0 else r-y
-                injection[s_x:e_x, s_y:e_y, ind] += np.array(self.injection_kernel[ind])[s_k_x:e_x-s_x+s_k_x,s_k_y:e_y-s_y+s_k_y]
+            if str(k) in channel.keys():
+                ind = self.color_channel[channel[str(k)]]
+            else:
+                ind = self.color_channel[channel['other']]
+            if ind is not None:
+                if (v[0] >= 0) and (v[0] <= arena_length) and \
+                    (v[1] >= 0) and (v[1] <= arena_width):
+                    y = int(v[0]/arena_length*self.pixel_width)
+                    x = int(v[1]/arena_width*self.pixel_height)
+                    # offset by the height
+                    y += int((self.pixel_width/2 - y)*0.023)
+                    x += int((self.pixel_height/2 - x)*0.023)
+                    if str(k) in channel.keys():
+                        ind = self.color_channel[channel[str(k)]]
+                    else:
+                        ind = self.color_channel[channel['other']]
+                    r = int(self.radius_factor[ind])
+                    s_x = np.max([0, x-r])
+                    s_y = np.max([0, y-r])
+                    e_x = np.min([x+r, self.pixel_height])
+                    e_y = np.min([y+r, self.pixel_width])
+                    s_k_x = 0 if x-r > 0 else r-x
+                    s_k_y = 0 if y-r > 0 else r-y
+                    injection[s_x:e_x, s_y:e_y, ind] += np.array(self.injection_kernel[ind])[s_k_x:e_x-s_x+s_k_x,
+                                                                                             s_k_y:e_y-s_y+s_k_y]
         # evaporation
         e = -(1/(self.evaporation_factor)) * self.pheromone_field
         # injection
@@ -417,7 +424,11 @@ class LocalizationModel(object):
         self.zoom_ratio = 2
         self.tolerence = 0.4
         self.r_tolerence = 0.004
-        self.update_calibration_info()
+        # default calibration data
+        with np.load('./camera/calibration_data.npz') as X:
+            data = [X[i] for i in ('mtx','dist','rvecs','tvecs','PresM')]
+        self.update_calibration_info(data)
+        
         self.calibrate_info = []
         self.chessboard_corners = [0, 0]
     
@@ -432,14 +443,12 @@ class LocalizationModel(object):
         for [id, r1, r0] in self.id_table:
             self.pattern.append(Pattern(int(id), r1, r0, self.id_table))
     
-    def update_calibration_info(self):
-        with np.load('./camera/calibration_data.npz') as X:
-            self.mtx, self.dist, self.rvecs, self.tvecs, self.PresM = [X[i] for i in ('mtx','dist','rvecs','tvecs','PresM')]
+    def update_calibration_info(self, data):
+        self.mtx, self.dist, self.rvecs, self.tvecs, self.PresM = data
         temp_array = np.array([0,0,0])
         mtx1 = np.insert(self.mtx, 3, temp_array, axis=1)
         rotM = cv2.Rodrigues(self.rvecs)[0]
         rot_trans_M = np.insert(np.insert(rotM, 3, self.tvecs.T, axis=1),3,np.array([0,0,0,1]),axis=0)
-
         self.w2p_M = np.matrix(np.matmul(mtx1, rot_trans_M))
         self.p2w_M = self.w2p_M.I
         self.newcameramtx, roi = cv2.getOptimalNewCameraMatrix(self.mtx, self.dist, self.image_size, 0, self.image_size)
@@ -475,23 +484,23 @@ class LocalizationModel(object):
 
     def run_calibration(self, img, c_col, c_row, c_size_world, offsetx=0, offsety=0, border=0):
         c_size_world -= 0.0046
-        objp = np.zeros((c_col*c_row, 3), np.float32)
-        objp[:,:2] = np.mgrid[0:c_col,0:c_row].T.reshape(-1,2)
-        objp[:,:2] = objp[:,:2]*c_size_world + c_size_world + border
+        self.objp = np.zeros((c_col*c_row, 3), np.float32)
+        self.objp[:,:2] = np.mgrid[0:c_col,0:c_row].T.reshape(-1,2)
+        self.objp[:,:2] = self.objp[:,:2]*c_size_world + c_size_world + border
         # ONLY FOR THE CURRENT HARDWARE SETTING !! (PARTS OF THE SCREEN ON THE LEFT AND RIGHT SIDE ARE COVERED)
-        objp[:,0] = objp[:,0] - 0.0125
-        # objp[:,1] = objp[:,1] - offsety
+        self.objp[:,0] = self.objp[:,0] - 0.0125
+        # self.objp[:,1] = self.objp[:,1] - offsety
         # axis = np.float32([[0,0,0], [1.4,0,0], [0,0.8,0], [0,0,-0.15]]).reshape(-1,3)
         criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
-        objpoints = [] # 3D points in world coordinates
-        imgpoints = [] # 2D points in image coordinates
+        self.objpoints = [] # 3D points in world coordinates
+        self.imgpoints = [] # 2D points in image coordinates
         self.chessboard_corners[0], corners = cv2.findChessboardCorners(img, (c_col, c_row), None)
         if self.chessboard_corners[0]:
-            objpoints.append(objp)
+            self.objpoints.append(self.objp)
             self.chessboard_corners[1] = cv2.cornerSubPix(img, corners, (11, 11), (-1,-1), criteria)
-            imgpoints.append(self.chessboard_corners[1])
+            self.imgpoints.append(self.chessboard_corners[1])
             # ret, mtx, dist, rvecs, tvecs
-            self.calibrate_info = cv2.calibrateCamera(objpoints, imgpoints, img.shape[::-1], None, None)
+            self.calibrate_info = cv2.calibrateCamera(self.objpoints, self.imgpoints, img.shape[::-1], None, None)
         else:
             print('not enough corners found')
         return self.chessboard_corners[0]
@@ -541,6 +550,22 @@ class LocalizationModel(object):
                                 return possib_pos
         return possib_pos
     
+    def get_prespective_matrix_from_calibration(self):
+        if self.chessboard_corners[0]:
+            ret, mtx, dist, rvecs, tvecs = self.calibrate_info
+            # calculate rotation and translation vectors from 
+            ret, rvecs, tvecs = cv2.solvePnP(self.objp[0], self.imgpoints[0], mtx, dist)
+            temp_array = np.array([0,0,0])
+            mtx1 = np.insert(mtx,3,temp_array,axis=1)
+            rotM = cv2.Rodrigues(rvecs)[0]
+            rot_trans_M = np.insert(np.insert(rotM, 3, tvecs.T, axis=1),3,np.array([0,0,0,1]),axis=0)
+
+            w2p_M = np.matrix(np.matmul(mtx1,rot_trans_M))
+            p2w_M = w2p_M.I
+            return 0
+        else:
+            return -1
+        
     def segment(self, img, pos, ii):
         search_size = self.pat_img_r*(1+0)
         search_start_y, search_start_x = max(int(pos[1] - search_size),0), max(int(pos[0] - search_size),0)
@@ -608,7 +633,7 @@ class LocalizationModel(object):
                         # else:
                         #     _offset_angle = np.arctan2(inner_ellipse[0][1] - outer_ellipse[0][1], _x_diff) + np.pi
                         
-                        _offset_angle = np.arctan2(inner_ellipse[0][1] - outer_ellipse[0][1],
+                        _offset_angle = np.arctan2(outer_ellipse[0][1] - inner_ellipse[0][1],
                                                    outer_ellipse[0][0] - inner_ellipse[0][0])
                         # _offset_angle = (_offset_angle - np.pi) % (np.pi*2) + np.pi
                         # angle_ = (angle_ - np.pi) % (np.pi*2) + np.pi
