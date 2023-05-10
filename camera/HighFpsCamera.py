@@ -293,7 +293,7 @@ class Camera:
 		return 0	
 
 	# 设置曝光
-	def setExposureTime(self,camera, dVal):
+	def setExposureTime(self, camera, dVal):
 		# 通用属性设置:设置曝光 --根据属性类型，直接构造属性节点。如曝光是 double类型，构造doubleNode节点
 		exposureTimeNode = pointer(GENICAM_DoubleNode())
 		exposureTimeNodeInfo = GENICAM_DoubleNodeInfo() 
@@ -317,8 +317,52 @@ class Camera:
 		# 释放节点资源	 
 		exposureTimeNode.contents.release(exposureTimeNode)	
 		return 0
-		
-	# 枚举相机
+	
+	# 设置增益
+	def setGainRaw(self, camera, dVal):
+		GainRawNode = pointer(GENICAM_DoubleNode())
+		GainRawNodeInfo = GENICAM_DoubleNodeInfo() 
+		GainRawNodeInfo.pCamera = pointer(camera)
+		GainRawNodeInfo.attrName = b"GainRaw"
+		nRet = GENICAM_createDoubleNode(byref(GainRawNodeInfo), byref(GainRawNode))
+		if ( nRet != 0 ):
+			print("create GainRaw Node fail!")
+			return -1
+
+		nRet = GainRawNode.contents.setValue(GainRawNode, c_double(dVal))  
+		if ( nRet != 0 ):
+			print("set GainRaw value [%f]us fail!"  % (dVal))
+			GainRawNode.contents.release(GainRawNode)
+			return -1
+		else:
+			print("set GainRaw value [%f]us success." % (dVal))
+
+		GainRawNode.contents.release(GainRawNode)	
+		return 0
+
+	# 设置伽马
+	def setGamma(self, camera, dVal):
+		GammaNode = pointer(GENICAM_DoubleNode())
+		GammaNodeInfo = GENICAM_DoubleNodeInfo() 
+		GammaNodeInfo.pCamera = pointer(camera)
+		GammaNodeInfo.attrName = b"Gamma"
+		nRet = GENICAM_createDoubleNode(byref(GammaNodeInfo), byref(GammaNode))
+		if ( nRet != 0 ):
+			print("create Gamma Node fail!")
+			return -1
+
+		nRet = GammaNode.contents.setValue(GammaNode, c_double(dVal))  
+		if ( nRet != 0 ):
+			print("set Gamma value [%f]us fail!"  % (dVal))
+			GammaNode.contents.release(GammaNode)
+			return -1
+		else:
+			print("set Gamma value [%f]us success." % (dVal))
+
+		GammaNode.contents.release(GammaNode)	
+		return 0
+	
+ 	# 枚举相机
 	def enumCameras(self):
 		# 获取系统单例
 		system = pointer(GENICAM_System())

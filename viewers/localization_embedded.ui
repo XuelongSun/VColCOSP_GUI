@@ -397,7 +397,7 @@ color: rgb(0,255, 0);
     <string>| Camera</string>
    </property>
   </widget>
-  <widget class="QSlider" name="hS_brightness">
+  <widget class="QSlider" name="hS_gamma">
    <property name="geometry">
     <rect>
      <x>406</x>
@@ -434,7 +434,7 @@ border-radius: 4px;
     <number>100</number>
    </property>
    <property name="value">
-    <number>80</number>
+    <number>10</number>
    </property>
    <property name="orientation">
     <enum>Qt::Horizontal</enum>
@@ -666,7 +666,7 @@ color: rgb(255, 255, 127);
     </rect>
    </property>
    <property name="text">
-    <string>Brightness:</string>
+    <string>Gamma</string>
    </property>
   </widget>
   <widget class="QSlider" name="hS_gain">

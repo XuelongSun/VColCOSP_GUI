@@ -152,6 +152,8 @@ class Controller:
         self.viewer.loc_embedded.pb_check_camera.clicked.connect(self.loc_check_camera)
         self.viewer.loc_embedded.pb_start.clicked.connect(self.loc_start)
         self.viewer.loc_embedded.hS_exposure.valueChanged.connect(self.loc_camera_setting)
+        self.viewer.loc_embedded.hS_gain.valueChanged.connect(self.loc_camera_setting)
+        self.viewer.loc_embedded.hS_gamma.valueChanged.connect(self.loc_camera_setting)
         self.viewer.loc_embedded.pb_generate_pattern.clicked.connect(self.loc_generate_pattern)
         self.viewer.loc_embedded.pb_start_calibration.clicked.connect(self.loc_start_camera_calibration)
         self.viewer.loc_embedded.pb_start_capture.clicked.connect(self.loc_open_camera)
@@ -270,7 +272,7 @@ class Controller:
             if plot.type == 'plot':
                 for k, v in plot.lines.items():
                     _id, ds = k.split('/')
-                    r_id = _id[-1]
+                    r_id = _id.split('_')[-1]
                     if ds == 'POS_X':
                         v.setData(x=np.arange(len(self.loc_world_locations[int(r_id)])),
                                 y=np.array(self.loc_world_locations[int(r_id)], dtype=np.float)[:,0])
@@ -1278,6 +1280,14 @@ class Controller:
             exp = self.viewer.loc_embedded.hS_exposure.value() * 100
             if self.loc_camera.setExposureTime(self.loc_camera.camera, exp) == 0:
                 time.sleep(0.1)
+        elif sender.objectName() == 'hS_gain':
+            gain = self.viewer.loc_embedded.hS_gain.value()
+            if self.loc_camera.setGainRaw(self.loc_camera.camera, gain) == 0:
+                time.sleep(0.1)
+        elif sender.objectName() == 'hS_gamma':
+            gamma = self.viewer.loc_embedded.hS_gamma.value() / 25
+            if self.loc_camera.setGamma(self.loc_camera.camera, gamma) == 0:
+                time.sleep(0.1)
     
     def loc_generate_pattern(self):
         self.viewer.loc_pattern.show()
@@ -1543,7 +1553,7 @@ class Controller:
             self.viewer.com.cbox_request_id.addItem(str(k))
             self.viewer.com.cbox_send_robot_id.addItem(str(k))
 
-    def serial_port_send(self, data, r_id=None):
+    def serial_port_send(self, data, r_id=None, mode='once'):
         header = b''
         # add robot ID
         # if not given, get from the GUI
@@ -1578,8 +1588,9 @@ class Controller:
             QMessageBox.warning(self.viewer.com, 'Error', 'Cannot send data')
             self.viewer.system_logger('Try to send data, but failed -_-', 'error', out='com')
             return
-        self.viewer.system_logger('Send %d bytes data via serial port: \n %s' % (len_bytes, data),
-                                  out='com')
+        if mode=='once':
+            self.viewer.system_logger('Send %d bytes data via serial port: \n %s' % (len_bytes, data),
+                                    out='com')
     
     def serial_send_raw_data(self):
         send_str = self.viewer.com.text_edit_send_raw.toPlainText()
@@ -1856,11 +1867,11 @@ class Controller:
 
     def exp_task(self):
         self.exp_predator_id = 1
-        self.exp_prey_ids = [0, 2] + list(range(3, 11))
+        self.exp_prey_ids = [0] + list(range(2, 11))
         self.exp_prey_cluster = {}
         self.exp_prey_cluster_id = dict.fromkeys(self.exp_prey_ids, 1)
         self.exp_prey_robot_size = dict.fromkeys(self.exp_prey_ids, 0.04)
-
+        self.pre_exp_task_t = self.exp_start_time
         while self.exp_is_running:
             # timer
             t = time.time() - self.exp_start_time
@@ -1869,119 +1880,127 @@ class Controller:
             s = t - h * 3600 - m * 60
             self.viewer.main_menu.et_exp_timer.setText('ExperimentTime: %2d H %2d M% 2.2f S' % (h, m, s))
             # task
-            self.exp_prey_cluster = {}
-            # robot if defined: predator: 0, prey: 1,2...10
-            # 1. receive data from prey and predator (energy, f_avoid, f_gather, px, py)
-            pd_energy = self.serial_data_model.get_robot_data(self.exp_predator_id, 'Energy')
-            pd_position = self.loc_world_locations[self.exp_predator_id][:2]
-            pd_heading = self.loc_world_locations[self.exp_predator_id][2]
-            pe_energys = {}
-            pe_positions = {}
-            pe_energy_sum = 0
-            for id_ in self.exp_prey_ids:
-                pe_energys.update({id_:self.serial_data_model.get_robot_data(id_, 'Energy')})
-                pe_positions.update({id_:self.loc_world_locations[id_]})
-                # prey in escaping state
-                if self.serial_data_model.get_robot_data(id_, 'state') == 2:
-                    pe_energy_sum += pe_energys[id_]
-            
-            # 2. justify if each prey's energy is less than zero (death):
-            # if so, send the value of f_avoid, f_gather
-            for d_id in np.argwhere(np.array(pe_energys)<0):
-                send_data = b'DWD'
-                # generate f_avoid and f_gather value
-                if np.random.uniform(0, 1) > 0.1:
-                    temp_a_e = [(a, a.energy) for a in self.alive_preys]
-                    temp_a_e = sorted(temp_a_e, key=lambda x:x[1])
-                    sum_ = sum([a_[1] for a_ in temp_a_e])
-                    partial_p = [a_[1]/sum_ for a_ in temp_a_e]
-                    p_ = np.random.rand(1)[0]
-                    ind = np.where(partial_p < p_)[0][-1] if len(np.where(partial_p < p_)[0]) > 0 else -1
-                    f_gather = temp_a_e[min(ind + 1, len(temp_a_e)-1)][0].f_gather
-                    f_avoid = temp_a_e[min(ind + 1, len(temp_a_e)-1)][0].f_avoid
+            if t - self.pre_exp_task_t >= self.viewer.main_menu.sp_exp_task_interval:
+                self.pre_exp_task_t = t
+                # 1. receive data from prey and predator (energy, f_avoid, f_gather, px, py)
+                if self.exp_predator_id in self.loc_world_locations.keys():
+                    pd_position = self.loc_world_locations[self.exp_predator_id][:2]
+                    pd_heading = self.loc_world_locations[self.exp_predator_id][2]
                 else:
-                    f_gather = np.random.uniform(0.02, 0.32)
-                    f_avoid = np.random.uniform(0.01, 1.01)
-                send_data += st.pack('2f', f_avoid, f_gather)
-                print('send to prey {}:'.format(d_id), send_data)
-                self.serial_port_send(send_data, r_id=d_id)
-            # 3. clusterring the preys
-            self.exp_prey_cluster = {}
-            ## 3.1 roughly arange by distance
-            for id_ in self.exp_prey_ids:
-                if self.exp_prey_cluster_id[id_] is None:
-                    self.exp_prey_cluster_id[id_] = len(self.exp_prey_cluster) + 1
-                    self.exp_prey_cluster.update()
-                    a_k = []
-                    for k, v in self.exp_prey_cluster_id.items():
-                        if v is None:
-                            a_k.append(k)
-                    cl_k = []
-                    for k in a_k:
-                        if k != id_:
-                            if distance(pe_positions[k], pe_positions[id_]) <= \
-                                (self.exp_prey_robot_size[k] + self.exp_prey_robot_size[id_])*2:
-                                    cl_k.append(k)
-                    self.exp_prey_cluster.update({self.exp_prey_cluster_id[id_]:a_k + [id_]})
-                    for k in a_k:
-                        self.exp_prey_cluster_id[k] = self.exp_prey_cluster_id[id_]
-            # 3.2 re-arange cluster using rectangle box
-            rect = {}
-            margin = 10
-            for ind, k in self.exp_prey_cluster.items():
-                if len(k) >=2:
-                    x = np.array([pe_positions[k_][0] for k_ in k])
-                    y = np.array([pe_positions[k_][1] for k_ in k])
-                    rect.update({ind:[x.min()-margin, x.max()+margin,
-                                        y.min()-margin, y.max()+margin]})
-            for c_c in combinations(rect.keys(), 2):
-                r1l = rect[c_c[1]][0]
-                r1r = rect[c_c[1]][1]
-                r2l = rect[c_c[0]][0]
-                r2r = rect[c_c[0]][1]
-                r1b = rect[c_c[1]][2]
-                r1t = rect[c_c[1]][3]
-                r2b = rect[c_c[0]][2]
-                r2t = rect[c_c[0]][3]
-                if not ((r1l > r2r) or (r1t < r2b) or (r2l > r1r) or (r2t < r1b)):
-                    for k in self.exp_prey_cluster[c_c[1]]:
-                        self.exp_prey_cluster_id[k] = c_c[0]
-            self.exp_prey_cluster = {}
-            for id_ in self.exp_prey_ids:
-                if self.exp_prey_cluster_id[id_] in self.exp_prey_cluster.keys():
-                    self.exp_prey_cluster[self.exp_prey_cluster_id[id_]].append(id_)
-                elif self.exp_prey_cluster_id[id_] is not None:
-                    self.exp_prey_cluster.update({self.exp_prey_cluster_id[id_]:[id_]})
-                    
-            # 4. send predator its position, angle and the goal position
-            send_data = b'DWD'
-            # calculate goal position based on the prey's cluster info
-            sorted_c = sorted(self.exp_prey_cluster.items(), key=lambda v:len(v[1]))
-            _, v1 = sorted_c[-1]
-            if len(v1) >= 5:
-                if len(v1) >= len(self.exp_prey_ids) - 2:
+                    pd_position = [0,0]
+                    pd_heading = 0
+                    self.viewer.system_logger('Lost position of the predator', 'err')
+                ## ids defined from the localization and communication
+                exp_p_ids = set(self.serial_data_model.robot_data.keys()).intersection(set(self.loc_world_locations.keys())) - \
+                    set([self.exp_predator_id])
+                
+                pe_positions = {}
+                pe_energy_sum = 0
+                for id_ in exp_p_ids:
+                    pe_positions.update({id_:self.loc_world_locations[id_]})
+                    e = self.serial_data_model.get_robot_data(id_, 'Energy', -1)
+                    # prey in escaping state
+                    if self.serial_data_model.get_robot_data(id_, 'State', -1) == 2:
+                        pe_energy_sum += e
+                    # 2. justify if each prey's energy is less than zero (death):
+                    # if so, send the value of f_avoid, f_gather
+                    if e <= 0:
+                        # generate f_avoid and f_gather value
+                        if np.random.uniform(0, 1) > 0.1:
+                            temp_a_e = [(a, a.energy) for a in self.alive_preys]
+                            temp_a_e = sorted(temp_a_e, key=lambda x:x[1])
+                            sum_ = sum([a_[1] for a_ in temp_a_e])
+                            partial_p = [a_[1]/sum_ for a_ in temp_a_e]
+                            p_ = np.random.rand(1)[0]
+                            ind = np.where(partial_p < p_)[0][-1] if len(np.where(partial_p < p_)[0]) > 0 else -1
+                            f_gather = temp_a_e[min(ind + 1, len(temp_a_e)-1)][0].f_gather
+                            f_avoid = temp_a_e[min(ind + 1, len(temp_a_e)-1)][0].f_avoid
+                        else:
+                            f_gather = np.random.uniform(0.02, 0.32)
+                            f_avoid = np.random.uniform(0.01, 1.01)
+                        send_data = b'DWD'
+                        send_data += st.pack('2f', f_avoid, f_gather)
+                        print('send to prey {}:'.format(id_), send_data)
+                        self.serial_port_send(send_data, r_id=id_, mode='thread')
+
+                # 3. clusterring the preys
+                self.exp_prey_cluster = {}
+                ## 3.1 roughly arange by distance
+                for id_ in self.exp_prey_ids:
+                    if self.exp_prey_cluster_id[id_] is None:
+                        self.exp_prey_cluster_id[id_] = len(self.exp_prey_cluster) + 1
+                        self.exp_prey_cluster.update()
+                        a_k = []
+                        for k, v in self.exp_prey_cluster_id.items():
+                            if v is None:
+                                a_k.append(k)
+                        cl_k = []
+                        for k in a_k:
+                            if k != id_:
+                                if distance(pe_positions[k], pe_positions[id_]) <= \
+                                    (self.exp_prey_robot_size[k] + self.exp_prey_robot_size[id_])*2:
+                                        cl_k.append(k)
+                        self.exp_prey_cluster.update({self.exp_prey_cluster_id[id_]:a_k + [id_]})
+                        for k in a_k:
+                            self.exp_prey_cluster_id[k] = self.exp_prey_cluster_id[id_]
+                # 3.2 re-arange cluster using rectangle box
+                rect = {}
+                margin = 10
+                for ind, k in self.exp_prey_cluster.items():
+                    if len(k) >=2:
+                        x = np.array([pe_positions[k_][0] for k_ in k])
+                        y = np.array([pe_positions[k_][1] for k_ in k])
+                        rect.update({ind:[x.min()-margin, x.max()+margin,
+                                            y.min()-margin, y.max()+margin]})
+                for c_c in combinations(rect.keys(), 2):
+                    r1l = rect[c_c[1]][0]
+                    r1r = rect[c_c[1]][1]
+                    r2l = rect[c_c[0]][0]
+                    r2r = rect[c_c[0]][1]
+                    r1b = rect[c_c[1]][2]
+                    r1t = rect[c_c[1]][3]
+                    r2b = rect[c_c[0]][2]
+                    r2t = rect[c_c[0]][3]
+                    if not ((r1l > r2r) or (r1t < r2b) or (r2l > r1r) or (r2t < r1b)):
+                        for k in self.exp_prey_cluster[c_c[1]]:
+                            self.exp_prey_cluster_id[k] = c_c[0]
+                self.exp_prey_cluster = {}
+                for id_ in exp_p_ids:
+                    if self.exp_prey_cluster_id[id_] in self.exp_prey_cluster.keys():
+                        self.exp_prey_cluster[self.exp_prey_cluster_id[id_]].append(id_)
+                    elif self.exp_prey_cluster_id[id_] is not None:
+                        self.exp_prey_cluster.update({self.exp_prey_cluster_id[id_]:[id_]})
+                        
+                # 4. send predator its position, angle and the goal position
+                send_data = b'DWD'
+                # calculate goal position based on the prey's cluster info
+                sorted_c = sorted(self.exp_prey_cluster.items(), key=lambda v:len(v[1]))
+                _, v1 = sorted_c[-1]
+                
+                if len(v1) >= len(exp_p_ids) - 2:
                     i = np.random.randint(0, len(v1))
                     g_px = pe_positions[v1[i]][0]
                     g_py = pe_positions[v1[i]][1]
                 else:
-                    if len(v1) >= self.last_cluster_prey_num+2:
+                    if len(v1) >= self.last_cluster_prey_num + 2:
                         g_px = np.array([pe_positions[a][0] for a in v1]).mean()
                         g_py = np.array([pe_positions[a][1] for a in v1]).mean()
                     else:
                         # ?: how to send gpx gpy data when there is no change to the previous one? 
                         g_px = pd_position[0]
                         g_py = pd_position[1]
-            send_data += st.pack('6f', pd_position[0],  pd_position[1], pd_heading, g_px, g_py, pe_energy_sum)
-            print('send to predator:', send_data)
-            self.serial_port_send(send_data, r_id=d_id)
-            
-            # data send format
-            # to prey: DWD + 2f:'f_avoid, f_gather'
-            # to predator: DWD + 6f:'p_x, p_y, h, g_px, g_py, prey_energy'
-            
-            # save data
-            if self.viewer.main_menu.cb_auto_save.isChecked():
-                self.exp_save_data()
+
+                send_data += st.pack('6f', pd_position[0],  pd_position[1], pd_heading, g_px, g_py, pe_energy_sum)
+                print('send to predator:', send_data)
+                self.serial_port_send(send_data, r_id=self.exp_predator_id, mode='thread')
+                
+                # data send format
+                # to prey: DWD + 2f:'f_avoid, f_gather'
+                # to predator: DWD + 6f:'p_x, p_y, h, g_px, g_py, prey_energy'
+                
+                # save data
+                if self.viewer.main_menu.cb_auto_save.isChecked():
+                    self.exp_save_data()
 
 
 if __name__ == "__main__":

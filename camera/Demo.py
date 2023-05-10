@@ -312,7 +312,51 @@ def setExposureTime(camera, dVal):
 	# 释放节点资源	 
 	exposureTimeNode.contents.release(exposureTimeNode)	
 	return 0
-	
+
+# 设置增益
+def setGainRaw(camera, dVal):
+	GainRawNode = pointer(GENICAM_DoubleNode())
+	GainRawNodeInfo = GENICAM_DoubleNodeInfo() 
+	GainRawNodeInfo.pCamera = pointer(camera)
+	GainRawNodeInfo.attrName = b"GainRaw"
+	nRet = GENICAM_createDoubleNode(byref(GainRawNodeInfo), byref(GainRawNode))
+	if ( nRet != 0 ):
+		print("create GainRaw Node fail!")
+		return -1
+
+	nRet = GainRawNode.contents.setValue(GainRawNode, c_double(dVal))  
+	if ( nRet != 0 ):
+		print("set GainRaw value [%f]us fail!"  % (dVal))
+		GainRawNode.contents.release(GainRawNode)
+		return -1
+	else:
+		print("set GainRaw value [%f]us success." % (dVal))
+
+	GainRawNode.contents.release(GainRawNode)	
+	return 0
+
+# 设置增益
+def setGamma(camera, dVal):
+	GammaNode = pointer(GENICAM_DoubleNode())
+	GammaNodeInfo = GENICAM_DoubleNodeInfo() 
+	GammaNodeInfo.pCamera = pointer(camera)
+	GammaNodeInfo.attrName = b"Gamma"
+	nRet = GENICAM_createDoubleNode(byref(GammaNodeInfo), byref(GammaNode))
+	if ( nRet != 0 ):
+		print("create Gamma Node fail!")
+		return -1
+
+	nRet = GammaNode.contents.setValue(GammaNode, c_double(dVal))  
+	if ( nRet != 0 ):
+		print("set Gamma value [%f]us fail!"  % (dVal))
+		GammaNode.contents.release(GammaNode)
+		return -1
+	else:
+		print("set Gamma value [%f]us success." % (dVal))
+
+	GammaNode.contents.release(GammaNode)	
+	return 0
+
 # 枚举相机
 def enumCameras():
 	# 获取系统单例
