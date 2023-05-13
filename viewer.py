@@ -22,7 +22,7 @@ from viewers.Ui_visualization_plots import Ui_VisualizationPlot
 from viewers.Ui_message_box import Ui_message
 from viewers.Ui_data_save_setting import Ui_DataSavingSetting
 from viewers.Ui_loc_pattern import Ui_loc_pattern
-
+from viewers.Ui_exp_results import Ui_exp_result_win
 
 class WinLocPattern(QMainWindow, Ui_loc_pattern):
     def __init__(self):
@@ -183,6 +183,41 @@ class LEDScreen(QMainWindow):
         self.label.setGeometry(QRect(0, 0, width, height))
 
 
+class ExpResultWin(QMainWindow, Ui_exp_result_win):
+    def __init__(self):
+        super(ExpResultWin, self).__init__()
+        self.setupUi(self)
+        # self.setFixedSize(self.width(), self.height())
+        self.figures = []
+        self.fig_type = []
+
+    def setup_figures(self, figs):
+        for i, f in enumerate(figs):
+            title = f['name'] if 'name' in f.keys() else 'plot_{}'.format(i+1)
+            figure = pg.PlotWidget(title=title)
+            figure.setBackground('k')
+            self.fig_type.append(f['type'])
+            color = f['color'] if 'color' in f.keys() else 'y'
+            
+            if f['type'] == "plot":
+                item = pg.PlotCurveItem(symbol='d', size=10, pen=pg.mkPen(color))
+
+            elif f['type'] == "distribution":
+                item = pg.BarGraphItem(x=f['range'], height=np.zeros(20),
+                                       width=f['width'], brush=color)
+                self.bars = {}
+            figure.addItem(item)
+            self.verticalLayout.addWidget(figure)
+            self.figures.append(item)
+    
+    def update_figures(self, data):
+        for d, t, f in zip(data, self.fig_type, self.figures):
+            if t == 'plot':
+                f.setData(x=np.arange(len(d)), y=np.array(d))
+            elif t == 'distribution':
+                f.setOpts(height=d)
+
+
 class PheroBgInfoSetting(QMainWindow, Ui_phero_bg_info_setting):
     signal = pyqtSignal(str)
     
@@ -279,9 +314,18 @@ class PheroBgInfoSetting(QMainWindow, Ui_phero_bg_info_setting):
                        dtype=np.uint8)
         width = int(self.sb_arena_border_width.value())
         margin = int(self.sb_arena_border_margin.value())
-        img = cv2.rectangle(img, (margin,margin), 
-                            (100-margin,100-margin), 
-                            self.arena_border_color, width)
+        if width + margin >= 90:
+            if margin < 90:
+                img = cv2.line(img, [0, margin], [100 - margin, margin],
+                               self.arena_border_color, width)
+                img = cv2.line(img, [100 - margin, margin], [100 - margin, 100],
+                               self.arena_border_color, width)
+            else:
+                img = cv2.line(img, [0, 50], [100, 50], self.arena_border_color, width)
+        else:
+            img = cv2.rectangle(img, (margin,margin), 
+                                (100-margin,100-margin), 
+                                self.arena_border_color, width)
         _image = QImage(img[:], img.shape[1], img.shape[0], 
                         img.shape[1] * 3, QImage.Format_RGB888)
         image = QPixmap(_image)
@@ -329,7 +373,7 @@ class VisualizationPlot(Ui_VisualizationPlot, QMainWindow):
         if self.type == "plot":
             self.figure = pg.PlotWidget()
             self.figure.setBackground('k')
-            self.vl_figure.addWidget(self.figure)
+            # self.vl_figure.addWidget(self.figure)
             self.legend = self.figure.getPlotItem().addLegend(brush=pg.mkBrush((255,255,255,50)))
             self.lines = {}
         elif self.type == "map":
@@ -376,7 +420,7 @@ class VisualizationPlot(Ui_VisualizationPlot, QMainWindow):
             color_used = [v for k, v in self.color_in_use.items()]
             color_available = set(self.COLORS) - set(color_used)
             color = list(color_available)[0]
-            bar_plot = pg.BarGraphItem(brush=pg.mkBrush(color), pen='w', name=data_key)
+            bar_plot = pg.BarGraphItem(x=range(20), height=np.zeros(20), width=0.3, brush=pg.mkBrush(color), pen='w', name=data_key)
             self.bars.update({data_key:bar_plot})
             self.figure.addItem(bar_plot)
             self.legend.addItem(bar_plot, data_key)
@@ -488,6 +532,7 @@ class Viewer:
         self.com = Communication()
         self.message_box = MessageBox()
         self.data_save_setting = DialogSaveDataSetting()
+        self.exp_results = ExpResultWin()
         self.plots = []
         
         self.phero_bg_setting = PheroBgInfoSetting()

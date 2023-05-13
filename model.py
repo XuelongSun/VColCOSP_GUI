@@ -75,8 +75,11 @@ class SerialDataModel(object):
         return data
 
     def get_robot_data(self, robot_id, data_str, t=None):
-        data = list(zip(*self.robot_data[robot_id]))
-        return data[self.data_str_table[data_str]] if t is None else data[self.data_str_table[data_str]][t]
+        if robot_id in self.robot_data.keys():
+            data = list(zip(*self.robot_data[robot_id]))
+            return data[self.data_str_table[data_str]] if t is None else data[self.data_str_table[data_str]][t]
+        else:
+            return None
 
 
 class LedImageProcess:
