@@ -104,18 +104,8 @@ class Controller:
         self.phero_bg_sc = (0,0,0) # black
         self.phero_bg_loaded_image = None
         self.phero_bg_drawn_image = None
-        self.phero_bg_info_paras = {'pos_text_color':(255,255,255),
-                                    'pos_text_width':2,
-                                    'pos_line_style':'solid',
-                                    'pos_line_color':(125,125,125),
-                                    'pos_line_width':2,
-                                    'pos_marker_style':'circle',
-                                    'pos_marker_width':2,
-                                    'pos_marker_color':(0,255,255), 
-                                    'pos_marker_radius':30,
-                                    'arena_border_color':(255,255,255),
-                                    'arena_border_width':4,
-                                    'arena_border_margin':2}
+        self.phero_bg_info_paras = {}
+        self.phero_bg_setting_message_handle()
         self.viewer.phero.pb_bg_setting.clicked.connect(lambda:self.viewer.phero_bg_setting.show())
         self.viewer.phero_bg_setting.signal.connect(self.phero_bg_setting_message_handle)
         self.phero_image = None
@@ -499,8 +489,8 @@ class Controller:
         # get config and write to the config file
         config_dict = {'mode':str(self.viewer.vscene.comboBox_led_mode.currentIndex())}
         for name in ['sled_w','sled_h','sled_r','sled_c',
-                        'sp_x','sp_y','sled_fold_c','sled_fold_r',
-                        'frame_rate','pc_display_rate']:
+                     'sp_x','sp_y','sled_fold_c','sled_fold_r',
+                     'frame_rate','pc_display_rate']:
             exec('config_dict[name] = str(self.viewer.vscene.spinBox_{}.value())'.format(name))
         for k,v in config_dict.items():
             config.set('VScene', k, v)
@@ -558,8 +548,8 @@ class Controller:
             if self.phero_is_rendering:
                 self.phero_is_rendering = False
     
-    def phero_bg_setting_message_handle(self,message):
-        if message == "OK":
+    def phero_bg_setting_message_handle(self, message='call'):
+        if message == "OK" or message == "call":
             # update phero background param
             self.phero_bg_info_paras['pos_text_color'] = self.viewer.phero_bg_setting.pos_text_color
             self.phero_bg_info_paras['pos_line_color'] = self.viewer.phero_bg_setting.pos_line_color
@@ -570,7 +560,11 @@ class Controller:
             self.phero_bg_info_paras['pos_line_width'] = self.viewer.phero_bg_setting.sb_pos_line_width.value()
             self.phero_bg_info_paras['pos_marker_width'] = self.viewer.phero_bg_setting.sb_pos_marker_width.value()
             self.phero_bg_info_paras['arena_border_width'] = self.viewer.phero_bg_setting.sb_arena_border_width.value()
-            self.phero_bg_info_paras['arena_border_margin'] = self.viewer.phero_bg_setting.sb_arena_border_margin.value()
+            self.phero_bg_info_paras['arena_border_x'] = self.viewer.phero_bg_setting.sb_arena_border_x.value()
+            self.phero_bg_info_paras['arena_border_y'] = self.viewer.phero_bg_setting.sb_arena_border_y.value()
+            self.phero_bg_info_paras['arena_border_p1'] = self.viewer.phero_bg_setting.sb_arena_border_p1.value()
+            self.phero_bg_info_paras['arena_border_p2'] = self.viewer.phero_bg_setting.sb_arena_border_p2.value()
+            self.phero_bg_info_paras['arena_border_type'] = self.viewer.phero_bg_setting.cb_border_type.currentText()
             self.viewer.phero_bg_setting.hide()
         elif message == "Cancel":
             self.viewer.phero_bg_setting.hide()
@@ -775,16 +769,7 @@ class Controller:
                         info.update({int(v[0]):[v[1],v[2],v[3]]})
                     if self.viewer.phero.radioButton_info.isChecked():
                         image = np.zeros([self.phero_model.pixel_height,
-                                self.phero_model.pixel_width, 3], dtype=np.uint8)
-                        # arena border
-                        if self.viewer.phero_bg_setting.groupBox_arena_border.isChecked():
-                            m = self.phero_bg_info_paras['arena_border_margin']
-                            image = cv2.rectangle(image,
-                                                    (m,m),
-                                                    (self.phero_model.pixel_width-m, 
-                                                    self.phero_model.pixel_height-m),
-                                                    self.phero_bg_info_paras['arena_border_color'],
-                                                    self.phero_bg_info_paras['arena_border_width'])
+                                          self.phero_model.pixel_width, 3], dtype=np.uint8)
                         font = cv2.FONT_HERSHEY_SIMPLEX
                         for k, v in info.items():
                             if (v[0] >= 0) and (v[0] <= self.arena_length) and \
@@ -822,7 +807,24 @@ class Controller:
                                                             self.phero_bg_info_paras['pos_marker_color'],
                                                             4)
                             else:
-                                print('Invalid position value from LOCALIZATION:({},{}) of ID:({})'.format(v[0],v[1],k))               
+                                print('Invalid position value from LOCALIZATION:({},{}) of ID:({})'.format(v[0],v[1],k))
+                        # arena border
+                        if self.viewer.phero_bg_setting.groupBox_arena_border.isChecked():
+                            if self.phero_bg_info_paras['arena_border_type'] == 'rectangle':
+                                image = cv2.rectangle(image,
+                                                    (self.phero_bg_info_paras['arena_border_x'],
+                                                     self.phero_bg_info_paras['arena_border_y']), 
+                                                    (self.phero_bg_info_paras['arena_border_x'] + self.phero_bg_info_paras['arena_border_p1'],
+                                                     self.phero_bg_info_paras['arena_border_y'] + self.phero_bg_info_paras['arena_border_p2']), 
+                                                    self.phero_bg_info_paras['arena_border_color'],
+                                                    self.phero_bg_info_paras['arena_border_width'])
+                            elif self.phero_bg_info_paras['arena_border_type'] == 'circle':
+                                image = cv2.circle(image,
+                                                   (self.phero_bg_info_paras['arena_border_x'],
+                                                    self.phero_bg_info_paras['arena_border_y']),
+                                                   self.phero_bg_info_paras['arena_border_p1'],
+                                                   self.phero_bg_info_paras['arena_border_color'],
+                                                   self.phero_bg_info_paras['arena_border_width'])    
                         self.phero_background_image = image.copy()
                     elif self.viewer.phero.radioButton_image.isChecked():
                         # use background image
@@ -870,10 +872,10 @@ class Controller:
                         # merge the background and pheromone, pheromone z-index is lower
                         img_temp = (phero_image/np.max(phero_image)*255).astype(np.uint8)
                         mask = cv2.bitwise_and(cv2.cvtColor(img_temp,cv2.COLOR_RGB2GRAY),
-                                            cv2.cvtColor(self.phero_background_image,cv2.COLOR_RGB2GRAY))
+                                               cv2.cvtColor(self.phero_background_image,cv2.COLOR_RGB2GRAY))
                         if np.sum(mask) > 0:
                             phero_image[np.where(mask>0)] = self.phero_background_image[np.where(mask>0)]
-                            phero_image[np.where(mask<=0)] = self.phero_background_image[np.where(mask<=0)] + phero_image[np.where(mask<=0)]
+                        phero_image[np.where(mask<=0)] = self.phero_background_image[np.where(mask<=0)] + phero_image[np.where(mask<=0)]
                         self.phero_image = phero_image.copy()
                     # time.sleep(1/self.phero_frame_rate)
                 else:
@@ -1868,7 +1870,6 @@ class Controller:
                                                 'width':0.3/20}])
         self.exp_result_win_setted = True
         self.viewer.exp_results.show()
-                                                
 
     def exp_start(self):
         if self.viewer.main_menu.pb_start_exp.text() == "Start \n Experiment":
@@ -1901,7 +1902,7 @@ class Controller:
         data = []
         # prey energy
         d_ = []
-        for i in self.exp_predator_id:
+        for i in self.exp_prey_ids:
             e = self.serial_data_model.get_robot_data(i, 'Energy')
             
             if e:
@@ -1953,9 +1954,8 @@ class Controller:
     
     def exp_initial(self):
         self.exp_predator_id = 1
-        self.exp_prey_ids = [0] + list(range(2, 11))
+        self.exp_prey_ids = [0] + list(range(2, 16))
         self.exp_prey_cluster = {}
-        self.exp_prey_cluster_id = dict.fromkeys(self.exp_prey_ids, 1)
         self.exp_prey_robot_size = dict.fromkeys(self.exp_prey_ids, 0.04)
         self.pre_exp_task_t = time.time() - self.exp_start_time
         self.exp_loop_counter = 0
@@ -1981,16 +1981,18 @@ class Controller:
                     pd_position = [0,0]
                     pd_heading = 0
                     # self.viewer.system_logger('Lost position of the predator', 'err')
-                    print('exp-err: Lost position of the predator')
+                    print('\033[0;31m exp-err: Lost position of the predator \033[0m')
                 ## ids defined from the localization and communication
                 exp_p_ids = set(self.serial_data_model.robot_data.keys()).intersection(set(self.loc_world_locations.keys())) - \
                     set([self.exp_predator_id])
                 print('exp-info: valid ids:', exp_p_ids)
                 pe_positions = {}
+                pe_energy = {}
                 pe_energy_sum = 0
                 for id_ in exp_p_ids:
                     pe_positions.update({id_:self.loc_world_locations[id_]})
                     e = self.serial_data_model.get_robot_data(id_, 'Energy', -1)
+                    pe_energy.update({id_:e})
                     # prey in escaping state
                     if self.serial_data_model.get_robot_data(id_, 'State', -1) == 2:
                         pe_energy_sum += e
@@ -1999,26 +2001,31 @@ class Controller:
                     if e <= 0:
                         # generate f_avoid and f_gather value
                         if np.random.uniform(0, 1) > 0.1:
-                            temp_a_e = [(a, a.energy) for a in self.alive_preys]
-                            temp_a_e = sorted(temp_a_e, key=lambda x:x[1])
+                            temp_a_e = sorted(pe_energy.items(), key=lambda x:x[1])
                             sum_ = sum([a_[1] for a_ in temp_a_e])
-                            partial_p = [a_[1]/sum_ for a_ in temp_a_e]
-                            p_ = np.random.rand(1)[0]
-                            ind = np.where(partial_p < p_)[0][-1] if len(np.where(partial_p < p_)[0]) > 0 else -1
-                            f_gather = temp_a_e[min(ind + 1, len(temp_a_e)-1)][0].f_gather
-                            f_avoid = temp_a_e[min(ind + 1, len(temp_a_e)-1)][0].f_avoid
+                            if sum_ > 0:
+                                partial_p = [a_[1]/sum_ for a_ in temp_a_e]
+                                p_ = np.random.rand(1)[0]
+                                ind = np.where(partial_p < p_)[0][-1] if len(np.where(partial_p < p_)[0]) > 0 else -1
+                                use_id = temp_a_e[min(ind + 1, len(temp_a_e)-1)][0]
+                                f_gather = self.serial_data_model.get_robot_data(use_id, 'FGather', -1)
+                                f_avoid = self.serial_data_model.get_robot_data(use_id, 'FAvoid', -1)
+                            else:
+                                f_gather = np.random.uniform(0.02, 0.32)
+                                f_avoid = np.random.uniform(0.01, 1.01)
                         else:
                             f_gather = np.random.uniform(0.02, 0.32)
                             f_avoid = np.random.uniform(0.01, 1.01)
                         send_data = b'DWD'
                         send_data += st.pack('2f', f_avoid, f_gather)
-                        print('exp-info: send to prey {}:'.format(id_), send_data)
+                        print('exp-info: \033[0;46m send to prey {}:'.format(id_), send_data, '\033[0m')
                         self.serial_port_send(send_data, r_id=id_, mode='thread')
 
                 # 3. clusterring the preys
                 self.exp_prey_cluster = {}
+                self.exp_prey_cluster_id = dict.fromkeys(exp_p_ids, None)
                 ## 3.1 roughly arange by distance
-                for id_ in self.exp_prey_ids:
+                for id_ in exp_p_ids:
                     if self.exp_prey_cluster_id[id_] is None:
                         self.exp_prey_cluster_id[id_] = len(self.exp_prey_cluster) + 1
                         self.exp_prey_cluster.update()
@@ -2064,10 +2071,10 @@ class Controller:
                         self.exp_prey_cluster.update({self.exp_prey_cluster_id[id_]:[id_]})
                         
                 # 4. send predator its position, angle and the goal position
-                if self.exp_predator_id in exp_p_ids:
+                if self.exp_predator_id in set(self.serial_data_model.robot_data.keys()).intersection(set(self.loc_world_locations.keys())):
                     # calculate goal position based on the prey's cluster info
                     sorted_c = sorted(self.exp_prey_cluster.items(), key=lambda v:len(v[1]))
-                    if len(sorted):
+                    if len(sorted_c):
                         _, v1 = sorted_c[-1]
                     else:
                         v1 = {}
@@ -2087,10 +2094,10 @@ class Controller:
 
                     send_data = b'DWD'
                     send_data += st.pack('6f', pd_position[0],  pd_position[1], pd_heading, g_px, g_py, pe_energy_sum)
-                    print('send to predator:', send_data)
+                    print('exp-info: \033[0;41m send to predator:', send_data, '\033[0m')
                     self.serial_port_send(send_data, r_id=self.exp_predator_id, mode='thread')
                 else:
-                    print('exp-err: cannot find predator')
+                    print('\033[0;31m exp-err: cannot find predator \033[0m')
                 # data send format
                 # to prey: DWD + 2f:'f_avoid, f_gather'
                 # to predator: DWD + 6f:'p_x, p_y, h, g_px, g_py, prey_energy'

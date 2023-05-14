@@ -244,7 +244,11 @@ class PheroBgInfoSetting(QMainWindow, Ui_phero_bg_info_setting):
         self.lv_arena_border.setScaledContents(True)
         self.pb_arena_border_color.clicked.connect(self.arena_border_color_pick)
         self.sb_arena_border_width.valueChanged.connect(self.arena_border_image_update)
-        self.sb_arena_border_margin.valueChanged.connect(self.arena_border_image_update)
+        self.sb_arena_border_p1.valueChanged.connect(self.arena_border_image_update)
+        self.sb_arena_border_p2.valueChanged.connect(self.arena_border_image_update)
+        self.sb_arena_border_x.valueChanged.connect(self.arena_border_image_update)
+        self.sb_arena_border_y.valueChanged.connect(self.arena_border_image_update)
+        self.cb_border_type.currentIndexChanged.connect(self.arena_border_image_update)
         self.arena_border_color = (255,255,255)
         
         self.pb_ok.clicked.connect(self.click_ok)
@@ -310,22 +314,33 @@ class PheroBgInfoSetting(QMainWindow, Ui_phero_bg_info_setting):
         self.lv_pos_marker.setPixmap(image)
     
     def arena_border_image_update(self):
-        img = np.zeros([100, 100, 3],
+        img = np.zeros([200, 200, 3],
                        dtype=np.uint8)
         width = int(self.sb_arena_border_width.value())
-        margin = int(self.sb_arena_border_margin.value())
-        if width + margin >= 90:
-            if margin < 90:
-                img = cv2.line(img, [0, margin], [100 - margin, margin],
-                               self.arena_border_color, width)
-                img = cv2.line(img, [100 - margin, margin], [100 - margin, 100],
-                               self.arena_border_color, width)
-            else:
-                img = cv2.line(img, [0, 50], [100, 50], self.arena_border_color, width)
-        else:
-            img = cv2.rectangle(img, (margin,margin), 
-                                (100-margin,100-margin), 
+        x = self.sb_arena_border_x.value()
+        y = self.sb_arena_border_y.value()
+        p1 = self.sb_arena_border_p1.value()
+        p2 = self.sb_arena_border_p2.value()
+        t = self.cb_border_type.currentText()
+        if t == 'rectangle':
+            img = cv2.rectangle(img, (x, y), 
+                                (x + p1, y+p2), 
                                 self.arena_border_color, width)
+        elif t == 'circle':
+            img = cv2.circle(img, (x, y), p1, self.arena_border_color, width)
+        # margin = int(self.sb_arena_border_margin.value())
+        # if width + margin >= 90:
+        #     if margin < 90:
+        #         img = cv2.line(img, [0, margin], [100 - margin, margin],
+        #                        self.arena_border_color, width)
+        #         img = cv2.line(img, [100 - margin, margin], [100 - margin, 100],
+        #                        self.arena_border_color, width)
+        #     else:
+        #         img = cv2.line(img, [0, 50], [100, 50], self.arena_border_color, width)
+        # else:
+        #     img = cv2.rectangle(img, (margin,margin), 
+        #                         (100-margin,100-margin), 
+        #                         self.arena_border_color, width)
         _image = QImage(img[:], img.shape[1], img.shape[0], 
                         img.shape[1] * 3, QImage.Format_RGB888)
         image = QPixmap(_image)
@@ -599,8 +614,8 @@ class Viewer:
 
 if __name__ == '__main__':
     App = QApplication(sys.argv)
-    # view = PheroBgInfoSetting()
-    view = WinLocPattern()
+    view = PheroBgInfoSetting()
+    # view = WinLocPattern()
     view.show()
     sys.exit(App.exec_())
 
