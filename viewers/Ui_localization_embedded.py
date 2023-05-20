@@ -189,7 +189,7 @@ class Ui_localization_embedded(object):
 "border-radius: 4px;\n"
 "}")
         self.hS_gamma.setMaximum(100)
-        self.hS_gamma.setProperty("value", 10)
+        self.hS_gamma.setProperty("value", 33)
         self.hS_gamma.setOrientation(QtCore.Qt.Horizontal)
         self.hS_gamma.setObjectName("hS_gamma")
         self.label_39 = QtWidgets.QLabel(localization_embedded)
@@ -288,7 +288,7 @@ class Ui_localization_embedded(object):
 "}")
         self.hS_gain.setMaximum(32)
         self.hS_gain.setSingleStep(1)
-        self.hS_gain.setProperty("value", 12)
+        self.hS_gain.setProperty("value", 18)
         self.hS_gain.setOrientation(QtCore.Qt.Horizontal)
         self.hS_gain.setObjectName("hS_gain")
         self.label_14 = QtWidgets.QLabel(localization_embedded)
@@ -322,7 +322,7 @@ class Ui_localization_embedded(object):
 "border-radius: 4px;\n"
 "}")
         self.hS_exposure.setMaximum(1000)
-        self.hS_exposure.setProperty("value", 50)
+        self.hS_exposure.setProperty("value", 69)
         self.hS_exposure.setOrientation(QtCore.Qt.Horizontal)
         self.hS_exposure.setObjectName("hS_exposure")
         self.pb_start = QtWidgets.QPushButton(localization_embedded)

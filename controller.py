@@ -64,6 +64,13 @@ class Controller:
         self.viewer.vscene.pb_pause_video.clicked.connect(self.vscene_pause_video)
         self.viewer.vscene.pb_load_config.clicked.connect(self.vscene_load_config)
         self.viewer.vscene.pb_save_config.clicked.connect(self.vscene_save_config)
+        
+        self.vscene_video_image = None
+        ## led screen window
+        self.vscene_screen = LEDScreen()
+        self.vscene_loaded_image_path = None
+        self.vscene_frame_num = 0
+        self.vscene_roll = 0
         ## timer for video player
         self.vscene_timer = QTimer()
         self.vscene_timer.timeout.connect(self.vscene_video_player)
@@ -74,12 +81,6 @@ class Controller:
                                                              self.vscene_img_height,
                                                              self.vscene_fold_row,
                                                              self.vscene_fold_column)
-        self.vscene_video_image = None
-        ## led screen window
-        self.vscene_screen = LEDScreen()
-        self.vscene_loaded_image_path = None
-        self.vscene_frame_num = 0
-        self.vscene_roll = 0
         
         #* pheromone
         self.phero_model = PheromoneModel()
@@ -98,6 +99,7 @@ class Controller:
         self.viewer.phero.pb_screen_shot.clicked.connect(self.phero_screenshot)
         
         self.phero_screen = LEDScreen()
+        
         #* pheromone background settings
         self.phero_background_image = np.zeros([self.phero_model.pixel_height,
                                                 self.phero_model.pixel_width, 3]).astype(np.uint8)
@@ -316,11 +318,7 @@ class Controller:
 
     def vscene_show_screen(self):
         if (self.viewer.vscene.pb_show.text() == "Show") and (self.vscene_image is not None):
-            self.vscene_screen.show_label_img(self.vscene_screen_start_pos[0],
-                                              self.vscene_screen_start_pos[1],
-                                              self.vscene_img_width,
-                                              self.vscene_img_height,
-                                              self.vscene_image)
+            self.vscene_screen.show_label_img(self.vscene_image)
             self.viewer.vscene.pb_show.setText("Hide")
             self.vscene_screen.show()
         elif self.viewer.vscene.pb_show.text() == "Hide":
@@ -340,7 +338,10 @@ class Controller:
         self.vscene_fold_column = int(self.viewer.vscene.spinBox_sled_fold_c.value())
         self.vscene_img_width = int(self.vscene_led_unit_width * self.vscene_led_unit_row)
         self.vscene_img_height = int(self.vscene_led_unit_height * self.vscene_led_unit_column)
-
+        self.vscene_screen.set_window_position(self.vscene_screen_start_pos[0],
+                                               self.vscene_screen_start_pos[1],
+                                               self.vscene_img_width,
+                                               self.vscene_img_height)
         self.vscene_display_mode = self.viewer.vscene.comboBox_led_mode.currentText()
         self.vscene_video_image = None
         if self.vscene_display_mode == "Default":
@@ -383,11 +384,7 @@ class Controller:
                 #TODO: other modes
                 self.vscene_image = None
         if (self.viewer.vscene.pb_show.text() == "Hide") and (self.vscene_image is not None):
-            self.vscene_screen.show_label_img(self.vscene_screen_start_pos[0],
-                                           self.vscene_screen_start_pos[1],
-                                           self.vscene_img_width,
-                                           self.vscene_img_height,
-                                           self.vscene_image)
+            self.vscene_screen.show_label_img(self.vscene_image)
             
     def vscene_load_picture(self):
         self.vscene_loaded_image_path = self.load_picture(self.viewer.vscene) 
@@ -465,11 +462,7 @@ class Controller:
             self.vscene_timer.stop()
         self.vscene_frame_num += 1
         if (self.viewer.vscene.pb_show.text() == "Hide") and (self.vscene_image is not None):
-            self.vscene_screen.show_label_img(self.vscene_screen_start_pos[0],
-                                           self.vscene_screen_start_pos[1],
-                                           self.vscene_img_width,
-                                           self.vscene_img_height,
-                                           self.vscene_image)
+            self.vscene_screen.show_label_img(self.vscene_image)
         
     def vscene_start_video(self):
         self.vscene_frame_rate = self.viewer.vscene.spinBox_frame_rate.value()
@@ -1899,58 +1892,64 @@ class Controller:
             self.viewer.main_menu.pb_start_exp.setText("Start \n Experiment")
 
     def exp_update_results(self):
-        data = []
-        # prey energy
-        d_ = []
-        for i in self.exp_prey_ids:
-            e = self.serial_data_model.get_robot_data(i, 'Energy')
+        if self.viewer.main_menu.cb_exp_data_plot.isChecked():
+            data = []
+            # prey energy
+            d_ = []
+            for i in self.exp_prey_ids:
+                e = self.serial_data_model.get_robot_data(i, 'Energy')
+                
+                if e:
+                    d_.append(self.serial_data_model.get_robot_data(i, 'Energy'))
             
+            if d_:
+                min_l = min([len(d__) for d__ in d_])
+            else:
+                min_l = -1
+                
+            if min_l:
+                temp = [d__[-min_l:-1] for d__ in d_]
+                data.append(np.mean(temp, axis=0))
+            else:
+                data.append(np.zeros(self.exp_loop_counter))
+            
+            e = self.serial_data_model.get_robot_data(self.exp_predator_id, 'Energy')
             if e:
-                d_.append(self.serial_data_model.get_robot_data(i, 'Energy'))
-        
-        if d_:
-            min_l = min([len(d__) for d__ in d_])
-        else:
-            min_l = -1
+                data.append(e)
+            else:
+                data.append(np.zeros(self.exp_loop_counter))
             
-        if min_l:
-            temp = [d__[-min_l:-1] for d__ in d_]
-            data.append(np.mean(temp, axis=0))
-        else:
-            data.append(np.zeros(self.exp_loop_counter))
-        
-        e = self.serial_data_model.get_robot_data(self.exp_predator_id, 'Energy')
-        if e:
-            data.append(e)
-        else:
-            data.append(np.zeros(self.exp_loop_counter))
-        
-        d_ = []
-        for i in (0, 2, 8):
-            f_a = self.serial_data_model.get_robot_data(i, 'FAvoid', -1)
-            if f_a:
-                d_.append(f_a)
-        if d_:
-            temp = d_.copy()
-        else:
-            temp = np.ones(20)*5
-        temp, _ = np.histogram(np.array(temp), bins=20, range=(0.01, 10.01))
-        data.append(temp)
-        
-        d_ = []
-        for i in (0, 2, 8):
-            f_g = self.serial_data_model.get_robot_data(i, 'FGather', -1)
-            if f_g:
-                d_.append(f_g)
-        if d_:
-            temp = d_.copy()
-        else:
-            temp = np.ones(20)*0.2
+            d_ = []
+            for i in self.exp_prey_ids:
+                f_a = self.serial_data_model.get_robot_data(i, 'FAvoid', -1)
+                if f_a:
+                    d_.append(f_a)
+            if d_:
+                temp = d_.copy()
+            else:
+                temp = np.ones(20)*5
+            temp, _ = np.histogram(np.array(temp), bins=20, range=(0.01, 10.01))
+            data.append(temp)
             
-        temp, _ = np.histogram(np.array(temp), bins=20, range=(0.02, 0.32))
-        data.append(temp)
-        
-        self.viewer.exp_results.update_figures(data)
+            d_ = []
+            for i in self.exp_prey_ids:
+                f_g = self.serial_data_model.get_robot_data(i, 'FGather', -1)
+                if f_g:
+                    d_.append(f_g)
+            if d_:
+                temp = d_.copy()
+            else:
+                temp = np.ones(20)*0.2
+                
+            temp, _ = np.histogram(np.array(temp), bins=20, range=(0.02, 0.32))
+            data.append(temp)
+            
+            self.viewer.exp_results.update_figures(data)
+            if self.viewer.exp_results.isHidden():
+                self.viewer.exp_results.show()
+        elif not self.viewer.exp_results.isHidden():
+            self.viewer.exp_results.hide()
+            
     
     def exp_initial(self):
         self.exp_predator_id = 1
@@ -2092,6 +2091,8 @@ class Controller:
                             g_px = pd_position[0]
                             g_py = pd_position[1]
 
+                    g_px = 0.7
+                    g_py = 0.4
                     send_data = b'DWD'
                     send_data += st.pack('6f', pd_position[0],  pd_position[1], pd_heading, g_px, g_py, pe_energy_sum)
                     print('exp-info: \033[0;41m send to predator:', send_data, '\033[0m')

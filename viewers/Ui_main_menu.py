@@ -407,6 +407,9 @@ class Ui_main_menu(object):
 "")
         self.sp_exp_task_interval.setProperty("value", 1.0)
         self.sp_exp_task_interval.setObjectName("sp_exp_task_interval")
+        self.cb_exp_data_plot = QtWidgets.QCheckBox(main_menu)
+        self.cb_exp_data_plot.setGeometry(QtCore.QRect(20, 380, 231, 19))
+        self.cb_exp_data_plot.setObjectName("cb_exp_data_plot")
 
         self.retranslateUi(main_menu)
         QtCore.QMetaObject.connectSlotsByName(main_menu)
@@ -439,4 +442,5 @@ class Ui_main_menu(object):
         self.pb_load_config.setText(_translate("main_menu", "Load Config"))
         self.pb_save_config.setText(_translate("main_menu", "Save Config"))
         self.label_56.setText(_translate("main_menu", "s"))
+        self.cb_exp_data_plot.setText(_translate("main_menu", "experiment data visulization"))
 import resources_rc

@@ -13,12 +13,15 @@ import gc
 
 g_cameraStatusUserInfo = b"statusInfo"
 
+img_height = 1200 # 2160
+img_width = 1920 # 4096
+
 class Camera:
 	def __init__(self):
 		# self.connectCallBackFuncEx = connectCallBackEx(self.deviceLinkNotify)
 		self.connectCallBackFuncEx = connectCallBackEx(self.deviceLinkNotify)
 		self.frameCallbackFuncEx = callbackFuncEx(self.onGetFrameEx)
-		self.usr_image = c_buffer(b'\0', 1920*1200)
+		self.usr_image = c_buffer(b'\0', img_width*img_height)
 		self.g_isStop = False
 
 	def onGetFrameEx(self, frame, userInfo):
@@ -639,13 +642,13 @@ class Camera:
 
 	def get_gray_image(self):
 		grayByteArray = bytearray(self.usr_image)
-		Image = numpy.array(grayByteArray).reshape(1200, 1920)
+		Image = numpy.array(grayByteArray).reshape(img_height, img_width)
 		Image = cv.cvtColor(Image, cv.COLOR_BAYER_BG2GRAY)
 		return Image
 
 	def get_BGR_image(self):
 		colorByteArray = bytearray(self.usr_image)
-		Image = numpy.array(colorByteArray).reshape(1200, 1920)
+		Image = numpy.array(colorByteArray).reshape(img_height, img_width)
 		Image = cv.cvtColor(Image, cv.COLOR_BAYER_BG2BGR)
 		return Image
 

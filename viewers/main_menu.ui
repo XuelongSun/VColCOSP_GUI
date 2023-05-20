@@ -855,6 +855,19 @@ color: rgb(0,255, 0);
     <double>1.000000000000000</double>
    </property>
   </widget>
+  <widget class="QCheckBox" name="cb_exp_data_plot">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>380</y>
+     <width>231</width>
+     <height>19</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>experiment data visulization</string>
+   </property>
+  </widget>
  </widget>
  <resources>
   <include location="../resources.qrc"/>

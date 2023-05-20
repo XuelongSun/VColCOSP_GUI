@@ -434,7 +434,7 @@ border-radius: 4px;
     <number>100</number>
    </property>
    <property name="value">
-    <number>10</number>
+    <number>33</number>
    </property>
    <property name="orientation">
     <enum>Qt::Horizontal</enum>
@@ -709,7 +709,7 @@ border-radius: 4px;
     <number>1</number>
    </property>
    <property name="value">
-    <number>12</number>
+    <number>18</number>
    </property>
    <property name="orientation">
     <enum>Qt::Horizontal</enum>
@@ -778,7 +778,7 @@ border-radius: 4px;
     <number>1000</number>
    </property>
    <property name="value">
-    <number>50</number>
+    <number>69</number>
    </property>
    <property name="orientation">
     <enum>Qt::Horizontal</enum>
