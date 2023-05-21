@@ -2,6 +2,7 @@ import sys
 import os
 import scipy.io as sio
 import configparser
+import json
 from multiprocessing import Process
 from itertools import combinations
 import cv2
@@ -213,6 +214,7 @@ class Controller:
         self.exp_result_win_setted = False
         self.viewer.main_menu.pb_save_data_setting.clicked.connect(self.exp_save_data_setting)
         self.viewer.data_save_setting.answer.connect(self.exp_save_data_setting_update)
+        self.viewer.main_menu.cb_exp_data_plot.stateChanged.connect(self.exp_switch_results_visualization)
         
         self.viewer.main_menu.pb_start_exp.clicked.connect(self.exp_start)
         self.viewer.main_menu.pb_save_data.clicked.connect(self.exp_save_data)
@@ -379,7 +381,7 @@ class Controller:
                 else:
                     QMessageBox.warning(self.viewer.vscene, 
                                         'ERROR', 
-                                        'No Picture loaded, please load picture first.')
+                                        'No Picture loaded for visual scene, please load picture first.')
             else:
                 #TODO: other modes
                 self.vscene_image = None
@@ -981,8 +983,8 @@ class Controller:
         # get config and write to the config file
         config_dict = {'mode':str(self.viewer.phero.comboBox_led_mode.currentIndex())}
         for name in ['sled_w','sled_h','sled_r','sled_c',
-                        'sp_x','sp_y','arena_l','arena_w',
-                        'frame_rate']:
+                     'sp_x','sp_y','arena_l','arena_w',
+                     'frame_rate']:
             exec('config_dict[name] = str(self.viewer.phero.spinBox_{}.value())'.format(name))
         for p in ['d_kernel_s','diffusion','evaporation','injection','radius']:
             for c in ['r','g','b']:
@@ -990,7 +992,11 @@ class Controller:
                 config_dict[p + '_' + c] = str(value)
         diversity = self.viewer.phero.te_diversity.toPlainText()
         config_dict['diversity_string'] = diversity
-        for k,v in config_dict.items():
+        # pheromone bg
+        for k, v in self.phero_bg_info_paras.items():
+            config_dict[k] = str(v)
+
+        for k, v in config_dict.items():
             config.set('Pheromone', k, v)
         return config
         
@@ -1022,9 +1028,7 @@ class Controller:
                         else:
                             value = config.getfloat('Pheromone', p + '_' + c)
                         eval('self.viewer.phero.sp_'+ p + '_' + c +'.setValue(value)')
-            for name in ['sled_w','sled_h','sled_r','sled_c',
-                            'sp_x','sp_y','arena_l','arena_w',
-                            'frame_rate']:
+            for name in ['sled_w','sled_h','sled_r','sled_c','sp_x','sp_y','arena_l','arena_w', 'frame_rate']:
                 if name in options:
                     if name == 'arena_l' or name == 'arena_w':
                         value = config.getfloat('Pheromone', name)
@@ -1036,6 +1040,17 @@ class Controller:
                 self.viewer.phero.te_diversity.insertPlainText(config.get('Pheromone',
                                                                         'diversity_string'))
             self.phero_refresh_parameter()
+            # pheromone background setting
+            for k in self.phero_bg_info_paras.keys():
+                if k in options:
+                    if k.endswith('color'):
+                        exec("self.viewer.phero_bg_setting." + k + "= tuple(map(int, config.get('Pheromone', 'pos_marker_color')[1:-1].split(',')))")
+                    elif k == "arena_border_type":
+                        self.viewer.phero_bg_setting.cb_border_type.setCurrentText(config.get('Pheromone', k))
+                    else:
+                        value = config.getint('Pheromone', k)
+                        eval("self.viewer.phero_bg_setting.sb_" + k + ".setValue(value)")
+            self.phero_bg_setting_message_handle()
         else:
             self.viewer.system_logger('No Pheromone Section Found', 'warning')
 
@@ -1879,7 +1894,8 @@ class Controller:
             self.exp_thread = threading.Thread(target=self.exp_task)
             self.exp_thread.start()
             self.exp_is_running = True
-            self.exp_results_update_timer.start(100)
+            if self.viewer.main_menu.cb_exp_data_plot.isChecked():
+                self.exp_results_update_timer.start(1000)
             self.viewer.main_menu.pb_start_exp.setText("Stop \n Experiment")
             self.viewer.main_menu.lineEdit_exp_name.setDisabled(True)
             self.viewer.system_logger('Experiment ' + name + ' started', out='exp')
@@ -1890,65 +1906,70 @@ class Controller:
             name = self.viewer.main_menu.lineEdit_exp_name.text()
             self.viewer.system_logger('Experiment ' + name + ' stopped', out='exp')
             self.viewer.main_menu.pb_start_exp.setText("Start \n Experiment")
-
-    def exp_update_results(self):
+    
+    def exp_switch_results_visualization(self):
         if self.viewer.main_menu.cb_exp_data_plot.isChecked():
-            data = []
-            # prey energy
-            d_ = []
-            for i in self.exp_prey_ids:
-                e = self.serial_data_model.get_robot_data(i, 'Energy')
-                
-                if e:
-                    d_.append(self.serial_data_model.get_robot_data(i, 'Energy'))
-            
-            if d_:
-                min_l = min([len(d__) for d__ in d_])
-            else:
-                min_l = -1
-                
-            if min_l:
-                temp = [d__[-min_l:-1] for d__ in d_]
-                data.append(np.mean(temp, axis=0))
-            else:
-                data.append(np.zeros(self.exp_loop_counter))
-            
-            e = self.serial_data_model.get_robot_data(self.exp_predator_id, 'Energy')
-            if e:
-                data.append(e)
-            else:
-                data.append(np.zeros(self.exp_loop_counter))
-            
-            d_ = []
-            for i in self.exp_prey_ids:
-                f_a = self.serial_data_model.get_robot_data(i, 'FAvoid', -1)
-                if f_a:
-                    d_.append(f_a)
-            if d_:
-                temp = d_.copy()
-            else:
-                temp = np.ones(20)*5
-            temp, _ = np.histogram(np.array(temp), bins=20, range=(0.01, 10.01))
-            data.append(temp)
-            
-            d_ = []
-            for i in self.exp_prey_ids:
-                f_g = self.serial_data_model.get_robot_data(i, 'FGather', -1)
-                if f_g:
-                    d_.append(f_g)
-            if d_:
-                temp = d_.copy()
-            else:
-                temp = np.ones(20)*0.2
-                
-            temp, _ = np.histogram(np.array(temp), bins=20, range=(0.02, 0.32))
-            data.append(temp)
-            
-            self.viewer.exp_results.update_figures(data)
-            if self.viewer.exp_results.isHidden():
-                self.viewer.exp_results.show()
-        elif not self.viewer.exp_results.isHidden():
+            self.exp_results_update_timer.start(1000)
+            self.viewer.exp_results.show()
+        else:
+            self.exp_results_update_timer.stop()
             self.viewer.exp_results.hide()
+            
+    def exp_update_results(self):
+        data = []
+        # prey energy
+        d_ = []
+        for i in self.exp_prey_ids:
+            e = self.serial_data_model.get_robot_data(i, 'Energy')
+            
+            if e:
+                d_.append(self.serial_data_model.get_robot_data(i, 'Energy'))
+        
+        if d_:
+            min_l = min([len(d__) for d__ in d_])
+        else:
+            min_l = -1
+            
+        if min_l:
+            temp = [d__[-min_l:-1] for d__ in d_]
+            data.append(np.mean(temp, axis=0))
+        else:
+            data.append(np.zeros(self.exp_loop_counter))
+        
+        e = self.serial_data_model.get_robot_data(self.exp_predator_id, 'Energy')
+        if e:
+            data.append(e)
+        else:
+            data.append(np.zeros(self.exp_loop_counter))
+        
+        d_ = []
+        for i in self.exp_prey_ids:
+            f_a = self.serial_data_model.get_robot_data(i, 'FAvoid', -1)
+            if f_a:
+                d_.append(f_a)
+        if d_:
+            temp = d_.copy()
+        else:
+            temp = np.ones(20)*5
+        temp, _ = np.histogram(np.array(temp), bins=20, range=(0.01, 10.01))
+        data.append(temp)
+        
+        d_ = []
+        for i in self.exp_prey_ids:
+            f_g = self.serial_data_model.get_robot_data(i, 'FGather', -1)
+            if f_g:
+                d_.append(f_g)
+        if d_:
+            temp = d_.copy()
+        else:
+            temp = np.ones(20)*0.2
+            
+        temp, _ = np.histogram(np.array(temp), bins=20, range=(0.02, 0.32))
+        data.append(temp)
+        
+        self.viewer.exp_results.update_figures(data)
+        if self.viewer.exp_results.isHidden():
+            self.viewer.exp_results.show()
             
     
     def exp_initial(self):
@@ -1974,8 +1995,8 @@ class Controller:
                 self.exp_loop_counter += 1
                 # 1. receive data from prey and predator (energy, f_avoid, f_gather, px, py)
                 if self.exp_predator_id in self.loc_world_locations.keys():
-                    pd_position = self.loc_world_locations[self.exp_predator_id][:2]
-                    pd_heading = self.loc_world_locations[self.exp_predator_id][2]
+                    pd_position = self.loc_world_locations[self.exp_predator_id][-1][:2]
+                    pd_heading = self.loc_world_locations[self.exp_predator_id][-1][2]
                 else:
                     pd_position = [0,0]
                     pd_heading = 0
@@ -1989,11 +2010,14 @@ class Controller:
                 pe_energy = {}
                 pe_energy_sum = 0
                 for id_ in exp_p_ids:
-                    pe_positions.update({id_:self.loc_world_locations[id_]})
+                    pe_positions.update({id_:self.loc_world_locations[id_][-1][:2]})
                     e = self.serial_data_model.get_robot_data(id_, 'Energy', -1)
                     pe_energy.update({id_:e})
                     # prey in escaping state
                     if self.serial_data_model.get_robot_data(id_, 'State', -1) == 2:
+                        pe_energy_sum += e
+                    # or use: prey that is closed to predator
+                    if distance(pe_positions[id_], pd_position) <= 0.2:
                         pe_energy_sum += e
                     # 2. justify if each prey's energy is less than zero (death):
                     # if so, send the value of f_avoid, f_gather
@@ -2091,11 +2115,10 @@ class Controller:
                             g_px = pd_position[0]
                             g_py = pd_position[1]
 
-                    g_px = 0.7
-                    g_py = 0.4
                     send_data = b'DWD'
                     send_data += st.pack('6f', pd_position[0],  pd_position[1], pd_heading, g_px, g_py, pe_energy_sum)
                     print('exp-info: \033[0;41m send to predator:', send_data, '\033[0m')
+                    print('exp-info: \033[0;41m send to predator:', (pd_position[0],  pd_position[1], pd_heading, g_px, g_py, pe_energy_sum), '\033[0m')
                     self.serial_port_send(send_data, r_id=self.exp_predator_id, mode='thread')
                 else:
                     print('\033[0;31m exp-err: cannot find predator \033[0m')
