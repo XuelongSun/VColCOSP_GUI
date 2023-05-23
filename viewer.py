@@ -23,6 +23,7 @@ from viewers.Ui_message_box import Ui_message
 from viewers.Ui_data_save_setting import Ui_DataSavingSetting
 from viewers.Ui_loc_pattern import Ui_loc_pattern
 from viewers.Ui_exp_results import Ui_exp_result_win
+from viewers.Ui_experiment import Ui_Form
 
 class WinLocPattern(QMainWindow, Ui_loc_pattern):
     def __init__(self):
@@ -71,7 +72,12 @@ class MainMenu(QMainWindow, Ui_main_menu):
         self.setupUi(self)
         self.setFixedSize(self.width(), self.height())
     
-
+class ExperimentWin(QMainWindow, Ui_Form):
+    def __init__(self):
+        super(ExperimentWin, self).__init__()
+        self.setupUi(self)
+        self.setFixedSize(self.width(), self.height())
+        
 class VScene(QMainWindow, Ui_vscene):
     signal = pyqtSignal(str)
     
@@ -548,6 +554,7 @@ class Viewer:
         self.message_box = MessageBox()
         self.data_save_setting = DialogSaveDataSetting()
         self.exp_results = ExpResultWin()
+        self.exp_win = ExperimentWin()
         self.plots = []
         
         self.phero_bg_setting = PheroBgInfoSetting()

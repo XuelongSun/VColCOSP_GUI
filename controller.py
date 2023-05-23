@@ -137,9 +137,10 @@ class Controller:
         self.loc_camera_is_calibrating = False
         self.loc_current_image = None
         self.loc_img_display = None
+        self.loc_world_location = {}
+        self.loc_world_location_list = []
         self.loc_world_locations = {}
         self.loc_image_location = []
-        self.loc_world_location = []
         self.loc_heading = []
         self.viewer.loc_embedded.signal.connect(self.loc_event_handle)
         self.viewer.loc_embedded.pb_check_camera.clicked.connect(self.loc_check_camera)
@@ -172,6 +173,7 @@ class Controller:
         self.serial_send_package_len = 32
         self.serial_recv_package_len = 96
         self.serial_port_timer = QTimer()
+        self.serial_port_timer.timeout.connect(self.serial_update_gui)
         self.robot_data_buff = []
         self.serial_data_is_running = False
         self.valid_robot_ids = []
@@ -225,13 +227,19 @@ class Controller:
         self.sys_timer.start(100)
         
     def system_frequency_task(self):
-        # 1.system time
+        #  1.system time and experiment time
         t = time.time() - self.sys_time
         h = int(t / 3600)
         m = int((t - h * 3600) / 60)
         s = t - h * 3600 - m * 60
         self.viewer.main_menu.et_sys_timer.setText('SystemTime: %2d H %2d M% 2.2f S' % (h, m, s))
-        
+        if self.exp_is_running:
+            t = time.time() - self.exp_start_time
+            h = int(t / 3600)
+            m = int((t - h * 3600) / 60)
+            s = t - h * 3600 - m * 60
+            self.viewer.main_menu.et_exp_timer.setText('ExperimentTime: %2d H %2d M% 2.2f S' % (h, m, s))
+            
         # 2.update robot ids and data
         self.exp_available_data_key = []
         self.exp_detected_robot_ids = []
@@ -239,7 +247,7 @@ class Controller:
         ids_from_com = []
         ## ids from localization
         if self.loc_world_locations:
-            ids_from_loc = list(self.loc_world_locations.keys())
+            ids_from_loc = list(self.loc_world_location.keys())
             self.exp_available_data_key += ['POS_X', 'POS_Y']
 
         ## ids from communication
@@ -254,16 +262,6 @@ class Controller:
             self.exp_detected_robot_ids = ids_from_loc.copy()
         else:
             self.exp_detected_robot_ids = ids_from_com.copy()
-        
-        # 3.update localization data counter
-        if self.serial_data_is_running:
-            if ids_from_com:
-                s = '%d robots, %d frame have received\n' % (len(ids_from_com),
-                                                            self.serial_data_model.num_package)
-                self.viewer.com.et_data_flow_info.setText(s)
-        else:
-            s = 'Waiting for data...'
-            self.viewer.com.et_data_flow_info.setText(s)
         
         # 4. update visualization plots
         for plot in self.viewer.plots:
@@ -299,6 +297,7 @@ class Controller:
     def login(self):
         self.viewer.login.close()
         self.viewer.main_menu.show()
+        # self.viewer.main_menu.show()
     
     def load_picture(self, window):
         filename, _ = QFileDialog.getOpenFileName(window, 'Load Picture', 
@@ -759,7 +758,7 @@ class Controller:
             if self.phero_mode == "Dy-Localization":
                 if self.loc_is_running:
                     info = {}
-                    for v in self.loc_world_location:
+                    for v in self.loc_world_location_list:
                         # id,x,y,h
                         info.update({int(v[0]):[v[1],v[2],v[3]]})
                     if self.viewer.phero.radioButton_info.isChecked():
@@ -827,14 +826,16 @@ class Controller:
                             QMessageBox.warning(self.viewer.phero, 
                                                 'Error', 
                                                 'Please load background image first!')
-                            self.phero_timer.stop()
+                            self.phero_is_rendering = False
+                            break
                         else:
                             image = cv2.imread(self.phero_bg_loaded_image_path)
                         if image is None:
                             QMessageBox.warning(self.viewer.vscene, 
                                                 'Error', 
                                                 'Cannot load image:{}'.format(self.phero_bg_loaded_image_path))
-                            self.phero_timer.stop()
+                            self.phero_is_rendering = False
+                            break
                         else:
                             self.phero_background_image = image.copy()
                     elif self.viewer.phero.radioButton_sc.isChecked():
@@ -852,7 +853,9 @@ class Controller:
                                                 self.phero_model.pixel_width, 3]).astype(np.uint8)
                     else:
                         # phero_image = self.phero_field_display.copy()
-                        phero_image = self.phero_model.render_pheromone(info, self.phero_channel, self.arena_length, self.arena_width)
+                        phero_image = self.phero_model.render_pheromone(info,
+                                                                        self.phero_channel,
+                                                                        self.arena_length, self.arena_width)
                     #     try:
                     #         phero_image = self.phero_model.render_pheromone(info, self.phero_channel,
                     #                                                     self.arena_length, self.arena_width)
@@ -861,8 +864,8 @@ class Controller:
                     #         self.phero_stop_render()
                     if self.phero_background_image is None:
                         QMessageBox.warning(self.viewer.phero,'Error','No valide background image!')
-                        self.phero_timer.stop()
-                        return
+                        self.phero_is_rendering = False
+                        break
                     else:
                         # merge the background and pheromone, pheromone z-index is lower
                         img_temp = (phero_image/np.max(phero_image)*255).astype(np.uint8)
@@ -874,7 +877,7 @@ class Controller:
                         self.phero_image = phero_image.copy()
                     # time.sleep(1/self.phero_frame_rate)
                 else:
-                    self.phero_stop_render()
+                    self.phero_is_rendering = False
                     break
 
             elif self.phero_mode == "Video":
@@ -882,7 +885,6 @@ class Controller:
                      QMessageBox.warning(self.viewer.phero,
                                          'Error',
                                          'Please load video first.')
-                     self.phero_timer.stop()
                      self.phero_is_rendering = False
                      break
                  else:
@@ -939,7 +941,7 @@ class Controller:
                 # the latest frame data
                 # pos = self.loc_data_thread.loc_data_model.get_last_pos()
                 QMessageBox.warning(self.viewer.phero,'Error','Please read the localization data first!')
-                self.phero_timer.stop()
+                self.phero_stop_render()
 
         elif self.phero_mode == "Dy-Customized":
             #* user defined
@@ -1044,7 +1046,8 @@ class Controller:
             for k in self.phero_bg_info_paras.keys():
                 if k in options:
                     if k.endswith('color'):
-                        exec("self.viewer.phero_bg_setting." + k + "= tuple(map(int, config.get('Pheromone', 'pos_marker_color')[1:-1].split(',')))")
+                        exec("self.viewer.phero_bg_setting." + k + "= tuple(map(int, config.get('Pheromone', '{}')[1:-1].split(',')))".format(k))
+                        eval("self.viewer.phero_bg_setting.{}_image_update()".format(k[:-6]))
                     elif k == "arena_border_type":
                         self.viewer.phero_bg_setting.cb_border_type.setCurrentText(config.get('Pheromone', k))
                     else:
@@ -1161,18 +1164,23 @@ class Controller:
             # grab image from camera
             self.loc_current_image = self.loc_camera.get_gray_image()
             # calculate locations
-            self.loc_world_location, self.loc_image_location, self.loc_heading = self.loc_model.search_pattern(self.loc_current_image)
-            for info, h in zip(self.loc_world_location, self.loc_heading):
+            self.loc_world_location_list, self.loc_image_location, self.loc_heading = self.loc_model.search_pattern(self.loc_current_image)
+            for info, h in zip(self.loc_world_location_list, self.loc_heading):
                 # world location
                 if info[0] in self.loc_world_locations.keys():
                     self.loc_world_locations[int(info[0])].append([info[1], info[2], h])
                 else:
                     self.loc_world_locations.update({int(info[0]):[info[1], info[2], h]})
+                self.loc_world_location[int(info[0])] = [info[1], info[2], h]
 
     def loc_display(self):
-        self.loc_img_display = self.loc_camera.get_BGR_image()
-        if self.loc_is_running:
+        if self.viewer.loc_embedded.cb_show_camera_image.isChecked():
             # color image
+            self.loc_img_display = self.loc_camera.get_BGR_image()
+        else:
+            self.loc_img_display = np.zeros([1200, 1920, 3], dtype=np.uint8)
+
+        if self.loc_is_running:
             for info, h in zip(self.loc_image_location, self.loc_heading):
                 if self.viewer.loc_embedded.cb_show_id.isChecked():
                     self.loc_img_display = cv2.putText(self.loc_img_display, str(info[0]), (info[1], info[2]),
@@ -1257,8 +1265,8 @@ class Controller:
                 self.loc_img_display = cv2.putText(self.loc_img_display, 'cannot found {}x{} corners'.format(c_row, c_col),
                                             (20, self.loc_img_display.shape[0]//10),
                                             cv2.FONT_HERSHEY_COMPLEX_SMALL, 3, (255, 0, 0), 2)
-
-        self.viewer.loc_embedded.update_localization_display(self.loc_img_display)
+        if np.sum(self.loc_img_display) > 0:
+            self.viewer.loc_embedded.update_localization_display(self.loc_img_display)
     
     def loc_dispaly_calibration_data(self):
         if self.loc_camera_opened:
@@ -1544,28 +1552,36 @@ class Controller:
                                 # print('got frame end')
                                 # update robot data
                                 d_display += d
+                                self.serial_data_model.raw_data = d_display
                                 self.serial_data_model.data_transfer(data)
                                 # self.serial_port.reset_input_buffer()
-                    # raw data display
-                    if self.viewer.com.cb_show_raw.isChecked():
-                        raw_data_str = ''
-                        if self.viewer.com.cb_show_raw_hex.isChecked():
-                            for c in d_display:
-                                raw_data_str += ('0'*(c <= 15) + str(hex(c))[2:]) + ' '
-                        else:
-                            raw_data_str = d_display.decode('utf-8', errors='replace')
-                        self.viewer.com.raw_data_insert_text(raw_data_str)
-                    
-                    # update robot ID combox
-                    self.serial_update_robot_id()
+
     
-    def serial_update_robot_id(self):
+    def serial_update_gui(self):
+        # update localization data counter
+        if self.serial_data_model.robot_data.keys():
+            s = '%d robots, %d frame have received\n' % (len(self.serial_data_model.robot_data.keys()),
+                                                        self.serial_data_model.num_package)
+        else:
+            s = 'Waiting for data...'
+        self.viewer.com.et_data_flow_info.setText(s)
+        
+        # raw data display
+        if self.viewer.com.cb_show_raw.isChecked():
+            raw_data_str = ''
+            if self.viewer.com.cb_show_raw_hex.isChecked():
+                for c in self.serial_data_model.raw_data:
+                    raw_data_str += ('0'*(c <= 15) + str(hex(c))[2:]) + ' '
+            else:
+                raw_data_str = self.serial_data_model.raw_data.decode('utf-8', errors='replace')
+            self.viewer.com.raw_data_insert_text(raw_data_str)
+        
         if self.viewer.com.cbox_request_id.count() != len(self.serial_data_model.robot_data.keys()):
             self.viewer.com.cbox_request_id.clear()
             self.viewer.com.cbox_send_robot_id.clear()
-        for k in self.serial_data_model.robot_data.keys():
-            self.viewer.com.cbox_request_id.addItem(str(k))
-            self.viewer.com.cbox_send_robot_id.addItem(str(k))
+            for k in self.serial_data_model.robot_data.keys():
+                self.viewer.com.cbox_request_id.addItem(str(k))
+                self.viewer.com.cbox_send_robot_id.addItem(str(k))
 
     def serial_port_send(self, data, r_id=None, mode='once'):
         header = b''
@@ -1602,9 +1618,10 @@ class Controller:
             QMessageBox.warning(self.viewer.com, 'Error', 'Cannot send data')
             self.viewer.system_logger('Try to send data, but failed -_-', 'error', out='com')
             return
+        
         if mode=='once':
             self.viewer.system_logger('Send %d bytes data via serial port: \n %s' % (len_bytes, data),
-                                    out='com')
+                                      out='com')
     
     def serial_send_raw_data(self):
         send_str = self.viewer.com.text_edit_send_raw.toPlainText()
@@ -1677,6 +1694,7 @@ class Controller:
                 self.viewer.com.pb_open_port.setDisabled(True)
                 self.viewer.com.pb_close_port.setDisabled(True)
                 self.viewer.com.pb_scan_port.setDisabled(True)
+                self.serial_port_timer.start(400)
             else:
                 QMessageBox.warning(self.viewer.com, 'Error',
                                     'The serial port is not open, please open the port and retry')
@@ -1688,13 +1706,14 @@ class Controller:
             self.viewer.com.pb_open_port.setDisabled(False)
             self.viewer.com.pb_close_port.setDisabled(False)
             self.viewer.com.pb_scan_port.setDisabled(False)
+            self.serial_port_timer.stop()
     
     def serial_clear_data_cached(self):
         len_ = len(self.serial_data_model.robot_data)
         self.serial_data_model.clear_data()
         if len(self.serial_data_model.robot_data) == 0:
             self.viewer.system_logger('Cleared {} Robot Data.'.format(len_))
-            self.serial_update_robot_id()
+            self.serial_update_gui()
     
     def exp_visualization_add_plot(self):
         name = self.viewer.main_menu.sender().objectName().split("_")[-1]
@@ -1781,9 +1800,7 @@ class Controller:
                            '_'.join(self.exp_save_data_selected_data) + '.txt'
                 with open(filename, mode='a') as self.save_data_txt_f:
                     self.save_data_txt_f.write('\n'.join(self.exp_data_to_save) + '\n')
-                    self.viewer.system_logger(
-                        'Write %d lines of data to txt file successfully' % len(self.exp_data_to_save),
-                        out='exp')
+                    print('Write %d lines of data to txt file successfully' % len(self.exp_data_to_save))
                     self.exp_data_to_save = []
             for r in self.exp_save_data_selected_id:
                 data_by_id = [str(exp_t), str(r)]
@@ -1791,8 +1808,7 @@ class Controller:
                     try:
                         data_by_id.append(str(d[r]))
                     except:
-                        self.viewer.system_logger(
-                            'lost data of robot(ID=%d)' % r, log_type='error', out='exp')
+                        print('lost data of robot(ID=%d)' % r)
                 data_by_id = ','.join(data_by_id)
                 self.exp_data_to_save.append(data_by_id)
 
@@ -1810,8 +1826,7 @@ class Controller:
                     # create a new mat file
                     save_dic = {'data': self.exp_data_to_save}
                 sio.savemat(filename, save_dic)
-                self.viewer.system_logger('Write %d long list to mat file successfully' % len(self.exp_data_to_save),
-                                              out='exp')
+                print('Write %d long list to mat file successfully' % len(self.exp_data_to_save))
                 self.exp_data_to_save = []
             for r in self.exp_save_data_selected_id:
                 data_by_id = [exp_t, r]
@@ -1819,8 +1834,7 @@ class Controller:
                     try:
                         data_by_id.append(d[r])
                     except:
-                        self.viewer.system_logger(
-                            'lost data of robot(ID=%d)' % r, log_type='error', out='exp')
+                        print('lost data of robot(ID=%d)' % r)
                         break
                 self.exp_data_to_save.append(data_by_id)
 
@@ -1877,7 +1891,6 @@ class Controller:
                                                 'color':'y',
                                                 'width':0.3/20}])
         self.exp_result_win_setted = True
-        self.viewer.exp_results.show()
 
     def exp_start(self):
         if self.viewer.main_menu.pb_start_exp.text() == "Start \n Experiment":
@@ -1885,20 +1898,20 @@ class Controller:
             if name == "":
                 self.viewer.show_message_box("Please provide experiment name", 'warning')
                 return
-            self.exp_start_time = time.time()
+            self.exp_initial()
+
             if not self.exp_result_win_setted:
                 self.exp_setup_result_win()
-            else:
-                self.viewer.exp_results.show()
-            self.exp_initial()
-            self.exp_thread = threading.Thread(target=self.exp_task)
-            self.exp_thread.start()
-            self.exp_is_running = True
             if self.viewer.main_menu.cb_exp_data_plot.isChecked():
+                self.viewer.exp_results.show()
                 self.exp_results_update_timer.start(1000)
             self.viewer.main_menu.pb_start_exp.setText("Stop \n Experiment")
             self.viewer.main_menu.lineEdit_exp_name.setDisabled(True)
             self.viewer.system_logger('Experiment ' + name + ' started', out='exp')
+            self.exp_is_running = True
+            self.exp_start_time = time.time()
+            self.exp_thread = threading.Thread(target=self.exp_task)
+            self.exp_thread.start()
         elif self.viewer.main_menu.pb_start_exp.text() == "Stop \n Experiment":
             self.viewer.main_menu.lineEdit_exp_name.setDisabled(False)
             self.exp_is_running = False
@@ -1908,12 +1921,15 @@ class Controller:
             self.viewer.main_menu.pb_start_exp.setText("Start \n Experiment")
     
     def exp_switch_results_visualization(self):
-        if self.viewer.main_menu.cb_exp_data_plot.isChecked():
-            self.exp_results_update_timer.start(1000)
-            self.viewer.exp_results.show()
+        if self.exp_is_running:
+            if self.viewer.main_menu.cb_exp_data_plot.isChecked():
+                self.exp_results_update_timer.start(1000)
+                self.viewer.exp_results.show()
+            else:
+                self.exp_results_update_timer.stop()
+                self.viewer.exp_results.hide()
         else:
-            self.exp_results_update_timer.stop()
-            self.viewer.exp_results.hide()
+            self.viewer.system_logger("Please start experiment first", 'err', out="exp")
             
     def exp_update_results(self):
         data = []
@@ -1970,8 +1986,7 @@ class Controller:
         self.viewer.exp_results.update_figures(data)
         if self.viewer.exp_results.isHidden():
             self.viewer.exp_results.show()
-            
-    
+
     def exp_initial(self):
         self.exp_predator_id = 1
         self.exp_prey_ids = [0] + list(range(2, 16))
@@ -1984,40 +1999,35 @@ class Controller:
         while self.exp_is_running:
             # timer
             t = time.time() - self.exp_start_time
-            h = int(t / 3600)
-            m = int((t - h * 3600) / 60)
-            s = t - h * 3600 - m * 60
-            self.viewer.main_menu.et_exp_timer.setText('ExperimentTime: %2d H %2d M% 2.2f S' % (h, m, s))
             # task
-            if t - self.pre_exp_task_t >= self.viewer.main_menu.sp_exp_task_interval.value():
+            if t - self.pre_exp_task_t >= 1:
                 print("exp-info:run at ", t)
                 self.pre_exp_task_t = t
                 self.exp_loop_counter += 1
                 # 1. receive data from prey and predator (energy, f_avoid, f_gather, px, py)
-                if self.exp_predator_id in self.loc_world_locations.keys():
-                    pd_position = self.loc_world_locations[self.exp_predator_id][-1][:2]
-                    pd_heading = self.loc_world_locations[self.exp_predator_id][-1][2]
+                if self.exp_predator_id in self.loc_world_location.keys():
+                    pd_position = self.loc_world_location[self.exp_predator_id][:2]
+                    pd_heading = self.loc_world_location[self.exp_predator_id][2]
                 else:
                     pd_position = [0,0]
                     pd_heading = 0
-                    # self.viewer.system_logger('Lost position of the predator', 'err')
                     print('\033[0;31m exp-err: Lost position of the predator \033[0m')
                 ## ids defined from the localization and communication
-                exp_p_ids = set(self.serial_data_model.robot_data.keys()).intersection(set(self.loc_world_locations.keys())) - \
+                exp_p_ids = set(self.serial_data_model.robot_data.keys()).intersection(set(self.loc_world_location.keys())) - \
                     set([self.exp_predator_id])
                 print('exp-info: valid ids:', exp_p_ids)
                 pe_positions = {}
                 pe_energy = {}
                 pe_energy_sum = 0
                 for id_ in exp_p_ids:
-                    pe_positions.update({id_:self.loc_world_locations[id_][-1][:2]})
+                    pe_positions.update({id_:self.loc_world_location[id_][:2]})
                     e = self.serial_data_model.get_robot_data(id_, 'Energy', -1)
                     pe_energy.update({id_:e})
                     # prey in escaping state
                     if self.serial_data_model.get_robot_data(id_, 'State', -1) == 2:
                         pe_energy_sum += e
                     # or use: prey that is closed to predator
-                    if distance(pe_positions[id_], pd_position) <= 0.2:
+                    if distance(pe_positions[id_], pd_position) <= 0.1:
                         pe_energy_sum += e
                     # 2. justify if each prey's energy is less than zero (death):
                     # if so, send the value of f_avoid, f_gather
@@ -2045,76 +2055,77 @@ class Controller:
                         self.serial_port_send(send_data, r_id=id_, mode='thread')
 
                 # 3. clusterring the preys
-                self.exp_prey_cluster = {}
-                self.exp_prey_cluster_id = dict.fromkeys(exp_p_ids, None)
-                ## 3.1 roughly arange by distance
-                for id_ in exp_p_ids:
-                    if self.exp_prey_cluster_id[id_] is None:
-                        self.exp_prey_cluster_id[id_] = len(self.exp_prey_cluster) + 1
-                        self.exp_prey_cluster.update()
-                        a_k = []
-                        for k, v in self.exp_prey_cluster_id.items():
-                            if v is None:
-                                a_k.append(k)
-                        cl_k = []
-                        for k in a_k:
-                            if k != id_:
-                                if distance(pe_positions[k], pe_positions[id_]) <= \
-                                    (self.exp_prey_robot_size[k] + self.exp_prey_robot_size[id_])*2:
-                                        cl_k.append(k)
-                        self.exp_prey_cluster.update({self.exp_prey_cluster_id[id_]:a_k + [id_]})
-                        for k in a_k:
-                            self.exp_prey_cluster_id[k] = self.exp_prey_cluster_id[id_]
-                # 3.2 re-arange cluster using rectangle box
-                rect = {}
-                margin = 10
-                for ind, k in self.exp_prey_cluster.items():
-                    if len(k) >=2:
-                        x = np.array([pe_positions[k_][0] for k_ in k])
-                        y = np.array([pe_positions[k_][1] for k_ in k])
-                        rect.update({ind:[x.min()-margin, x.max()+margin,
-                                            y.min()-margin, y.max()+margin]})
-                for c_c in combinations(rect.keys(), 2):
-                    r1l = rect[c_c[1]][0]
-                    r1r = rect[c_c[1]][1]
-                    r2l = rect[c_c[0]][0]
-                    r2r = rect[c_c[0]][1]
-                    r1b = rect[c_c[1]][2]
-                    r1t = rect[c_c[1]][3]
-                    r2b = rect[c_c[0]][2]
-                    r2t = rect[c_c[0]][3]
-                    if not ((r1l > r2r) or (r1t < r2b) or (r2l > r1r) or (r2t < r1b)):
-                        for k in self.exp_prey_cluster[c_c[1]]:
-                            self.exp_prey_cluster_id[k] = c_c[0]
-                self.exp_prey_cluster = {}
-                for id_ in exp_p_ids:
-                    if self.exp_prey_cluster_id[id_] in self.exp_prey_cluster.keys():
-                        self.exp_prey_cluster[self.exp_prey_cluster_id[id_]].append(id_)
-                    elif self.exp_prey_cluster_id[id_] is not None:
-                        self.exp_prey_cluster.update({self.exp_prey_cluster_id[id_]:[id_]})
+                # self.exp_prey_cluster = {}
+                # self.exp_prey_cluster_id = dict.fromkeys(exp_p_ids, None)
+                # ## 3.1 roughly arange by distance
+                # for id_ in exp_p_ids:
+                #     if self.exp_prey_cluster_id[id_] is None:
+                #         self.exp_prey_cluster_id[id_] = len(self.exp_prey_cluster) + 1
+                #         self.exp_prey_cluster.update()
+                #         a_k = []
+                #         for k, v in self.exp_prey_cluster_id.items():
+                #             if v is None:
+                #                 a_k.append(k)
+                #         cl_k = []
+                #         for k in a_k:
+                #             if k != id_:
+                #                 if distance(pe_positions[k], pe_positions[id_]) <= \
+                #                     (self.exp_prey_robot_size[k] + self.exp_prey_robot_size[id_])*2:
+                #                         cl_k.append(k)
+                #         self.exp_prey_cluster.update({self.exp_prey_cluster_id[id_]:a_k + [id_]})
+                #         for k in a_k:
+                #             self.exp_prey_cluster_id[k] = self.exp_prey_cluster_id[id_]
+                # # 3.2 re-arange cluster using rectangle box
+                # rect = {}
+                # margin = 10
+                # for ind, k in self.exp_prey_cluster.items():
+                #     if len(k) >=2:
+                #         x = np.array([pe_positions[k_][0] for k_ in k])
+                #         y = np.array([pe_positions[k_][1] for k_ in k])
+                #         rect.update({ind:[x.min()-margin, x.max()+margin,
+                #                             y.min()-margin, y.max()+margin]})
+                # for c_c in combinations(rect.keys(), 2):
+                #     r1l = rect[c_c[1]][0]
+                #     r1r = rect[c_c[1]][1]
+                #     r2l = rect[c_c[0]][0]
+                #     r2r = rect[c_c[0]][1]
+                #     r1b = rect[c_c[1]][2]
+                #     r1t = rect[c_c[1]][3]
+                #     r2b = rect[c_c[0]][2]
+                #     r2t = rect[c_c[0]][3]
+                #     if not ((r1l > r2r) or (r1t < r2b) or (r2l > r1r) or (r2t < r1b)):
+                #         for k in self.exp_prey_cluster[c_c[1]]:
+                #             self.exp_prey_cluster_id[k] = c_c[0]
+                # self.exp_prey_cluster = {}
+                # for id_ in exp_p_ids:
+                #     if self.exp_prey_cluster_id[id_] in self.exp_prey_cluster.keys():
+                #         self.exp_prey_cluster[self.exp_prey_cluster_id[id_]].append(id_)
+                #     elif self.exp_prey_cluster_id[id_] is not None:
+                #         self.exp_prey_cluster.update({self.exp_prey_cluster_id[id_]:[id_]})
                         
-                # 4. send predator its position, angle and the goal position
-                if self.exp_predator_id in set(self.serial_data_model.robot_data.keys()).intersection(set(self.loc_world_locations.keys())):
-                    # calculate goal position based on the prey's cluster info
-                    sorted_c = sorted(self.exp_prey_cluster.items(), key=lambda v:len(v[1]))
-                    if len(sorted_c):
-                        _, v1 = sorted_c[-1]
-                    else:
-                        v1 = {}
+                # # 4. send predator its position, angle and the goal position
+                if self.exp_predator_id in set(self.serial_data_model.robot_data.keys()).intersection(set(self.loc_world_location.keys())):
+                #     # calculate goal position based on the prey's cluster info
+                #     sorted_c = sorted(self.exp_prey_cluster.items(), key=lambda v:len(v[1]))
+                #     if len(sorted_c):
+                #         _, v1 = sorted_c[-1]
+                #     else:
+                #         v1 = {}
                     
-                    if len(v1) >= len(exp_p_ids) - 2:
-                        i = np.random.randint(0, len(v1))
-                        g_px = pe_positions[v1[i]][0]
-                        g_py = pe_positions[v1[i]][1]
-                    else:
-                        if len(v1) >= self.last_cluster_prey_num + 2:
-                            g_px = np.array([pe_positions[a][0] for a in v1]).mean()
-                            g_py = np.array([pe_positions[a][1] for a in v1]).mean()
-                        else:
-                            # ?: how to send gpx gpy data when there is no change to the previous one? 
-                            g_px = pd_position[0]
-                            g_py = pd_position[1]
-
+                #     if len(v1) >= len(exp_p_ids) - 2:
+                #         i = np.random.randint(0, len(v1))
+                #         g_px = pe_positions[v1[i]][0]
+                #         g_py = pe_positions[v1[i]][1]
+                #     else:
+                #         if len(v1) >= self.last_cluster_prey_num + 2:
+                #             g_px = np.array([pe_positions[a][0] for a in v1]).mean()
+                #             g_py = np.array([pe_positions[a][1] for a in v1]).mean()
+                #         else:
+                #             # ?: how to send gpx gpy data when there is no change to the previous one? 
+                            # g_px = pd_position[0]
+                            # g_py = pd_position[1]
+                    g_px = 0
+                    g_py = 1
                     send_data = b'DWD'
                     send_data += st.pack('6f', pd_position[0],  pd_position[1], pd_heading, g_px, g_py, pe_energy_sum)
                     print('exp-info: \033[0;41m send to predator:', send_data, '\033[0m')
@@ -2129,6 +2140,7 @@ class Controller:
                 # save data
                 if self.viewer.main_menu.cb_auto_save.isChecked():
                     self.exp_save_data()
+
 
 
 if __name__ == "__main__":

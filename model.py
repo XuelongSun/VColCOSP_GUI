@@ -46,7 +46,9 @@ class SerialDataModel(object):
         self.num_package = 0
         # robot
         self.robot_data = {}
-    
+        # raw data
+        self.raw_data = ''
+        
     def clear_data(self):
         self.num_package = 0
         # robot
