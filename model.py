@@ -417,7 +417,7 @@ class Pattern(object):
 
 class LocalizationModel(object):
     def __init__(self):
-        self.id_table_filename = 'ID1.txt'
+        self.id_table_filename = 'ID.txt'
         self.arena_size = (1.4,0.8)
         self.image_size = (1920, 1200)
         self.pattern_size = 0.04
