@@ -142,7 +142,7 @@ class Ui_main_menu(object):
         self.line_14.setFrameShape(QtWidgets.QFrame.HLine)
         self.line_14.setObjectName("line_14")
         self.pb_start_exp = QtWidgets.QPushButton(main_menu)
-        self.pb_start_exp.setGeometry(QtCore.QRect(14, 406, 113, 73))
+        self.pb_start_exp.setGeometry(QtCore.QRect(110, 410, 91, 71))
         font = QtGui.QFont()
         font.setFamily("Arial")
         font.setPointSize(10)
@@ -171,7 +171,7 @@ class Ui_main_menu(object):
         self.label_54.setFont(font)
         self.label_54.setObjectName("label_54")
         self.lineEdit_exp_name = QtWidgets.QLineEdit(main_menu)
-        self.lineEdit_exp_name.setGeometry(QtCore.QRect(84, 310, 151, 20))
+        self.lineEdit_exp_name.setGeometry(QtCore.QRect(84, 310, 211, 20))
         font = QtGui.QFont()
         font.setFamily("Arial")
         font.setPointSize(10)
@@ -187,7 +187,7 @@ class Ui_main_menu(object):
         self.label_55.setFont(font)
         self.label_55.setObjectName("label_55")
         self.pb_save_data_setting = QtWidgets.QPushButton(main_menu)
-        self.pb_save_data_setting.setGeometry(QtCore.QRect(352, 338, 91, 49))
+        self.pb_save_data_setting.setGeometry(QtCore.QRect(350, 338, 71, 51))
         font = QtGui.QFont()
         font.setFamily("Arial")
         font.setPointSize(10)
@@ -207,7 +207,7 @@ class Ui_main_menu(object):
 "")
         self.pb_save_data_setting.setObjectName("pb_save_data_setting")
         self.pb_save_data = QtWidgets.QPushButton(main_menu)
-        self.pb_save_data.setGeometry(QtCore.QRect(502, 356, 115, 33))
+        self.pb_save_data.setGeometry(QtCore.QRect(526, 356, 91, 33))
         font = QtGui.QFont()
         font.setFamily("Arial")
         font.setPointSize(10)
@@ -349,10 +349,10 @@ class Ui_main_menu(object):
         self.line_12.setFrameShape(QtWidgets.QFrame.HLine)
         self.line_12.setObjectName("line_12")
         self.cb_auto_save = QtWidgets.QCheckBox(main_menu)
-        self.cb_auto_save.setGeometry(QtCore.QRect(504, 332, 109, 19))
+        self.cb_auto_save.setGeometry(QtCore.QRect(532, 332, 81, 20))
         self.cb_auto_save.setObjectName("cb_auto_save")
         self.pb_load_config = QtWidgets.QPushButton(main_menu)
-        self.pb_load_config.setGeometry(QtCore.QRect(136, 406, 113, 29))
+        self.pb_load_config.setGeometry(QtCore.QRect(8, 408, 91, 29))
         font = QtGui.QFont()
         font.setFamily("Arial")
         font.setPointSize(10)
@@ -372,7 +372,7 @@ class Ui_main_menu(object):
 "")
         self.pb_load_config.setObjectName("pb_load_config")
         self.pb_save_config = QtWidgets.QPushButton(main_menu)
-        self.pb_save_config.setGeometry(QtCore.QRect(134, 448, 117, 29))
+        self.pb_save_config.setGeometry(QtCore.QRect(10, 450, 91, 29))
         font = QtGui.QFont()
         font.setFamily("Arial")
         font.setPointSize(10)
@@ -410,6 +410,46 @@ class Ui_main_menu(object):
         self.cb_exp_data_plot = QtWidgets.QCheckBox(main_menu)
         self.cb_exp_data_plot.setGeometry(QtCore.QRect(20, 380, 231, 19))
         self.cb_exp_data_plot.setObjectName("cb_exp_data_plot")
+        self.pb_reset_exp = QtWidgets.QPushButton(main_menu)
+        self.pb_reset_exp.setGeometry(QtCore.QRect(210, 410, 91, 71))
+        font = QtGui.QFont()
+        font.setFamily("Arial")
+        font.setPointSize(10)
+        font.setBold(True)
+        font.setWeight(75)
+        self.pb_reset_exp.setFont(font)
+        self.pb_reset_exp.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+        self.pb_reset_exp.setStyleSheet("QPushButton::disabled {\n"
+"    border: 2px solid rgb(149, 149, 149);\n"
+"    color:rgb(149, 149, 149);\n"
+"    border-radius:10px;\n"
+"}\n"
+"QPushButton{\n"
+"border: 2px solid rgb(19, 126, 124);\n"
+"border-radius:10px;\n"
+"}\n"
+"")
+        self.pb_reset_exp.setObjectName("pb_reset_exp")
+        self.pb_save_data_clear_cache = QtWidgets.QPushButton(main_menu)
+        self.pb_save_data_clear_cache.setGeometry(QtCore.QRect(430, 340, 81, 49))
+        font = QtGui.QFont()
+        font.setFamily("Arial")
+        font.setPointSize(10)
+        font.setBold(True)
+        font.setWeight(75)
+        self.pb_save_data_clear_cache.setFont(font)
+        self.pb_save_data_clear_cache.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+        self.pb_save_data_clear_cache.setStyleSheet("QPushButton::disabled {\n"
+"    border: 2px solid rgb(149, 149, 149);\n"
+"    color:rgb(149, 149, 149);\n"
+"    border-radius:10px;\n"
+"}\n"
+"QPushButton{\n"
+"border: 2px solid rgb(19, 126, 124);\n"
+"border-radius:10px;\n"
+"}\n"
+"")
+        self.pb_save_data_clear_cache.setObjectName("pb_save_data_clear_cache")
 
         self.retranslateUi(main_menu)
         QtCore.QMetaObject.connectSlotsByName(main_menu)
@@ -443,4 +483,8 @@ class Ui_main_menu(object):
         self.pb_save_config.setText(_translate("main_menu", "Save Config"))
         self.label_56.setText(_translate("main_menu", "s"))
         self.cb_exp_data_plot.setText(_translate("main_menu", "experiment data visulization"))
+        self.pb_reset_exp.setText(_translate("main_menu", "Reset \n"
+" Experiment"))
+        self.pb_save_data_clear_cache.setText(_translate("main_menu", "Clear \n"
+" Cache"))
 import resources_rc
