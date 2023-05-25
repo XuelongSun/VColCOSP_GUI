@@ -248,7 +248,7 @@ class Controller:
         ## ids from localization
         if self.loc_world_location:
             ids_from_loc = list(self.loc_world_location.keys())
-            self.exp_available_data_key += ['POS_X', 'POS_Y', 'Heading']
+            self.exp_available_data_key += ['POS-X', 'POS-Y', 'Heading']
 
         ## ids from communication
         if self.serial_data_is_running:
@@ -269,10 +269,10 @@ class Controller:
                 for k, v in plot.lines.items():
                     _id, ds = k.split('/')
                     r_id = _id.split('_')[-1]
-                    if ds == 'POS_X':
+                    if ds == 'POS-X':
                         v.setData(x=np.arange(len(self.loc_world_locations[int(r_id)])),
                                 y=np.array(self.loc_world_locations[int(r_id)], dtype=np.float)[:,0])
-                    elif ds == 'POS_Y':
+                    elif ds == 'POS-Y':
                         v.setData(x=np.arange(len(self.loc_world_locations[int(r_id)])),
                                 y=np.array(self.loc_world_locations[int(r_id)], dtype=np.float)[:,1])
                     elif ds == 'Heading':
@@ -1780,12 +1780,12 @@ class Controller:
         current_data = []
         for d_s in self.exp_save_data_selected_data:
             robot_data = {}
-            if d_s == 'POS_X':
+            if d_s == 'POS-X':
                 for k in self.loc_world_locations.keys():
                     robot_data.update({k:self.loc_world_locations[k][-1][0]})
                 # for r_info in self.loc_world_locations[-1]:
                 #     robot_data.update({r_info[0]:r_info[1]})
-            elif d_s == 'POS_Y':
+            elif d_s == 'POS-Y':
                 for k in self.loc_world_locations.keys():
                     robot_data.update({k:self.loc_world_locations[k][-1][1]})
                 # for r_info in self.loc_world_location[-1]:
@@ -1920,14 +1920,15 @@ class Controller:
             self.viewer.main_menu.lineEdit_exp_name.setDisabled(True)
             self.viewer.system_logger('Experiment ' + name + ' started', out='exp')
             self.exp_is_running = True
-            # self.exp_start_time = time.time()
+            self.exp_start_time = time.time()
             # self.exp_thread = threading.Thread(target=self.exp_task)
             # self.exp_thread.start()
             if not self.exp_result_win_setted:
                 self.exp_setup_result_win()
             if self.viewer.main_menu.cb_exp_data_plot.isChecked():
                 self.viewer.exp_results.show()
-            self.exp_results_update_timer.start(1000)
+            interval = self.viewer.main_menu.sp_exp_task_interval.value()
+            self.exp_results_update_timer.start(int(interval*1000))
         elif self.viewer.main_menu.pb_start_exp.text() == "Stop \n Experiment":
             self.viewer.main_menu.lineEdit_exp_name.setDisabled(False)
             self.exp_is_running = False
@@ -2022,7 +2023,7 @@ class Controller:
                 self.viewer.exp_results.show()
         else:
             if not self.viewer.exp_results.isHidden():
-                self.viewer.exp_results.isHidden()
+                self.viewer.exp_results.hide()
 
     def exp_initial(self):
         self.exp_predator_id = 1
@@ -2229,7 +2230,7 @@ class Controller:
                     send_data += st.pack('2f', f_avoid, f_gather)
                     print('exp-info: \033[0;46m send to prey {}:'.format(id_), send_data, '\033[0m')
                     self.serial_port_send(send_data, r_id=id_, mode='thread')
-
+            pe_energy_sum = pe_energy_sum/40
             # # 4. send predator its position, angle and the goal position
             if self.exp_predator_id in set(self.serial_data_model.robot_data.keys()).intersection(set(self.loc_world_location.keys())):
                 g_px = 0
